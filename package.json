@@ -1,0 +1,39 @@
+{
+  "name": "x-win",
+  "version": "0.0.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": {
+    "name": "BENKHADRA Hocine",
+    "email": "contact@benkhadra.com",
+    "url": "https://benkhadra.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/miniben-90/x-win.git"
+  },
+  "napi": {
+    "name": "x-win",
+    "triples": {}
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@napi-rs/cli": "^2.13.2",
+    "ava": "^4.3.3"
+  },
+  "ava": {
+    "timeout": "3m"
+  },
+  "engines": {
+    "node": ">= 10"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "ava",
+    "version": "napi version"
+  },
+  "packageManager": "yarn@3.3.0"
+}
