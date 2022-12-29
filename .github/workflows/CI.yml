@@ -39,6 +39,9 @@ jobs:
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
             build: |-
+              sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+              &&
+              sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 & &&
               set -e &&
               yarn build --target x86_64-unknown-linux-gnu &&
               strip *.node
@@ -51,6 +54,9 @@ jobs:
             target: aarch64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: |-
+              sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+              &&
+              sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 & &&
               set -e &&
               yarn build --target aarch64-unknown-linux-gnu &&
               aarch64-unknown-linux-gnu-strip *.node
@@ -60,12 +66,6 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@16
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - name: Setup xvfb (Linux)
-        if: matrix.settings.host == 'ubuntu-latest'
-        run: |
-          sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
-          # start xvfb on (default) display :0
-          sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
       - uses: actions/checkout@v3
       - name: Setup node
         uses: actions/setup-node@v3
