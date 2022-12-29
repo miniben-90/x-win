@@ -60,6 +60,12 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@16
     runs-on: ${{ matrix.settings.host }}
     steps:
+      - name: Setup xvfb (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+          # start xvfb on (default) display :0
+          sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
       - uses: actions/checkout@v3
       - name: Setup node
         uses: actions/setup-node@v3
