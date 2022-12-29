@@ -61,7 +61,7 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       - name: Setup xvfb (Linux)
-        if: runner.os == 'Linux'
+        if: matrix.settings.host == 'ubuntu-latest'
         run: |
           sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
           # start xvfb on (default) display :0
