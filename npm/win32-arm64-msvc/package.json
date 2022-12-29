@@ -1,0 +1,25 @@
+{
+  "name": "x-win-win32-arm64-msvc",
+  "version": "0.1.0",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "x-win.win32-arm64-msvc.node",
+  "files": [
+    "x-win.win32-arm64-msvc.node"
+  ],
+  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux.",
+  "author": {
+    "name": "BENKHADRA Hocine",
+    "email": "contact@benkhadra.com",
+    "url": "https://benkhadra.com/"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/miniben-90/x-win.git"
+}
