@@ -1,6 +1,6 @@
 {
   "name": "x-win",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "index.js",
   "types": "index.d.ts",
   "author": {
@@ -8,10 +8,7 @@
     "email": "contact@benkhadra.com",
     "url": "https://benkhadra.com/"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/miniben-90/x-win.git"
-  },
+  "repository": "https://github.com/miniben-90/x-win.git",
   "napi": {
     "name": "x-win",
     "triples": {}
@@ -35,5 +32,6 @@
     "test": "ava",
     "version": "napi version"
   },
-  "packageManager": "yarn@3.3.0"
+  "packageManager": "yarn@3.3.0",
+  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux."
 }
