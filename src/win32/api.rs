@@ -11,7 +11,14 @@ use std::{
   ffi::c_void,
   path::{Path, PathBuf},
 };
-use windows::Win32::{System::StationsAndDesktops::EnumDesktopWindows, UI::WindowsAndMessaging::{IsWindow, IsWindowVisible, GetWindowInfo, WINDOWINFO, WS_EX_TOOLWINDOW, WS_CHILD, WS_CAPTION}, Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED}};
+use windows::Win32::{
+  Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED},
+  System::StationsAndDesktops::EnumDesktopWindows,
+  UI::WindowsAndMessaging::{
+    GetWindowInfo, IsWindow, IsWindowVisible, WINDOWINFO, WS_ACTIVECAPTION, WS_CAPTION, WS_CHILD,
+    WS_EX_TOOLWINDOW,
+  },
+};
 use windows::{
   core::{HSTRING, PCWSTR, PWSTR},
   w,
@@ -46,7 +53,6 @@ pub struct WindowsAPI {}
  * Impl. for windows system
  */
 impl API for WindowsAPI {
-
   fn get_active_window(&self) -> Result<WindowInfo, napi::Error> {
     let hwnd = unsafe { GetForegroundWindow() };
     let active_window = get_window_information(hwnd);
@@ -54,16 +60,15 @@ impl API for WindowsAPI {
   }
 
   fn get_open_windows(&self) -> Result<Vec<WindowInfo>, napi::Error> {
-    let mut results:Vec<WindowInfo> = Vec::new();
-    let mut open_windows:Vec<HWND> = Vec::new();
+    let mut results: Vec<WindowInfo> = Vec::new();
+    let mut open_windows: Vec<HWND> = Vec::new();
 
     let lparam = unsafe {
-      std::mem::transmute::<*mut c_void, LPARAM>(
-        &mut open_windows as *mut Vec<HWND> as *mut c_void,
-      )
+      std::mem::transmute::<*mut c_void, LPARAM>(&mut open_windows as *mut Vec<HWND> as *mut c_void)
     };
 
-    let enum_desktop_success = unsafe { EnumDesktopWindows(None, Some(enum_desktop_windows_proc), lparam) };
+    let enum_desktop_success =
+      unsafe { EnumDesktopWindows(None, Some(enum_desktop_windows_proc), lparam) };
 
     if enum_desktop_success.as_bool() && open_windows.len().ne(&0) {
       for hwnd in open_windows {
@@ -77,17 +82,26 @@ impl API for WindowsAPI {
 
 /** Functions for callback */
 
-extern  "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
   let open_windows = unsafe { std::mem::transmute::<LPARAM, &mut Vec<HWND>>(lparam) };
 
   unsafe {
     if IsWindow(hwnd).as_bool() && IsWindow(hwnd).as_bool() && IsWindowVisible(hwnd).as_bool() {
       let mut pwi: WINDOWINFO = WINDOWINFO::default();
       GetWindowInfo(hwnd, &mut pwi);
-      if pwi.dwExStyle & WS_EX_TOOLWINDOW.0 == 0 && pwi.dwStyle & WS_CAPTION.0 == WS_CAPTION.0 && pwi.dwStyle & WS_CHILD.0 == 0 {
+      if (pwi.dwExStyle & WS_EX_TOOLWINDOW.0 == 0
+        && pwi.dwStyle & WS_CAPTION.0 == WS_CAPTION.0
+        && pwi.dwStyle & WS_CHILD.0 == 0)
+        || pwi.dwWindowStatus == WS_ACTIVECAPTION.0
+      {
         let mut clocked_val: i32 = 0;
         let cbattribute = std::mem::size_of::<i32>() as u32;
-        let result = DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &mut clocked_val as *mut i32 as *mut _, cbattribute);
+        let result = DwmGetWindowAttribute(
+          hwnd,
+          DWMWA_CLOAKED,
+          &mut clocked_val as *mut i32 as *mut _,
+          cbattribute,
+        );
         if result.is_ok() && clocked_val == 0 {
           open_windows.push(hwnd);
         }
@@ -125,7 +139,7 @@ extern "system" fn enum_child_windows_func(hwnd: HWND, lparam: LPARAM) -> BOOL {
  * To know the os
  */
 fn os_name() -> String {
-  r#"windows"#.to_owned()
+  r#"win32"#.to_owned()
 }
 
 /**
@@ -357,9 +371,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
         name: "".to_string(),
         exec_name: "".to_string(),
       },
-      usage: UsageInfo {
-        memory: 0,
-      },
+      usage: UsageInfo { memory: 0 },
     }
   }
 }
