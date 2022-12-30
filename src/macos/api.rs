@@ -74,7 +74,7 @@ impl API for MacosAPI {
  * To know the os
  */
 fn os_name() -> String {
-  r#"macos"#.to_owned()
+  r#"darwin"#.to_owned()
 }
 
 // fn get_window_information
