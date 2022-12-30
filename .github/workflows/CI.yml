@@ -17,7 +17,7 @@ env:
       - docs/**
   pull_request: null
 jobs:
-  build-images:
+  create-docker-images:
     name: Build nodejs-rust:lts
     runs-on: ubuntu-latest
     permissions:
@@ -46,7 +46,7 @@ jobs:
           tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
   build:
     needs:
-      - build-image
+      - create-docker-images
     strategy:
       fail-fast: false
       matrix:
