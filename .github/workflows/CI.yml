@@ -3,8 +3,6 @@ env:
   DEBUG: napi:*
   APP_NAME: x-win
   MACOSX_DEPLOYMENT_TARGET: '10.13'
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 'on':
   push:
     branches:
@@ -20,6 +18,7 @@ env:
   pull_request: null
 jobs:
   build-images:
+    name: Build nodejs-rust:lts
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,17 +27,17 @@ jobs:
     - name: Build and push debian aarch64 cross
       uses: docker/build-push-action@v2
       with:
-        file: docker/debian-aarch64.Dockerfile
+        file: docker/debian.Dockerfile
         platforms: linux/amd64
         push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian-aarch64
+        tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
     - name: Build and push debian with zig
       uses: docker/build-push-action@v2
       with:
-        file: docker/debian-zig.Dockerfile
+        file: docker/debian-aarch64.Dockerfile
         platforms: linux/amd64
         push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian-zig
+        tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
   build:
     needs:
       - build-image
@@ -61,7 +60,7 @@ jobs:
             target: i686-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            docker: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian
+            docker: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
             build: |-
               set -e &&
               yarn build --target x86_64-unknown-linux-gnu &&
@@ -73,7 +72,7 @@ jobs:
               strip -x *.node
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            docker: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian-aarch64
+            docker: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
             build: |-
               set -e &&
               yarn build --target aarch64-unknown-linux-gnu &&
@@ -262,7 +261,7 @@ jobs:
       - name: Setup and run tests
         uses: addnab/docker-run-action@v3
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs:aarch64-${{ matrix.node }}
+          image: ghcr.io/miniben-90/x-win/nodejs:aarch64-${{ matrix.node }}
           options: '-v ${{ github.workspace }}:/build -w /build'
           run: |
             set -e
