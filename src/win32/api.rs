@@ -89,10 +89,12 @@ extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL
     if IsWindow(hwnd).as_bool() && IsWindow(hwnd).as_bool() && IsWindowVisible(hwnd).as_bool() {
       let mut pwi: WINDOWINFO = WINDOWINFO::default();
       GetWindowInfo(hwnd, &mut pwi);
-      if (pwi.dwExStyle & WS_EX_TOOLWINDOW.0 == 0
-        && pwi.dwStyle & WS_CAPTION.0 == WS_CAPTION.0
-        && pwi.dwStyle & WS_CHILD.0 == 0)
+      if (
+        (pwi.dwExStyle & WS_EX_TOOLWINDOW.0 == 0
+        && pwi.dwStyle & WS_CAPTION.0 == WS_CAPTION.0)
         || pwi.dwWindowStatus == WS_ACTIVECAPTION.0
+      )
+        && pwi.dwStyle & WS_CHILD.0 == 0
       {
         let mut clocked_val: i32 = 0;
         let cbattribute = std::mem::size_of::<i32>() as u32;
