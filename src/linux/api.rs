@@ -258,9 +258,8 @@ fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
     long_length: std::u32::MAX,
   });
   if let Ok(window_title) = conn.wait_for_reply(window_title) {
-    let window_title = window_title.value();
-    let window_title = std::str::from_utf8(window_title);
-    return window_title.unwrap_or("").to_owned();
+    let window_title: &[u8] = window_title.value();
+    return xcb::Lat1Str::from_bytes(window_title).to_string().to_owned();
   }
   return "".to_owned();
 }
