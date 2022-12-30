@@ -3,6 +3,8 @@ env:
   DEBUG: napi:*
   APP_NAME: x-win
   MACOSX_DEPLOYMENT_TARGET: '10.13'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 'on':
   push:
     branches:
@@ -17,7 +19,29 @@ env:
       - docs/**
   pull_request: null
 jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Build and push debian aarch64 cross
+      uses: docker/build-push-action@v2
+      with:
+        file: docker/debian-aarch64.Dockerfile
+        platforms: linux/amd64
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian-aarch64
+    - name: Build and push debian with zig
+      uses: docker/build-push-action@v2
+      with:
+        file: docker/debian-zig.Dockerfile
+        platforms: linux/amd64
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian-zig
   build:
+    needs:
+      - build-image
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +61,7 @@ jobs:
             target: i686-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+            docker: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian
             build: |-
               set -e &&
               yarn build --target x86_64-unknown-linux-gnu &&
@@ -49,7 +73,7 @@ jobs:
               strip -x *.node
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
+            docker: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs-rust:lts-debian-aarch64
             build: |-
               set -e &&
               yarn build --target aarch64-unknown-linux-gnu &&
@@ -114,7 +138,7 @@ jobs:
         with:
           image: ${{ matrix.settings.docker }}
           options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
-          run: "sudo apt-get update && sudo apt-get install -y libxcb-ewmh-dev libxcb-randr0-dev libxcb1-dev libxcb-composite0-dev libx11-dev && ${{ matrix.settings.build }}"
+          run: ${{ matrix.settings.build }}
       - name: Build
         run: ${{ matrix.settings.build }}
         if: ${{ !matrix.settings.docker }}
@@ -238,7 +262,7 @@ jobs:
       - name: Setup and run tests
         uses: addnab/docker-run-action@v3
         with:
-          image: ghcr.io/napi-rs/napi-rs/nodejs:aarch64-${{ matrix.node }}
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/nodejs:aarch64-${{ matrix.node }}
           options: '-v ${{ github.workspace }}:/build -w /build'
           run: |
             set -e
