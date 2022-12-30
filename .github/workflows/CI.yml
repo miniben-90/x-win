@@ -24,20 +24,26 @@ jobs:
       contents: read
       packages: write
     steps:
-    - name: Build and push debian aarch64 cross
-      uses: docker/build-push-action@v2
-      with:
-        file: docker/debian.Dockerfile
-        platforms: linux/amd64
-        push: true
-        tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
-    - name: Build and push debian with zig
-      uses: docker/build-push-action@v2
-      with:
-        file: docker/debian-aarch64.Dockerfile
-        platforms: linux/amd64
-        push: true
-        tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push debian aarch64 cross
+        uses: docker/build-push-action@v2
+        with:
+          file: docker/debian.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
+      - name: Build and push debian with zig
+        uses: docker/build-push-action@v2
+        with:
+          file: docker/debian-aarch64.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
   build:
     needs:
       - build-image
