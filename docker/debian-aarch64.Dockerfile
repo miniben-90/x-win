@@ -4,25 +4,9 @@ RUN echo "....install packages...." && \
   DEBIAN_FRONTEND=noninteractive && \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-  lsb-release \
   xvfb \
-  locales \
-  yaru-theme-icon \
-  libproj15 \
-  libatk1.0-0 \
-  libatkmm-1.6-1v5 \
-  libcairo2 \
-  libgdk-pixbuf2.0-0 \
-  libgl1 \
-  libglib2.0-0 \
-  libglibmm-2.4-1v5 \
-  libgssapi-krb5-2 \
-  libgtk-3-0 \
-  libgtk2.0-0 \
-  libgtkmm-3.0-1v5 \
-  libpango-1.0-0 \
-  libpangocairo-1.0-0 \
-  libx11-6 \
+  x11-utils \
+  x11-xserver-utils \
   libgl1-mesa-dev \
   libxcb-composite0-dev \
   libxcb-damage0-dev \
