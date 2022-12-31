@@ -1,5 +1,5 @@
 {
-  "name": "x-win-darwin-universal",
+  "name": "@miniben90/x-win-darwin-universal",
   "version": "0.1.1",
   "os": [
     "darwin"

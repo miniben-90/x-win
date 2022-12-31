@@ -1,3 +1,3 @@
-# `x-win-darwin-x64`
+# `@miniben90/x-win-darwin-x64`
 
-This is the **x86_64-apple-darwin** binary for `x-win`
+This is the **x86_64-apple-darwin** binary for `@miniben90/x-win`
