@@ -1,7 +1,5 @@
 #![deny(unused_imports)]
 
-extern crate xcb;
-
 use std::{
   fs::{read_link, File},
   io::Read,
