@@ -26,7 +26,8 @@ RUN apt-get update && \
   libxcb-xv0-dev \
   libxcb-xvmc0-dev \
   libx11-xcb-dev \
-  libx11-dev
+  libx11-dev \
+  pkg-config
 
 # Try to install xcb & libxcb
 
