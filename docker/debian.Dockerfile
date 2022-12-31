@@ -20,20 +20,9 @@ RUN echo "....install packages...." && \
   libgtk-3-0 \
   libgtk2.0-0 \
   libgtkmm-3.0-1v5 \
-  libmysqlclient21 \
   libpango-1.0-0 \
   libpangocairo-1.0-0 \
-  libpcrecpp0v5 \
-  libpng16-16 \
-  libpython2.7 \
-  libsecret-1-0 \
-  libsigc++-2.0-0v5 \
-  libsqlite3-0 \
-  libssh-4 \
-  libssl1.1 \
   libx11-6 \
-  libxml2 \
-  libzip5 \
   libgl1-mesa-dev \
   libxcb-composite0-dev \
   libxcb-damage0-dev \
