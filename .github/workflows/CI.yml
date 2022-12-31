@@ -30,14 +30,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push debian aarch64 cross
+      - name: Build & Push ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
         uses: docker/build-push-action@v2
         with:
           file: docker/debian.Dockerfile
           platforms: linux/amd64
           push: true
           tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
-      - name: Build and push debian with zig
+      - name: Build & Push ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
         uses: docker/build-push-action@v2
         with:
           file: docker/debian-aarch64.Dockerfile
