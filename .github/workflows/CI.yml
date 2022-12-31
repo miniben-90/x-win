@@ -89,6 +89,11 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@16
     runs-on: ${{ matrix.settings.host }}
     steps:
+      - name: (Linux) Install libx11-de
+        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev
       - uses: actions/checkout@v3
       - name: Setup node
         uses: actions/setup-node@v3

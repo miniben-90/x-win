@@ -25,16 +25,25 @@ RUN apt-get update && \
   libxcb-xtest0-dev \
   libxcb-xv0-dev \
   libxcb-xvmc0-dev \
-  libx11-xcb-dev
+  libx11-xcb-dev \
+  libx11-dev
 
-  # libxcb-randr0-dev \
-  # libxcb-xtest0-dev \
-  # libxcb-xinerama0-dev \
-  # libxcb-shape0-dev \
-  # libxcb-xkb-dev \
-  # libxcb-ewmh-dev \
-  # libxcb1-dev \
-  # libxcb-composite0-dev \
-  # libxcb-render0-dev \
-  # libxcb-xfixes0-dev \
-  # libx11-dev
+# Try to install xcb & libxcb
+
+RUN set -x && \
+wget --no-check-certificate https://xcb.freedesktop.org/dist/xcb-proto-1.14.1.tar.gz && \
+tar -xzvf xcb-proto-1.14.1.tar.gz && \
+cd xcb-proto-1.14.1 && \
+./configure && \
+make && \
+sudo make install && \
+cd ..
+
+RUN set -x && \
+wget --no-check-certificate https://xcb.freedesktop.org/dist/libxcb-1.14.tar.gz && \
+tar -xzvf libxcb-1.14.tar.gz && \
+cd libxcb-1.14 && \
+./configure --enable-xkb --enable-xinput --enable-selinux && \
+make && \
+sudo make install && \
+cd ..
