@@ -8,7 +8,7 @@ description = "Get position, size, title and a few other properties of the activ
 repository = "https://github.com/miniben-90/x-win"
 
 [lib]
-crate-type = ["lib", "cdylib"]
+crate-type = ["cdylib"]
 
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
