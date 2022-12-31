@@ -12,6 +12,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@miniben90/x-win@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@miniben90/x-win@workspace:."
+  dependencies:
+    "@napi-rs/cli": ^2.14.0
+    ava: ^4.3.3
+  languageName: unknown
+  linkType: soft
+
 "@napi-rs/cli@npm:^2.14.0":
   version: 2.14.0
   resolution: "@napi-rs/cli@npm:2.14.0"
@@ -1999,15 +2008,6 @@ __metadata:
   checksum: 5da60bd4eeeb935eec97ead3df6e28e5917a6bd317478e4a85a5285e8480b8ed96032bbcc6ecd07b236142a24f3ca871c924ec4a6575e623ec1b11bf8c1c253c
   languageName: node
   linkType: hard
-
-"x-win@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "x-win@workspace:."
-  dependencies:
-    "@napi-rs/cli": ^2.14.0
-    ava: ^4.3.3
-  languageName: unknown
-  linkType: soft
 
 "y18n@npm:^5.0.5":
   version: 5.0.8
