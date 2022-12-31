@@ -10,5 +10,6 @@ RUN apt-get update && \
   libxcb-ewmh-dev \
   libxcb1-dev \
   libxcb-composite0-dev \
-  libx11-dev && \
-  apt-get autoremove -y
+  libxcb-render0-dev \
+  libxcb-xfixes0-dev \
+  libx11-dev
