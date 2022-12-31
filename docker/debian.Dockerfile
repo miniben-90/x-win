@@ -36,9 +36,7 @@ RUN echo "....install packages...." && \
   libxcb-util0-dev && \
   echo "....cleanup...." && \
   apt-get autoclean -y && \
-  apt-get autoremove -y && \
-  echo "....generate local en_US...." && \
-  locale-gen en_US.UTF-8
+  apt-get autoremove -y
 
 #Add Xorg configuration to use dummy desktop
 ADD ./docker/config/xorg.conf /usr/share/X11/xorg.conf.d/xorg.conf
