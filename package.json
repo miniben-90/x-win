@@ -1,6 +1,6 @@
 {
   "name": "@miniben90/x-win",
-  "version": "0.1.4",
+  "version": "0.0.1",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
@@ -49,14 +49,5 @@
     "version": "napi version"
   },
   "packageManager": "yarn@3.3.1",
-  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux.",
-  "optionalDependencies": {
-    "@miniben90/x-win-win32-x64-msvc": "0.1.4",
-    "@miniben90/x-win-darwin-x64": "0.1.4",
-    "@miniben90/x-win-linux-x64-gnu": "0.1.4",
-    "@miniben90/x-win-win32-arm64-msvc": "0.1.4",
-    "@miniben90/x-win-win32-ia32-msvc": "0.1.4",
-    "@miniben90/x-win-darwin-arm64": "0.1.4",
-    "@miniben90/x-win-darwin-universal": "0.1.4"
-  }
+  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux."
 }
