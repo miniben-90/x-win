@@ -13,7 +13,6 @@
     "name": "x-win",
     "triples": {
       "additional": [
-        "x86_64-unknown-linux-gnu",
         "x86_64-pc-windows-msvc",
         "aarch64-pc-windows-msvc",
         "i686-pc-windows-msvc",
@@ -50,5 +49,14 @@
     "version": "napi version"
   },
   "packageManager": "yarn@3.3.1",
-  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux."
+  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux.",
+  "optionalDependencies": {
+    "@miniben90/x-win-win32-x64-msvc": "0.1.4",
+    "@miniben90/x-win-darwin-x64": "0.1.4",
+    "@miniben90/x-win-linux-x64-gnu": "0.1.4",
+    "@miniben90/x-win-win32-arm64-msvc": "0.1.4",
+    "@miniben90/x-win-win32-ia32-msvc": "0.1.4",
+    "@miniben90/x-win-darwin-arm64": "0.1.4",
+    "@miniben90/x-win-darwin-universal": "0.1.4"
+  }
 }
