@@ -73,7 +73,7 @@ impl API for WindowsAPI {
     if enum_desktop_success.as_bool() && open_windows.len().ne(&0) {
       for hwnd in open_windows {
         let window_info = get_window_information(hwnd);
-        if window_info.title.eq(&"") && window_info.info.exec_name.eq(&"explorer") {
+        if window_info.title.eq(&"") && window_info.info.exec_name.to_lowercase().eq(&"explorer") {
           continue;
         }
         results.push(window_info);
@@ -327,7 +327,7 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
       .to_owned();
     process_info.name = process_info.exec_name.clone();
 
-    if process_info.exec_name.eq(r#"ApplicationFrameHost"#) {
+    if process_info.exec_name.to_lowercase().eq(r#"applicationframehost"#) {
       let lparam = unsafe {
         std::mem::transmute::<*mut c_void, LPARAM>(
           &mut process_info as *mut ProcessInfo as *mut c_void,
@@ -346,6 +346,24 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
  * Function that construct windowInfo
  */
 fn get_window_information(hwnd: HWND) -> WindowInfo {
+  let mut window_info: WindowInfo = WindowInfo {
+    id: 0,
+    os: os_name(),
+    title: "".to_string(),
+    position: WindowPosition {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    },
+    info: ProcessInfo {
+      process_id: 0,
+      path: "".to_string(),
+      name: "".to_string(),
+      exec_name: "".to_string(),
+    },
+    usage: UsageInfo { memory: 0 },
+  };
   let mut lpdwprocessid: u32 = 0;
   unsafe { GetWindowThreadProcessId(hwnd, Some(&mut lpdwprocessid)) };
   if let Ok(handle) = open_process_handle(lpdwprocessid) {
@@ -362,36 +380,20 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
         std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
       )
     };
-
     close_process_handle(handle);
-    WindowInfo {
-      id,
-      os: os_name(),
-      title: get_window_title(hwnd),
-      position,
-      info: parent_process,
-      usage: UsageInfo {
-        memory: process_memory_counters.WorkingSetSize as u32,
-      },
-    }
-  } else {
-    WindowInfo {
-      id: 0,
-      os: os_name(),
-      title: "".to_string(),
-      position: WindowPosition {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-      info: ProcessInfo {
-        process_id: 0,
-        path: "".to_string(),
-        name: "".to_string(),
-        exec_name: "".to_string(),
-      },
-      usage: UsageInfo { memory: 0 },
+    if parent_process.exec_name.to_lowercase().ne(&"searchhost") {
+      window_info = WindowInfo {
+        id,
+        os: os_name(),
+        title: get_window_title(hwnd),
+        position,
+        info: parent_process,
+        usage: UsageInfo {
+          memory: process_memory_counters.WorkingSetSize as u32,
+        },
+      };
     }
   }
+
+  window_info
 }
