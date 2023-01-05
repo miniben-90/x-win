@@ -72,7 +72,11 @@ impl API for WindowsAPI {
 
     if enum_desktop_success.as_bool() && open_windows.len().ne(&0) {
       for hwnd in open_windows {
-        results.push(get_window_information(hwnd));
+        let window_info = get_window_information(hwnd);
+        if window_info.title.eq(&"") && window_info.info.exec_name.eq(&"explorer") {
+          continue;
+        }
+        results.push(window_info);
       }
     }
 
