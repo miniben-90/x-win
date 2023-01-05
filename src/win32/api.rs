@@ -16,7 +16,7 @@ use windows::Win32::{
   System::StationsAndDesktops::EnumDesktopWindows,
   UI::WindowsAndMessaging::{
     GetWindowInfo, IsWindow, IsWindowVisible, WINDOWINFO, WS_ACTIVECAPTION, WS_CAPTION, WS_CHILD,
-    WS_EX_TOOLWINDOW,
+    WS_EX_TOOLWINDOW, WINDOWPLACEMENT, GetWindowPlacement, SW_SHOWMAXIMIZED,
   },
 };
 use windows::{
@@ -80,19 +80,33 @@ impl API for WindowsAPI {
   }
 }
 
-/** Functions for callback */
+/**
+ * Is the window show as maximized
+ */
+fn is_fullscreen(hwnd: HWND) -> BOOL {
+  let mut lpwndpl: WINDOWPLACEMENT = WINDOWPLACEMENT::default();
+  let success = unsafe { GetWindowPlacement(hwnd, &mut lpwndpl) };
+  if success.as_bool() && lpwndpl.showCmd == SW_SHOWMAXIMIZED {
+    return true.into();
+  } else {
+    return false.into();
+  }
+}
 
+/** Functions for callback */
 extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
   let open_windows = unsafe { std::mem::transmute::<LPARAM, &mut Vec<HWND>>(lparam) };
 
   unsafe {
+
+
     if IsWindow(hwnd).as_bool() && IsWindow(hwnd).as_bool() && IsWindowVisible(hwnd).as_bool() {
       let mut pwi: WINDOWINFO = WINDOWINFO::default();
       GetWindowInfo(hwnd, &mut pwi);
       if (
-        (pwi.dwExStyle & WS_EX_TOOLWINDOW.0 == 0
-        && pwi.dwStyle & WS_CAPTION.0 == WS_CAPTION.0)
+        (pwi.dwExStyle & WS_EX_TOOLWINDOW.0 == 0 && pwi.dwStyle & WS_CAPTION.0 == WS_CAPTION.0)
         || pwi.dwWindowStatus == WS_ACTIVECAPTION.0
+        || is_fullscreen(hwnd).as_bool()
       )
         && pwi.dwStyle & WS_CHILD.0 == 0
       {
