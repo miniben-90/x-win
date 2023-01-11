@@ -1,6 +1,6 @@
 #![deny(unused_imports)]
 
-use cocoa::appkit::NSApplication;
+// use cocoa::appkit::NSApplication;
 use cocoa::base::{id, nil};
 use cocoa::foundation::{NSAutoreleasePool, NSString, NSUInteger, NSURL};
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
@@ -83,7 +83,7 @@ fn get_active_window_pid() -> NSUInteger {
   unsafe {
     let _pool = NSAutoreleasePool::new(nil);
     let shared_app_id: id = msg_send![class!(NSApplication), sharedApplication];
-    NSApplication::finishLaunching(shared_app_id);
+    // NSApplication::finishLaunching(shared_app_id);
     let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
     let frontapp: id = msg_send![workspace, frontmostApplication];
     let active_window_pid: NSUInteger = msg_send![frontapp, processIdentifier];
