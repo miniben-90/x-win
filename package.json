@@ -1,6 +1,6 @@
 {
   "name": "@miniben90/x-win",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
@@ -28,8 +28,8 @@
   "repository": "https://github.com/miniben-90/x-win.git",
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "^2.14.0",
-    "ava": "^4.3.3"
+    "@napi-rs/cli": "^2.14.2",
+    "ava": "^5.1.0"
   },
   "ava": {
     "timeout": "3m"
