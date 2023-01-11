@@ -1,4 +1,4 @@
-# x-win
+# @miniben90/x-win
 
 > This project work with Rust and napi-rs to make easy to have active window or an array of open windows.
 > It work with Microsoft Windows (10, 11), Linux (With Xserver) and Macos(*).
@@ -9,10 +9,10 @@ Easy to install:
 
 ```sh
 # With npm
-npm i x-win
+npm i @miniben90/x-win
 
 # With yarn
-yarn add x-win
+yarn add @miniben90/x-win
 ```
 
 ### (*)About Macos
