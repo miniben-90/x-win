@@ -1,6 +1,5 @@
 #![deny(unused_imports)]
 
-// use cocoa::appkit::NSApplication;
 use cocoa::base::{id, nil};
 use cocoa::foundation::{NSAutoreleasePool, NSString, NSUInteger, NSURL};
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
@@ -17,8 +16,9 @@ use core_graphics::display::{
 };
 use core_graphics::geometry::CGRect;
 use core_graphics::window::{
-  kCGWindowBounds, kCGWindowIsOnscreen, kCGWindowLayer, kCGWindowMemoryUsage, kCGWindowName,
   kCGWindowNumber, kCGWindowOwnerName, kCGWindowOwnerPID,
+  kCGWindowBounds, kCGWindowIsOnscreen, kCGWindowLayer, kCGWindowMemoryUsage,
+  kCGWindowName,
 };
 
 use crate::common::{
@@ -28,7 +28,12 @@ use crate::common::{
     window_position::WindowPosition,
   },
 };
-use crate::macos::application_services::AXIsProcessTrusted;
+
+use core_graphics::base::CGError;
+
+extern "C" {
+    fn CGPreflightScreenCaptureAccess() -> CGError;
+}
 
 pub struct MacosAPI {}
 
@@ -68,8 +73,6 @@ impl API for MacosAPI {
   }
 }
 
-
-
 /**
  * To know the os
  */
@@ -82,7 +85,7 @@ fn os_name() -> String {
 fn get_active_window_pid() -> NSUInteger {
   unsafe {
     let _pool = NSAutoreleasePool::new(nil);
-    let shared_app_id: id = msg_send![class!(NSApplication), sharedApplication];
+    let _shared_app_id: id = msg_send![class!(NSApplication), sharedApplication];
     // NSApplication::finishLaunching(shared_app_id);
     let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
     let frontapp: id = msg_send![workspace, frontmostApplication];
@@ -98,6 +101,8 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
   if only_active {
     active_window_pid = get_active_window_pid();
   }
+
+  let has_screen_capture_permission = unsafe { CGPreflightScreenCaptureAccess() == 1 };
 
   let options = kCGWindowListOptionOnScreenOnly
     | kCGWindowListExcludeDesktopElements
@@ -164,11 +169,11 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     
     let app_name = cfd.get(unsafe { kCGWindowOwnerName });
     let app_name = app_name.downcast::<CFString>().unwrap().to_string();
-
+    
     let mut title: String = "<unknown>".to_owned();
 
-    if unsafe { AXIsProcessTrusted() == 1 } {
-      let title_ref = cfd.get(unsafe { kCGWindowName });
+    if has_screen_capture_permission {
+    let title_ref = cfd.get(unsafe { kCGWindowName });
       title = title_ref.downcast::<CFString>().unwrap().to_string();
     }
 

@@ -28,8 +28,8 @@
   "repository": "https://github.com/miniben-90/x-win.git",
   "license": "MIT",
   "devDependencies": {
-    "@napi-rs/cli": "^2.14.2",
-    "ava": "^5.1.0"
+    "@napi-rs/cli": "^2.14.5",
+    "ava": "^5.1.1"
   },
   "ava": {
     "timeout": "3m"
