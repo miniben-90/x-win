@@ -11,6 +11,7 @@ extern crate objc;
 extern crate core;
 
 use common::{x_win_struct::window_info::WindowInfo, api::API};
+use napi_derive::napi;
 use napi::Result;
 
 mod common;

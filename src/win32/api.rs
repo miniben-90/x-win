@@ -8,19 +8,19 @@ use crate::common::{
   },
 };
 use std::{
-  ffi::c_void,
-  path::{Path, PathBuf},
+  ffi::c_void
 };
+use std::path::{Path, PathBuf};
 use windows::Win32::{
   Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED},
-  System::StationsAndDesktops::EnumDesktopWindows,
+  System::{StationsAndDesktops::EnumDesktopWindows, ProcessStatus::GetProcessMemoryInfo},
   UI::WindowsAndMessaging::{
     GetWindowInfo, IsWindow, IsWindowVisible, WINDOWINFO, WS_ACTIVECAPTION, WS_CAPTION, WS_CHILD,
     WS_EX_TOOLWINDOW, WINDOWPLACEMENT, GetWindowPlacement, SW_SHOWMAXIMIZED,
   },
 };
 use windows::{
-  core::{HSTRING, PCWSTR, PWSTR},
+  core::{PCWSTR, PWSTR},
   w,
   Win32::{
     Foundation::HWND,
@@ -28,7 +28,7 @@ use windows::{
     Foundation::{HANDLE, MAX_PATH},
     Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW},
     System::{
-      ProcessStatus::{K32GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS},
+      ProcessStatus::{PROCESS_MEMORY_COUNTERS},
       Threading::{
         GetProcessId, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
         PROCESS_QUERY_LIMITED_INFORMATION,
@@ -108,11 +108,11 @@ extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL
       let mut pwi: WINDOWINFO = WINDOWINFO::default();
       GetWindowInfo(hwnd, &mut pwi);
       if (
-        (pwi.dwExStyle & WS_EX_TOOLWINDOW.0 == 0 && pwi.dwStyle & WS_CAPTION.0 == WS_CAPTION.0)
+        (pwi.dwExStyle & WS_EX_TOOLWINDOW == windows::Win32::UI::WindowsAndMessaging::WINDOW_EX_STYLE(0) && pwi.dwStyle & WS_CAPTION == WS_CAPTION)
         || pwi.dwWindowStatus == WS_ACTIVECAPTION.0
         || is_fullscreen(hwnd).as_bool()
       )
-        && pwi.dwStyle & WS_CHILD.0 == 0
+        && pwi.dwStyle & WS_CHILD == windows::Win32::UI::WindowsAndMessaging::WINDOW_STYLE(0)
       {
         let mut clocked_val: i32 = 0;
         let cbattribute = std::mem::size_of::<i32>() as u32;
@@ -276,7 +276,10 @@ fn get_process_name_from_path(process_path: &PathBuf) -> Result<String, ()> {
     "\\StringFileInfo\\{:04x}{:04x}\\FileDescription",
     lang.w_language, lang.w_code_page
   );
-  let lang_code: PCWSTR = PCWSTR::from(&HSTRING::from(&lang_code));
+  let lang_code_string: String = lang_code.to_string();
+  let lang_code_ptr: *const u16 = lang_code_string.encode_utf16().chain(Some(0)).collect::<Vec<_>>().as_ptr();
+
+  let lang_code: PCWSTR = PCWSTR::from_raw(lang_code_ptr);
 
   let mut file_description_ptr = std::ptr::null_mut();
 
@@ -374,7 +377,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
     let mut process_memory_counters = PROCESS_MEMORY_COUNTERS::default();
 
     unsafe {
-      K32GetProcessMemoryInfo(
+      GetProcessMemoryInfo(
         handle,
         &mut process_memory_counters as *mut _,
         std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32,

@@ -1,6 +1,6 @@
-import test from 'ava'
-import os from 'os'
-import { activeWindow, openWindows } from '../index.js'
+import test from 'ava';
+import os from 'os';
+import { activeWindow, openWindows } from '../index.js';
 
 const defaultStruct = {
   os: os.platform(),

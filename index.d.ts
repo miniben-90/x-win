@@ -5,13 +5,13 @@
 
 /**
  * Struct to store usage data of the window
-*/
+ */
 export interface UsageInfo {
   memory: number
 }
 /**
  * Struct to store process information of the window
-*/
+ */
 export interface ProcessInfo {
   processId: number
   path: string
@@ -20,7 +20,7 @@ export interface ProcessInfo {
 }
 /**
  * Struct to store position and size of the window
-*/
+ */
 export interface WindowPosition {
   x: number
   y: number
@@ -29,7 +29,7 @@ export interface WindowPosition {
 }
 /**
  * Struct to store all informations of the window
-*/
+ */
 export interface WindowInfo {
   id: number
   os: string
