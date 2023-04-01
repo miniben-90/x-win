@@ -1,6 +1,6 @@
 {
   "name": "@miniben90/x-win-win32-arm64-msvc",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "os": [
     "win32"
   ],
@@ -11,7 +11,7 @@
   "files": [
     "x-win.win32-arm64-msvc.node"
   ],
-  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux.",
+  "description": "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows.",
   "author": {
     "name": "BENKHADRA Hocine",
     "email": "contact@benkhadra.com",
@@ -19,7 +19,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">= 10"
+    "node": ">= 14"
   },
   "repository": "https://github.com/miniben-90/x-win.git"
 }

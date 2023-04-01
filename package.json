@@ -1,7 +1,7 @@
 {
   "name": "@miniben90/x-win",
-  "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux.",
-  "version": "0.4.0",
+  "description": "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows.",
+  "version": "0.4.1",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [

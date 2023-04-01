@@ -4,12 +4,9 @@
 
 # @miniben90/x-win
 
-> This project work with Rust and napi-rs to make easy to have active window or an array of open windows.
-> It work with Microsoft Windows (10, 11), Linux (With Xserver) and Macos(*).
+This project uses Rust and napi-rs to make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), and [macOS](#darwin).
 
 ## How to install
-
-Easy to install:
 
 ```sh
 # With npm
@@ -21,9 +18,10 @@ yarn add @miniben90/x-win
 
 ## How to use
 
-### Get information of current active window
+### Get information about the currently active window
 
 `exemple.ts`:
+
 ```typescript
 import { activeWindow, type WindowInfo } from '@miniben90/x-win';
 
@@ -33,7 +31,8 @@ console.log(currentWindow);
 ```
 
 `response`:
-```json
+
+```javascript
 {
   id: 26148,
   info: {
@@ -56,9 +55,10 @@ console.log(currentWindow);
 }
 ```
 
-### Get List of open windows with informations
+### Get a list of open windows with information
 
 `exemple.ts`:
+
 ```typescript
 import { openWindows, type WindowInfo } from '@miniben90/x-win';
 
@@ -68,7 +68,8 @@ console.log(windows);
 ```
 
 `response`:
-```json
+
+```javascript
 [{
   id: 26148,
   info: {
@@ -91,15 +92,26 @@ console.log(windows);
 }]
 ```
 
+# Linux
 
-## For Darwin
+> Dependencies are required to be installed for development purposes.
 
-> ### Record screen required for macos
-> Macos require to grant access for recording screen. If your project don't have it the title will have `<unknown>` as value.
+```sh
+sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev
+```
+
+# Darwin
+
+## Screen recording permission introduced in macOS 10.15 Catalina
+
+> macOS requires you to grant access for screen recording. If your project does not have it, the title will display `<unknown>` as its value.
 
 <hr class="padding-top: 30px;padding-bottom:30px">
 
-**This project was inspired by:**
+# Project References
+
+**Project Inspirations:**
+
 * [active-win](https://github.com/sindresorhus/active-win)
 * [active-win-pos-rs](https://github.com/dimusic/active-win-pos-rs)
 * This project was generated with [@napi-rs/cli](https://github.com/napi-rs)

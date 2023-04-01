@@ -4,7 +4,7 @@ name = "x-win"
 version = "0.0.0"
 authors = ["BENKHADRA Hocine <miniben90@hotmail.com>"]
 keywords = ["window", "active", "current", "position", "title", "list", "open"]
-description = "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux."
+description = "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows."
 repository = "https://github.com/miniben-90/x-win"
 
 [lib]
