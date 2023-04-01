@@ -249,24 +249,18 @@ fn decode_text(bytes: &[u8]) -> String {
   while index < bytes.len() {
     let ch = bytes[index];
     if ch < 128 {
-      result.push(ch as char);
-      index += 1;
+        result.push(ch as char);
+        index += 1;
     } else {
-      let ch_utf8 = match std::str::from_utf8(&bytes[index..index + 3]) {
-        Ok(ch) => ch.to_string(),
-        Err(_) => xcb::Lat1String::from_bytes(&bytes[index..index + 3])
-          .to_utf8()
-          .to_string(),
+      let ch_utf8 = match std::str::from_utf8(&bytes[index..index+3]) {
+          Ok(ch) => ch.to_string(),
+          Err(_) => xcb::Lat1String::from_bytes(&bytes[index..index+3]).to_utf8().to_string(),
       };
-      if ch == 194 || ch == 195 {
-        result.push_str(&ch_utf8);
-        index += 2;
-      } else {
-        result.push_str(&ch_utf8);
-        index += 3;
-      }
+
+      result.push_str(&ch_utf8);
+      index += 3;
     }
-  }
+}
   if let Ok(result) = strip_ansi_escapes::strip(&result) {
     return std::str::from_utf8(&result).unwrap().to_string();
   } else {
@@ -275,20 +269,47 @@ fn decode_text(bytes: &[u8]) -> String {
 }
 
 /**
+ * Generate Atom of COMPOUND_TEXT value
+ */
+fn get_compound_text_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
+  let compound_text = conn.send_request(&x::InternAtom {
+    only_if_exists: true,
+    name: b"C_STRING",
+  });
+  Ok(conn.wait_for_reply(compound_text)?.atom())
+}
+
+/**
+ * Generate Atom of COMPOUND_TEXT value
+ */
+fn get_wm_name_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
+  let compound_text = conn.send_request(&x::InternAtom {
+    only_if_exists: true,
+    name: b"_NET_WM_NAME",
+  });
+  Ok(conn.wait_for_reply(compound_text)?.atom())
+}
+
+/**
  * Get window title
  */
 fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
-  let window_title = conn.send_request(&x::GetProperty {
-    delete: false,
-    window,
-    property: x::ATOM_WM_NAME,
-    r#type: x::ATOM_ANY,
-    long_offset: 0,
-    long_length: std::u32::MAX,
-  });
-  if let Ok(window_title) = conn.wait_for_reply(window_title) {
-    let window_title: &[u8] = window_title.value();
-    return decode_text(window_title);
+  if let Ok(atom_wm_name) = get_wm_name_atom(&conn) {
+    if let Ok(atom_compound_text) = get_compound_text_atom(&conn) {
+      let window_title = conn.send_request(&x::GetProperty {
+        delete: false,
+        window,
+        property: atom_wm_name,
+        r#type: atom_compound_text,
+        long_offset: 0,
+        long_length: std::u32::MAX,
+      });
+      if let Ok(window_title) = conn.wait_for_reply(window_title) {
+        let window_title: &[u8] = window_title.value();
+        let window_title = decode_text(window_title);
+        return window_title;
+      }
+    }
   }
   return "".to_owned();
 }
