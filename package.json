@@ -1,7 +1,7 @@
 {
   "name": "@miniben90/x-win",
   "description": "Get position, size, title and a few other properties of the active or open window(s) on Windows, MacOS and Linux.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
@@ -48,7 +48,7 @@
     "timeout": "3m"
   },
   "engines": {
-    "node": ">= 16"
+    "node": ">= 14"
   },
   "scripts": {
     "artifacts": "napi artifacts",
