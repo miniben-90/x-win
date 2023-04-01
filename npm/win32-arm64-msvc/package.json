@@ -1,6 +1,6 @@
 {
   "name": "@miniben90/x-win-win32-arm64-msvc",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "os": [
     "win32"
   ],

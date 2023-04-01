@@ -243,6 +243,37 @@ fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosit
   position
 }
 
+fn decode_text(bytes: &[u8]) -> String {
+  let mut result = String::new();
+  let mut index = 0;
+  while index < bytes.len() {
+    let ch = bytes[index];
+    if ch < 128 {
+      result.push(ch as char);
+      index += 1;
+    } else {
+      let ch_utf8 = match std::str::from_utf8(&bytes[index..index + 3]) {
+        Ok(ch) => ch.to_string(),
+        Err(_) => xcb::Lat1String::from_bytes(&bytes[index..index + 3])
+          .to_utf8()
+          .to_string(),
+      };
+      if ch == 194 || ch == 195 {
+        result.push_str(&ch_utf8);
+        index += 2;
+      } else {
+        result.push_str(&ch_utf8);
+        index += 3;
+      }
+    }
+  }
+  if let Ok(result) = strip_ansi_escapes::strip(&result) {
+    return std::str::from_utf8(&result).unwrap().to_string();
+  } else {
+    return result;
+  }
+}
+
 /**
  * Get window title
  */
@@ -257,9 +288,7 @@ fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
   });
   if let Ok(window_title) = conn.wait_for_reply(window_title) {
     let window_title: &[u8] = window_title.value();
-    let window_title = std::str::from_utf8(window_title).unwrap().to_string();
-    let window_title = strip_ansi_escapes::strip(window_title).unwrap().to_owned();
-    return std::str::from_utf8(&window_title).unwrap().to_string();
+    return decode_text(window_title);
   }
   return "".to_owned();
 }
