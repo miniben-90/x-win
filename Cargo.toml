@@ -12,8 +12,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
-napi = { version = "2", default-features = false, features = ["napi4"] }
-napi-derive = "2"
+napi = { version = "2.12.0", default-features = false, features = ["napi4"] }
+napi-derive = "2.12.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.48.0", features = [
@@ -46,7 +46,7 @@ core-graphics = "0.22.3"
 objc = "0.2.7"
 
 [build-dependencies]
-napi-build = "2"
+napi-build = "2.0.1"
 
 [profile.release]
 lto = true

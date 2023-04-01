@@ -17,7 +17,7 @@ function isMusl() {
   // For Node 10
   if (!process.report || typeof process.report.getReport !== 'function') {
     try {
-      const lddPath = require('child_process').execSync('which ldd').toString().trim()
+      const lddPath = require('child_process').execSync('which ldd').toString().trim();
       return readFileSync(lddPath, 'utf8').includes('musl')
     } catch (e) {
       return true
@@ -62,7 +62,9 @@ switch (platform) {
   case 'win32':
     switch (arch) {
       case 'x64':
-        localFileExisted = existsSync(join(__dirname, 'x-win.win32-x64-msvc.node'))
+        localFileExisted = existsSync(
+          join(__dirname, 'x-win.win32-x64-msvc.node')
+        )
         try {
           if (localFileExisted) {
             nativeBinding = require('./x-win.win32-x64-msvc.node')
@@ -74,7 +76,9 @@ switch (platform) {
         }
         break
       case 'ia32':
-        localFileExisted = existsSync(join(__dirname, 'x-win.win32-ia32-msvc.node'))
+        localFileExisted = existsSync(
+          join(__dirname, 'x-win.win32-ia32-msvc.node')
+        )
         try {
           if (localFileExisted) {
             nativeBinding = require('./x-win.win32-ia32-msvc.node')
@@ -86,7 +90,9 @@ switch (platform) {
         }
         break
       case 'arm64':
-        localFileExisted = existsSync(join(__dirname, 'x-win.win32-arm64-msvc.node'))
+        localFileExisted = existsSync(
+          join(__dirname, 'x-win.win32-arm64-msvc.node')
+        )
         try {
           if (localFileExisted) {
             nativeBinding = require('./x-win.win32-arm64-msvc.node')
@@ -125,7 +131,9 @@ switch (platform) {
         }
         break
       case 'arm64':
-        localFileExisted = existsSync(join(__dirname, 'x-win.darwin-arm64.node'))
+        localFileExisted = existsSync(
+          join(__dirname, 'x-win.darwin-arm64.node')
+        )
         try {
           if (localFileExisted) {
             nativeBinding = require('./x-win.darwin-arm64.node')
@@ -159,7 +167,9 @@ switch (platform) {
     switch (arch) {
       case 'x64':
         if (isMusl()) {
-          localFileExisted = existsSync(join(__dirname, 'x-win.linux-x64-musl.node'))
+          localFileExisted = existsSync(
+            join(__dirname, 'x-win.linux-x64-musl.node')
+          )
           try {
             if (localFileExisted) {
               nativeBinding = require('./x-win.linux-x64-musl.node')
@@ -170,7 +180,9 @@ switch (platform) {
             loadError = e
           }
         } else {
-          localFileExisted = existsSync(join(__dirname, 'x-win.linux-x64-gnu.node'))
+          localFileExisted = existsSync(
+            join(__dirname, 'x-win.linux-x64-gnu.node')
+          )
           try {
             if (localFileExisted) {
               nativeBinding = require('./x-win.linux-x64-gnu.node')
@@ -184,7 +196,9 @@ switch (platform) {
         break
       case 'arm64':
         if (isMusl()) {
-          localFileExisted = existsSync(join(__dirname, 'x-win.linux-arm64-musl.node'))
+          localFileExisted = existsSync(
+            join(__dirname, 'x-win.linux-arm64-musl.node')
+          )
           try {
             if (localFileExisted) {
               nativeBinding = require('./x-win.linux-arm64-musl.node')
@@ -195,7 +209,9 @@ switch (platform) {
             loadError = e
           }
         } else {
-          localFileExisted = existsSync(join(__dirname, 'x-win.linux-arm64-gnu.node'))
+          localFileExisted = existsSync(
+            join(__dirname, 'x-win.linux-arm64-gnu.node')
+          )
           try {
             if (localFileExisted) {
               nativeBinding = require('./x-win.linux-arm64-gnu.node')
@@ -208,7 +224,9 @@ switch (platform) {
         }
         break
       case 'arm':
-        localFileExisted = existsSync(join(__dirname, 'x-win.linux-arm-gnueabihf.node'))
+        localFileExisted = existsSync(
+          join(__dirname, 'x-win.linux-arm-gnueabihf.node')
+        )
         try {
           if (localFileExisted) {
             nativeBinding = require('./x-win.linux-arm-gnueabihf.node')
@@ -234,7 +252,19 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { activeWindow, openWindows } = nativeBinding
+const { activeWindow, openWindows, activeWindow, openWindows, activeWindow, openWindows, activeWindow, openWindows, activeWindow, openWindows, activeWindow, openWindows, activeWindow, openWindows } = nativeBinding
 
+module.exports.activeWindow = activeWindow
+module.exports.openWindows = openWindows
+module.exports.activeWindow = activeWindow
+module.exports.openWindows = openWindows
+module.exports.activeWindow = activeWindow
+module.exports.openWindows = openWindows
+module.exports.activeWindow = activeWindow
+module.exports.openWindows = openWindows
+module.exports.activeWindow = activeWindow
+module.exports.openWindows = openWindows
+module.exports.activeWindow = activeWindow
+module.exports.openWindows = openWindows
 module.exports.activeWindow = activeWindow
 module.exports.openWindows = openWindows
