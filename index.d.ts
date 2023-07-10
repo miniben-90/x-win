@@ -37,6 +37,7 @@ export interface WindowInfo {
   position: WindowPosition
   info: ProcessInfo
   usage: UsageInfo
+  url: string
 }
 export function activeWindow(): WindowInfo
 export function openWindows(): Array<WindowInfo>
