@@ -1,5 +1,7 @@
 #![deny(unused_imports)]
 
+use std::process::Command;
+
 use cocoa::base::{id, nil};
 use cocoa::foundation::{NSAutoreleasePool, NSString, NSUInteger, NSURL};
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
@@ -16,9 +18,8 @@ use core_graphics::display::{
 };
 use core_graphics::geometry::CGRect;
 use core_graphics::window::{
+  kCGWindowBounds, kCGWindowIsOnscreen, kCGWindowLayer, kCGWindowMemoryUsage, kCGWindowName,
   kCGWindowNumber, kCGWindowOwnerName, kCGWindowOwnerPID,
-  kCGWindowBounds, kCGWindowIsOnscreen, kCGWindowLayer, kCGWindowMemoryUsage,
-  kCGWindowName,
 };
 
 use crate::common::{
@@ -32,7 +33,7 @@ use crate::common::{
 use core_graphics::base::CGError;
 
 extern "C" {
-    fn CGPreflightScreenCaptureAccess() -> CGError;
+  fn CGPreflightScreenCaptureAccess() -> CGError;
 }
 
 pub struct MacosAPI {}
@@ -64,6 +65,7 @@ impl API for MacosAPI {
           exec_name: "".to_owned(),
         },
         usage: UsageInfo { memory: 0 },
+        url: "".to_owned(),
       })
     }
   }
@@ -166,22 +168,25 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     if bundle_identifier.eq("com.apple.dock") {
       continue;
     }
-    
+
     let app_name = cfd.get(unsafe { kCGWindowOwnerName });
     let app_name = app_name.downcast::<CFString>().unwrap().to_string();
-    
+
     let mut title: String = "<unknown>".to_owned();
 
     if has_screen_capture_permission {
-    let title_ref = cfd.get(unsafe { kCGWindowName });
+      let title_ref = cfd.get(unsafe { kCGWindowName });
       title = title_ref.downcast::<CFString>().unwrap().to_string();
     }
 
     let bundle_url: id = unsafe { msg_send![app, bundleURL] };
     let path = unsafe { bundle_url.path().UTF8String() };
-    let path =
-      std::str::from_utf8(unsafe { std::ffi::CStr::from_ptr(path).to_bytes() }).unwrap();
-    let exec_name = std::path::Path::new(&app_name).file_name().unwrap().to_str().unwrap();
+    let path = std::str::from_utf8(unsafe { std::ffi::CStr::from_ptr(path).to_bytes() }).unwrap();
+    let exec_name = std::path::Path::new(&app_name)
+      .file_name()
+      .unwrap()
+      .to_str()
+      .unwrap();
 
     let memory = cfd.get(unsafe { kCGWindowMemoryUsage });
     let memory = memory.downcast::<CFNumber>().unwrap().to_i64().unwrap();
@@ -189,13 +194,45 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let id = cfd.get(unsafe { kCGWindowNumber });
     let id = id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
 
+    let mut url: String = "".to_owned();
+
+    if is_browser_bundle_id(&bundle_identifier) {
+      let mut command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
+      if is_safari_browser(&bundle_identifier)
+      {
+        command = format!("tell app id \"{}\" to get URL of front document", bundle_identifier);
+      }
+//       else if is_firefox_browser(&bundle_identifier)
+//       {
+//         command = format!("tell app id \"{}\"
+//   set fxProperties to tabs of front window as list
+//   return fxProperties
+// end tell", bundle_identifier);
+//       }
+      url = execute_applescript(&command, bundle_identifier);
+    }
+
+
     windows.push(WindowInfo {
       id: id as u32,
       os: os_name(),
       title,
-      position: WindowPosition { x: bounds.origin.x as i32, y: bounds.origin.y as i32, width: bounds.size.width as i32, height: bounds.size.height as i32 },
-      info: ProcessInfo { process_id: process_id as u32, path: path.to_owned(), name: app_name.to_owned(), exec_name: exec_name.to_owned() },
-      usage: UsageInfo { memory: memory as u32 },
+      position: WindowPosition {
+        x: bounds.origin.x as i32,
+        y: bounds.origin.y as i32,
+        width: bounds.size.width as i32,
+        height: bounds.size.height as i32,
+      },
+      info: ProcessInfo {
+        process_id: process_id as u32,
+        path: path.to_owned(),
+        name: app_name.to_owned(),
+        exec_name: exec_name.to_owned(),
+      },
+      usage: UsageInfo {
+        memory: memory as u32,
+      },
+      url,
     });
 
     if only_active && process_id.ne(&(active_window_pid as i64)) {
@@ -204,4 +241,59 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
   }
 
   return windows;
+}
+
+fn is_browser_bundle_id(bundle_id: &str) -> bool {
+  match bundle_id {
+    "com.apple.Safari"
+    | "com.apple.SafariTechnologyPreview"
+    | "com.google.Chrome"
+    | "com.google.Chrome.beta"
+    | "com.google.Chrome.dev"
+    | "com.google.Chrome.canary"
+    | "org.mozilla.firefox"
+    | "org.mozilla.firefoxdeveloperedition"
+    | "com.brave.Browser"
+    | "com.brave.Browser.beta"
+    | "com.brave.Browser.nightly"
+    | "com.microsoft.edgemac"
+    | "com.microsoft.edgemac.Beta"
+    | "com.microsoft.edgemac.Dev"
+    | "com.microsoft.edgemac.Canary"
+    | "com.mighty.app"
+    | "com.ghostbrowser.gb1"
+    | "com.bookry.wavebox"
+    | "com.pushplaylabs.sidekick"
+    | "com.operasoftware.Opera"
+    | "com.operasoftware.OperaNext"
+    | "com.operasoftware.OperaDeveloper"
+    | "com.operasoftware.OperaGX"
+    | "com.vivaldi.Vivaldi" => true,
+    _ => false,
+  }
+}
+
+fn is_safari_browser(bundle_id: &str) -> bool {
+  match bundle_id {
+    "com.apple.Safari"
+    | "com.apple.SafariTechnologyPreview" => true,
+    _ => false,
+  }
+}
+
+fn is_firefox_browser(bundle_id: &str) -> bool {
+  match bundle_id {
+    | "org.mozilla.firefox"
+    | "org.mozilla.firefoxdeveloperedition" => true,
+    _ => false,
+  }
+}
+
+fn execute_applescript(script: &str, origin: &str) -> String {
+  let output = Command::new("osascript")
+  .args(&["-e", script])
+  .output()
+  .expect("Failed to execute AppleScript");
+  let ouput = String::from_utf8_lossy(&output.stdout);
+  return ouput.trim().to_owned();
 }
