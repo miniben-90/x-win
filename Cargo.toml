@@ -43,12 +43,12 @@ optional = true
 features = ["xlib"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
-cocoa = "0.24.1"
-libc = "0.2.139"
-cocoa-foundation = "0.1"
+cocoa = "0.25.0"
+libc = "0.2.147"
+cocoa-foundation = "0.1.1"
 core-foundation = "0.9.3"
-core-foundation-sys = "0.8.3"
-core-graphics = "0.22.3"
+core-foundation-sys = "0.8.4"
+core-graphics = "0.23.1"
 objc = "0.2.7"
 
 [build-dependencies]
