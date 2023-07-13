@@ -49,23 +49,6 @@ struct LangCodePage {
 
 pub struct WindowsAPI {}
 
-const BROWSER_CHROMIUM_EXECUTABLES: [&str; 14] = [
-    "chrome",
-    "msedge",
-    "opera",
-    "opera_gx",
-    "brave",
-    "vivaldi",
-    "iron",
-    "epic",
-    "chromium",
-    "ucozmedia",
-    "blisk",
-    "maxthon",
-    "beaker",
-    "beaker browser"
-];
-
 /**
  * Impl. for windows system
  */
@@ -406,7 +389,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
     let exec_name = parent_process.exec_name.to_lowercase();
     if exec_name.ne(&"searchhost") {
       let mut url: String = "".to_owned();
-      if BROWSER_CHROMIUM_EXECUTABLES.contains(&exec_name.as_str()) {
+      if is_browser(&exec_name.as_str()) {
         url = get_browser_url(hwnd, true).to_owned();
       }
       if exec_name.contains(&"firefox") {
@@ -501,4 +484,24 @@ fn get_url_for_firefox(automation: IUIAutomation, element: IUIAutomationElement)
     }
   }
   return "".to_string();
+}
+
+fn is_browser(browser_name: &str) -> bool {
+  match browser_name {
+    "chrome"
+    | "msedge"
+    | "opera"
+    | "opera_gx"
+    | "brave"
+    | "vivaldi"
+    | "iron"
+    | "epic"
+    | "chromium"
+    | "ucozmedia"
+    | "blisk"
+    | "maxthon"
+    | "beaker"
+    | "beaker browser" => true,
+    _ => false
+  }
 }
