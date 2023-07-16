@@ -1,6 +1,6 @@
 {
   "name": "@miniben90/x-win-win32-ia32-msvc",
-  "version": "0.4.4",
+  "version": "1.0.0",
   "os": [
     "win32"
   ],
