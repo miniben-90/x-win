@@ -51,7 +51,8 @@ console.log(currentWindow);
   title: "● README.md - x-win - Visual Studio Code",
   usage: {
     memory: 113270784
-  }
+  },
+  url: ""
 }
 ```
 
@@ -88,7 +89,8 @@ console.log(windows);
   title: "● README.md - x-win - Visual Studio Code",
   usage: {
     memory: 113270784
-  }
+  },
+  url: ""
 }]
 ```
 
@@ -105,6 +107,62 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 ## Screen recording permission introduced in macOS 10.15 Catalina
 
 > macOS requires you to grant access for screen recording. If your project does not have it, the title will display `<unknown>` as its value.
+
+# URLs (Only available for Darwin and Windows Systems)
+
+It is possible to get URL of browsers window for macOS and Windows.
+
+## Windows
+
+| Browser name | Tested |
+|---|---|
+| firefox | ✅ |
+| firefox developer edition | ✅ |
+| google chrome | ✅ |
+| microsoft edge | ✅ |
+| opera software - opera | ✅ |
+| opera software - opera GX | ✅ |
+| brave |  |
+| vivaldi |  |
+| iron |  |
+| epic |  |
+| chromium | ✅ |
+| ucozmedia |  |
+| blisk |  |
+| maxthon |  |
+| beaker |  |
+| beaker browser |  |
+
+## macOS
+
+It will use AppleScript to get informations for chromium browsers and safari
+
+***For the moment Firefox and firefox developer edition are not supported***
+
+| Browser name | Tested |
+|---|---|
+| Safari | ✅ |
+| Safari Technology Preview |  |
+| google Chrome | ✅ |
+| google Chrome beta |  |
+| google Chrome dev |  |
+| google Chrome canary |  |
+| brave Browser |  |
+| brave Browser beta |  |
+| brave Browser nightly |  |
+| microsoft edge | ✅ |
+| microsoft edge Beta |  |
+| microsoft edge Dev |  |
+| microsoft edge Canary |  |
+| mighty |  |
+| ghost browser |  |
+| bookry wavebox |  |
+| pushplaylabs sidekick |  |
+| opera software - Opera | ✅ |
+| opera software - OperaNext |  |
+| opera software - OperaDeveloper |  |
+| opera software - OperaGX | ✅ |
+| Vivaldi |  |
 
 <hr class="padding-top: 30px;padding-bottom:30px">
 
