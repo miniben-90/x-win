@@ -194,7 +194,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let id = cfd.get(unsafe { kCGWindowNumber });
     let id = id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
 
-    let mut url: String = "".to_owned();
+    let mut url: String = String::new();
 
     if is_browser_bundle_id(&bundle_identifier) {
       let mut command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
@@ -202,14 +202,11 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       {
         command = format!("tell app id \"{}\" to get URL of front document", bundle_identifier);
       }
-//       else if is_firefox_browser(&bundle_identifier)
-//       {
-//         command = format!("tell app id \"{}\"
-//   set fxProperties to tabs of front window as list
-//   return fxProperties
-// end tell", bundle_identifier);
-//       }
-      url = execute_applescript(&command, bundle_identifier);
+      // else if is_firefox_browser(&bundle_identifier)
+      // {
+      //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
+      // }
+      url = execute_applescript(&command);
     }
 
 
@@ -289,7 +286,7 @@ fn is_firefox_browser(bundle_id: &str) -> bool {
   }
 }
 
-fn execute_applescript(script: &str, origin: &str) -> String {
+fn execute_applescript(script: &str) -> String {
   let output = Command::new("osascript")
   .args(&["-e", script])
   .output()
