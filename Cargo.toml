@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "x-win"
-version = "0.0.0"
+version = "0.4.4"
 authors = ["BENKHADRA Hocine <miniben90@hotmail.com>"]
 keywords = ["window", "active", "current", "position", "title", "list", "open"]
 description = "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows."
@@ -12,8 +12,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
-napi = { version = "2.12.0", default-features = false, features = ["napi4"] }
-napi-derive = "2.12.2"
+napi = { version = "2.13.1", default-features = false, features = ["napi4"] }
+napi-derive = "2.13.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.48.0", features = [
@@ -24,11 +24,18 @@ windows = { version = "0.48.0", features = [
   "Win32_System_ProcessStatus",
   "Win32_System_StationsAndDesktops",
   "Win32_UI_Input_KeyboardAndMouse",
-  "Win32_Graphics_Dwm"
+  "Win32_Graphics_Dwm",
+  "UI_UIAutomation",
+  "Win32_System_Com",
+  "Win32_UI_Accessibility",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_System_Ole",
+  "Win32_UI_Shell_PropertiesSystem",
+  "Win32_UI_Shell_Common"
 ]}
 
 [target.'cfg(target_os = "linux")'.dependencies]
-xcb = "1.2"
+xcb = "1.2.1"
 
 [target.'cfg(target_os = "linux")'.dependencies.x11]
 version = "2.19.0"
@@ -36,12 +43,12 @@ optional = true
 features = ["xlib"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
-cocoa = "0.24.1"
-libc = "0.2.139"
-cocoa-foundation = "0.1"
+cocoa = "0.25.0"
+libc = "0.2.147"
+cocoa-foundation = "0.1.1"
 core-foundation = "0.9.3"
-core-foundation-sys = "0.8.3"
-core-graphics = "0.22.3"
+core-foundation-sys = "0.8.4"
+core-graphics = "0.23.1"
 objc = "0.2.7"
 
 [build-dependencies]

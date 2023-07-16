@@ -68,6 +68,7 @@ impl API for LinuxAPI {
         exec_name: "".to_string(),
       },
       usage: UsageInfo { memory: 0 },
+      url: "".to_string(),
     })
   }
 
@@ -125,43 +126,38 @@ fn os_name() -> String {
  */
 fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> WindowInfo {
   let window_pid: u32 = get_window_pid(&conn, *window);
+  let mut window_info: WindowInfo = WindowInfo {
+    id: 0,
+    os: os_name(),
+    title: "".to_string(),
+    position: WindowPosition {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    },
+    info: ProcessInfo {
+      process_id: 0,
+      path: "".to_string(),
+      name: "".to_string(),
+      exec_name: "".to_string(),
+    },
+    usage: UsageInfo { memory: 0 },
+    url: "".to_string(),
+  };
+
   if window_pid != 0 {
     let (path, exec_name) = get_window_path_name(window_pid);
-    WindowInfo {
-      os: os_name(),
-      id: window.resource_id(),
-      title: get_window_title(&conn, *window),
-      position: get_window_position(&conn, *window),
-      info: ProcessInfo {
-        process_id: window_pid.try_into().unwrap(),
-        path,
-        exec_name,
-        name: get_window_class_name(&conn, *window),
-      },
-      usage: UsageInfo {
-        memory: get_window_memory_usage(window_pid),
-      },
-    }
-  } else {
-    WindowInfo {
-      id: 0,
-      os: os_name(),
-      title: "".to_string(),
-      position: WindowPosition {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-      info: ProcessInfo {
-        process_id: 0,
-        path: "".to_string(),
-        name: "".to_string(),
-        exec_name: "".to_string(),
-      },
-      usage: UsageInfo { memory: 0 },
-    }
+    window_info.id = window.resource_id();
+    window_info.title = get_window_title(&conn, *window);
+    window_info.info.process_id = window_pid.try_into().unwrap();
+    window_info.info.path = path;
+    window_info.info.exec_name = exec_name;
+    window_info.info.name = get_window_class_name(&conn, *window);
+    window_info.usage.memory = get_window_memory_usage(window_pid);
+    window_info.position = get_window_position(&conn, *window);
   }
+  return window_info;
 }
 
 /**

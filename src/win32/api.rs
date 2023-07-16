@@ -7,17 +7,15 @@ use crate::common::{
     window_position::WindowPosition,
   },
 };
-use std::{
-  ffi::c_void
-};
+use std::ffi::c_void;
 use std::path::{Path, PathBuf};
 use windows::Win32::{
   Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED},
   System::{StationsAndDesktops::EnumDesktopWindows, ProcessStatus::GetProcessMemoryInfo},
-  UI::WindowsAndMessaging::{
+  UI::{WindowsAndMessaging::{
     GetWindowInfo, IsWindow, IsWindowVisible, WINDOWINFO, WS_ACTIVECAPTION, WS_CAPTION, WS_CHILD,
     WS_EX_TOOLWINDOW, WINDOWPLACEMENT, GetWindowPlacement, SW_SHOWMAXIMIZED,
-  },
+  }, Accessibility::CUIAutomation},
 };
 use windows::{
   core::{PCWSTR, PWSTR},
@@ -28,16 +26,18 @@ use windows::{
     Foundation::{HANDLE, MAX_PATH},
     Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW},
     System::{
-      ProcessStatus::{PROCESS_MEMORY_COUNTERS},
+      ProcessStatus::PROCESS_MEMORY_COUNTERS,
       Threading::{
         GetProcessId, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
         PROCESS_QUERY_LIMITED_INFORMATION,
       },
+      Com::*,
     },
     UI::WindowsAndMessaging::{
       EnumChildWindows, GetForegroundWindow, GetWindowRect, GetWindowTextW,
       GetWindowThreadProcessId,
     },
+    UI::Accessibility::*,
   },
 };
 
@@ -366,9 +366,11 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
       exec_name: "".to_string(),
     },
     usage: UsageInfo { memory: 0 },
+    url: "".to_string(),
   };
   let mut lpdwprocessid: u32 = 0;
   unsafe { GetWindowThreadProcessId(hwnd, Some(&mut lpdwprocessid)) };
+
   if let Ok(handle) = open_process_handle(lpdwprocessid) {
     let position: WindowPosition = get_rect_window(hwnd);
     let id = unsafe { GetProcessId(handle) };
@@ -384,7 +386,15 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
       )
     };
     close_process_handle(handle);
-    if parent_process.exec_name.to_lowercase().ne(&"searchhost") {
+    let exec_name = parent_process.exec_name.to_lowercase();
+    if exec_name.ne(&"searchhost") {
+      let mut url: String = "".to_owned();
+      if is_browser(&exec_name.as_str()) {
+        url = get_browser_url(hwnd, true).to_owned();
+      }
+      if exec_name.contains(&"firefox") {
+        url = get_browser_url(hwnd, false).to_owned();
+      }
       window_info = WindowInfo {
         id,
         os: os_name(),
@@ -394,9 +404,104 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
         usage: UsageInfo {
           memory: process_memory_counters.WorkingSetSize as u32,
         },
+        url,
       };
     }
   }
 
   window_info
+}
+
+fn get_browser_url(hwnd: HWND, is_chromium: bool) -> String {
+  unsafe {
+    if CoInitializeEx(None, COINIT_MULTITHREADED).is_ok() {
+      let automation:Result<IUIAutomation, _> = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL);
+      if automation.is_ok() {
+        let automation: IUIAutomation = automation.unwrap();
+        let element: Result<IUIAutomationElement, _> = automation.ElementFromHandle(hwnd);
+        if element.is_ok() {
+          let element: IUIAutomationElement = element.unwrap();
+          /* Chromium part to get url from search bar */
+          if is_chromium {
+            return get_url_for_chromium(automation, element);
+          } else {
+            return get_url_for_firefox(automation, element);
+          }
+        }
+      }
+    }
+  }
+  return "".to_string();
+}
+
+fn get_url_for_chromium(automation: IUIAutomation, element: IUIAutomationElement) -> String {
+  unsafe {
+    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
+    variant1.lVal = 0xC354;
+    let mut variant2 = VARIANT_0_0::default();
+    variant2.vt = VT_I4;
+    variant2.Anonymous = variant1.clone();
+    let mut variant3 = VARIANT_0::default();
+    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
+    let variant = VARIANT { Anonymous: variant3.clone() };
+    let condition = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, variant).unwrap();
+    let test = element.FindFirst(TreeScope_Subtree, &condition);
+    if test.is_ok() {
+      let test = test.unwrap();
+      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
+      if variant.is_ok() {
+        let variant = variant.unwrap();
+        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
+          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
+        }
+      }
+    }
+  }
+  return "".to_string();
+}
+
+fn get_url_for_firefox(automation: IUIAutomation, element: IUIAutomationElement) -> String {
+  unsafe {
+    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
+    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from("urlbar-input"));
+    let mut variant2 = VARIANT_0_0::default();
+    variant2.vt = VT_BSTR;
+    variant2.Anonymous = variant1.clone();
+    let mut variant3 = VARIANT_0::default();
+    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
+    let variant = VARIANT { Anonymous: variant3.clone() };
+    let condition = automation.CreatePropertyCondition(UIA_AutomationIdPropertyId, variant).unwrap();
+    let test = element.FindFirst(TreeScope_Subtree, &condition);
+    if test.is_ok() {
+      let test = test.unwrap();
+      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
+      if variant.is_ok() {
+        let variant = variant.unwrap();
+        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
+          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
+        }
+      }
+    }
+  }
+  return "".to_string();
+}
+
+fn is_browser(browser_name: &str) -> bool {
+  match browser_name {
+    "chrome"
+    | "msedge"
+    | "opera"
+    | "opera_gx"
+    | "brave"
+    | "vivaldi"
+    | "iron"
+    | "epic"
+    | "chromium"
+    | "ucozmedia"
+    | "blisk"
+    | "maxthon"
+    | "beaker"
+    | "beaker browser" => true,
+    _ => false
+  }
 }
