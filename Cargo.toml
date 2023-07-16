@@ -35,7 +35,7 @@ windows = { version = "0.48.0", features = [
 ]}
 
 [target.'cfg(target_os = "linux")'.dependencies]
-xcb = "1.2"
+xcb = "1.2.1"
 
 [target.'cfg(target_os = "linux")'.dependencies.x11]
 version = "2.19.0"
