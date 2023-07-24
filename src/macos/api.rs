@@ -12,6 +12,7 @@ use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
 
 use core_foundation::number::CFNumber;
 use core_foundation::string::CFString;
+use core_graphics::access::ScreenCaptureAccess;
 use core_graphics::display::{
   kCGWindowListExcludeDesktopElements, kCGWindowListOptionIncludingWindow,
   kCGWindowListOptionOnScreenOnly, CGWindowListCopyWindowInfo,
@@ -29,12 +30,6 @@ use crate::common::{
     window_position::WindowPosition,
   },
 };
-
-use core_graphics::base::CGError;
-
-extern "C" {
-  fn CGPreflightScreenCaptureAccess() -> CGError;
-}
 
 pub struct MacosAPI {}
 
@@ -104,7 +99,9 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     active_window_pid = get_active_window_pid();
   }
 
-  let has_screen_capture_permission = unsafe { CGPreflightScreenCaptureAccess() == 1 };
+  let has_screen_capture_permission: ScreenCaptureAccess = ScreenCaptureAccess::default();
+
+  let has_screen_capture_permission = has_screen_capture_permission.preflight();
 
   let options = kCGWindowListOptionOnScreenOnly
     | kCGWindowListExcludeDesktopElements
