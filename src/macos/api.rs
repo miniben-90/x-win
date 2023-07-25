@@ -4,6 +4,7 @@ use std::process::Command;
 
 use cocoa::base::{id, nil};
 use cocoa::foundation::{NSAutoreleasePool, NSString, NSUInteger, NSURL};
+use cocoa_foundation::foundation::{NSProcessInfo, NSOperatingSystemVersion};
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::boolean::CFBoolean;
@@ -99,9 +100,11 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     active_window_pid = get_active_window_pid();
   }
 
-  let has_screen_capture_permission: ScreenCaptureAccess = ScreenCaptureAccess::default();
+  let mut has_screen_capture_permission: bool = true;
 
-  let has_screen_capture_permission = has_screen_capture_permission.preflight();
+  if is_upper_then_v11() {
+    has_screen_capture_permission = ScreenCaptureAccess::default().preflight();
+  }
 
   let options = kCGWindowListOptionOnScreenOnly
     | kCGWindowListExcludeDesktopElements
@@ -290,4 +293,14 @@ fn execute_applescript(script: &str) -> String {
   .expect("Failed to execute AppleScript");
   let ouput = String::from_utf8_lossy(&output.stdout);
   return ouput.trim().to_owned();
+}
+
+/**
+ * To known if operating system is upper then macOS 11 or not
+ */
+fn is_upper_then_v11() -> bool {
+  unsafe {
+    let process_info = NSProcessInfo::processInfo(nil);
+    process_info.isOperatingSystemAtLeastVersion(NSOperatingSystemVersion::new(11, 0, 0))
+  }
 }
