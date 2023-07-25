@@ -289,10 +289,11 @@ fn is_firefox_browser(bundle_id: &str) -> bool {
 fn execute_applescript(script: &str) -> String {
   let output = Command::new("osascript")
   .args(&["-e", script])
-  .output()
-  .expect("Failed to execute AppleScript");
-  let ouput = String::from_utf8_lossy(&output.stdout);
-  return ouput.trim().to_owned();
+  .output();
+  if output.is_ok() {
+    return String::from_utf8_lossy(&output.unwrap().stdout).trim().to_owned();
+  }
+  return "".to_owned();
 }
 
 /**
