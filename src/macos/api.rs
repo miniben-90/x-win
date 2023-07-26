@@ -4,7 +4,6 @@ use std::process::Command;
 
 use cocoa::base::{id, nil};
 use cocoa::foundation::{NSAutoreleasePool, NSString, NSUInteger, NSURL};
-use cocoa_foundation::foundation::{NSProcessInfo, NSOperatingSystemVersion};
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::boolean::CFBoolean;
@@ -13,7 +12,6 @@ use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
 
 use core_foundation::number::CFNumber;
 use core_foundation::string::CFString;
-use core_graphics::access::ScreenCaptureAccess;
 use core_graphics::display::{
   kCGWindowListExcludeDesktopElements, kCGWindowListOptionIncludingWindow,
   kCGWindowListOptionOnScreenOnly, CGWindowListCopyWindowInfo,
@@ -166,7 +164,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let app_name = cfd.get(unsafe { kCGWindowOwnerName });
     let app_name = app_name.downcast::<CFString>().unwrap().to_string();
 
-    let mut title: String = "<unknown>".to_owned();
+    let mut title: String = "".to_owned();
 
     if cfd.contains_key(&CFString::from_static_string("kCGWindowName")) {
       let title_ref = cfd.get(unsafe { kCGWindowName });
