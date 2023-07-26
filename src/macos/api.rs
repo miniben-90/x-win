@@ -100,12 +100,6 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     active_window_pid = get_active_window_pid();
   }
 
-  let mut has_screen_capture_permission: bool = true;
-
-  if is_upper_then_v11() {
-    has_screen_capture_permission = ScreenCaptureAccess::default().preflight();
-  }
-
   let options = kCGWindowListOptionOnScreenOnly
     | kCGWindowListExcludeDesktopElements
     | kCGWindowListOptionIncludingWindow;
@@ -174,7 +168,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
 
     let mut title: String = "<unknown>".to_owned();
 
-    if has_screen_capture_permission {
+    if cfd.contains_key(&CFString::from_static_string("kCGWindowName")) {
       let title_ref = cfd.get(unsafe { kCGWindowName });
       title = title_ref.downcast::<CFString>().unwrap().to_string();
     }
@@ -294,14 +288,4 @@ fn execute_applescript(script: &str) -> String {
     return String::from_utf8_lossy(&output.unwrap().stdout).trim().to_owned();
   }
   return "".to_owned();
-}
-
-/**
- * To known if operating system is upper then macOS 11 or not
- */
-fn is_upper_then_v11() -> bool {
-  unsafe {
-    let process_info = NSProcessInfo::processInfo(nil);
-    process_info.isOperatingSystemAtLeastVersion(NSOperatingSystemVersion::new(11, 0, 0))
-  }
 }

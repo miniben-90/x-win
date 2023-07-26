@@ -19,6 +19,10 @@ const defaultStruct = {
 function compareStruct(t, data) {
   const defaultkeys = Object.entries(defaultStruct);
   for (const [key, value] of defaultkeys) {
+    /** For darwin with permission issue should ignore title it will be empty */
+    if (os.platform() === 'darwin' && key === 'title') {
+      continue;
+    }
     if (!(key === 'title' && data.os === 'win32' && data.info.execName === 'Widgets')) {
       if (key === 'os') {
         t.deepEqual(value, data[key]);

@@ -106,7 +106,7 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 
 ## Screen recording permission introduced in macOS 10.15 Catalina
 
-> macOS requires you to grant access for screen recording. If your project does not have it, the title will display `<unknown>` as its value.
+> macOS requires you to grant access for screen recording. If your project does not have it, the title will be an empty value.
 
 # URLs (Only available for Darwin and Windows Systems)
 
