@@ -390,10 +390,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
     if exec_name.ne(&"searchhost") {
       let mut url: String = "".to_owned();
       if is_browser(&exec_name.as_str()) {
-        url = get_browser_url(hwnd, true).to_owned();
-      }
-      if exec_name.contains(&"firefox") {
-        url = get_browser_url(hwnd, false).to_owned();
+        url = get_browser_url(hwnd, exec_name).to_owned();
       }
       window_info = WindowInfo {
         id,
@@ -412,7 +409,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
   window_info
 }
 
-fn get_browser_url(hwnd: HWND, is_chromium: bool) -> String {
+fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
   unsafe {
     if CoInitializeEx(None, COINIT_MULTITHREADED).is_ok() {
       let automation:Result<IUIAutomation, _> = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL);
@@ -422,10 +419,12 @@ fn get_browser_url(hwnd: HWND, is_chromium: bool) -> String {
         if element.is_ok() {
           let element: IUIAutomationElement = element.unwrap();
           /* Chromium part to get url from search bar */
-          if is_chromium {
-            return get_url_for_chromium(&automation, &element);
+          if exec_name.contains(&"firefox") {
+            return get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned());
+          } else if exec_name.contains(&"msedge") {
+            return get_url_from_automation_id(&automation, &element, "view_1020".to_owned());
           } else {
-            return get_url_for_firefox(&automation, &element);
+            return get_url_for_chromium(&automation, &element);
           }
         }
       }
@@ -435,12 +434,12 @@ fn get_browser_url(hwnd: HWND, is_chromium: bool) -> String {
 }
 
 /**
- * Try to get url using automationId view_1020
+ * Get value from automationId
  */
-fn get_url_from_automation_id(automation: &IUIAutomation, element: &IUIAutomationElement, automaiton_id: String) -> String {
+fn get_url_from_automation_id(automation: &IUIAutomation, element: &IUIAutomationElement, automation_id: String) -> String {
   unsafe {
     let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from(automaiton_id));
+    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from(automation_id));
     let mut variant2 = VARIANT_0_0::default();
     variant2.vt = VT_BSTR;
     variant2.Anonymous = variant1.clone();
@@ -463,18 +462,10 @@ fn get_url_from_automation_id(automation: &IUIAutomation, element: &IUIAutomatio
   return "".to_string();
 }
 
-fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
-  let mut url: String = get_url_from_automation_id(automation, element, "view_1020".to_owned());
-  if url.is_empty() {
-    url = get_url_for_chromium_loop(automation, element);
-  }
-  return url;
-}
-
 /**
  * Loop to find out the url
  */
-fn get_url_for_chromium_loop(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
+fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
   unsafe {
     let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
     variant1.lVal = 0xC36E;//0xC376;//UIA_EditControlTypeId.clone_into(target);//0xC354;
@@ -519,14 +510,6 @@ fn get_url_for_chromium_loop(automation: &IUIAutomation, element: &IUIAutomation
   return "".to_owned();
 }
 
-/**
- * Get url for firefox using automation id urlbar-input
- */
-fn get_url_for_firefox(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
-  return get_url_from_automation_id(automation, element, "urlbar-input".to_owned());
-}
-
-
 fn is_browser(browser_name: &str) -> bool {
   match browser_name {
     "chrome"
@@ -542,7 +525,8 @@ fn is_browser(browser_name: &str) -> bool {
     | "blisk"
     | "maxthon"
     | "beaker"
-    | "beaker browser" => true,
+    | "beaker browser"
+    | "firefox" => true,
     _ => false
   }
 }
