@@ -423,9 +423,9 @@ fn get_browser_url(hwnd: HWND, is_chromium: bool) -> String {
           let element: IUIAutomationElement = element.unwrap();
           /* Chromium part to get url from search bar */
           if is_chromium {
-            return get_url_for_chromium(automation, element);
+            return get_url_for_chromium(&automation, &element);
           } else {
-            return get_url_for_firefox(automation, element);
+            return get_url_for_firefox(&automation, &element);
           }
         }
       }
@@ -434,36 +434,13 @@ fn get_browser_url(hwnd: HWND, is_chromium: bool) -> String {
   return "".to_string();
 }
 
-fn get_url_for_chromium(automation: IUIAutomation, element: IUIAutomationElement) -> String {
+/**
+ * Try to get url using automationId view_1020
+ */
+fn get_url_from_automation_id(automation: &IUIAutomation, element: &IUIAutomationElement, automaiton_id: String) -> String {
   unsafe {
     let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.lVal = 0xC354;
-    let mut variant2 = VARIANT_0_0::default();
-    variant2.vt = VT_I4;
-    variant2.Anonymous = variant1.clone();
-    let mut variant3 = VARIANT_0::default();
-    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
-    let variant = VARIANT { Anonymous: variant3.clone() };
-    let condition = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, variant).unwrap();
-    let test = element.FindFirst(TreeScope_Subtree, &condition);
-    if test.is_ok() {
-      let test = test.unwrap();
-      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
-      if variant.is_ok() {
-        let variant = variant.unwrap();
-        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
-          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
-        }
-      }
-    }
-  }
-  return "".to_string();
-}
-
-fn get_url_for_firefox(automation: IUIAutomation, element: IUIAutomationElement) -> String {
-  unsafe {
-    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from("urlbar-input"));
+    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from(automaiton_id));
     let mut variant2 = VARIANT_0_0::default();
     variant2.vt = VT_BSTR;
     variant2.Anonymous = variant1.clone();
@@ -485,6 +462,70 @@ fn get_url_for_firefox(automation: IUIAutomation, element: IUIAutomationElement)
   }
   return "".to_string();
 }
+
+fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
+  let mut url: String = get_url_from_automation_id(automation, element, "view_1020".to_owned());
+  if url.is_empty() {
+    url = get_url_for_chromium_loop(automation, element);
+  }
+  return url;
+}
+
+/**
+ * Loop to find out the url
+ */
+fn get_url_for_chromium_loop(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
+  unsafe {
+    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
+    variant1.lVal = 0xC36E;//0xC376;//UIA_EditControlTypeId.clone_into(target);//0xC354;
+    let mut variant2 = VARIANT_0_0::default();
+    variant2.vt = VT_I4;
+    variant2.Anonymous = variant1.clone();
+    let mut variant3 = VARIANT_0::default();
+    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
+    let variant = VARIANT { Anonymous: variant3.clone() };
+    let condition = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, variant).unwrap();
+    let elements = element.FindAll(TreeScope_Subtree, &condition);
+
+    if elements.is_ok() {
+      let elements = elements.unwrap();
+      let length = {
+        let length = elements.Length();
+        if length.is_ok() {
+          length.unwrap()
+        } else {
+          0
+        }
+      };
+      for index in 0..length {
+        let element = elements.GetElement(index);
+        if element.is_ok() {
+          let element = element.unwrap();
+          let value_pattern = element.GetCurrentPatternAs::<IUIAutomationValuePattern>(UIA_ValuePatternId);
+          if value_pattern.is_ok() {
+            let value_pattern = value_pattern.unwrap();
+            {
+              let value = value_pattern.CurrentValue();
+              if value.is_ok() {
+                let value = value.unwrap();
+                return value.to_owned().to_string();
+              }
+            };
+          }
+        }
+      }
+    }
+  }
+  return "".to_owned();
+}
+
+/**
+ * Get url for firefox using automation id urlbar-input
+ */
+fn get_url_for_firefox(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
+  return get_url_from_automation_id(automation, element, "urlbar-input".to_owned());
+}
+
 
 fn is_browser(browser_name: &str) -> bool {
   match browser_name {
