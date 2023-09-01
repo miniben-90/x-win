@@ -1,5 +1,10 @@
 #![deny(unused_imports)]
 
+use windows::{
+  core::w,
+  Win32::System::Variant::{VARIANT, VARIANT_0, VARIANT_0_0, VARIANT_0_0_0, VT_BSTR, VT_I4},
+};
+
 use crate::common::{
   api::API,
   x_win_struct::{
@@ -11,33 +16,35 @@ use std::ffi::c_void;
 use std::path::{Path, PathBuf};
 use windows::Win32::{
   Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED},
-  System::{StationsAndDesktops::EnumDesktopWindows, ProcessStatus::GetProcessMemoryInfo},
-  UI::{WindowsAndMessaging::{
-    GetWindowInfo, IsWindow, IsWindowVisible, WINDOWINFO, WS_ACTIVECAPTION, WS_CAPTION, WS_CHILD,
-    WS_EX_TOOLWINDOW, WINDOWPLACEMENT, GetWindowPlacement, SW_SHOWMAXIMIZED,
-  }, Accessibility::CUIAutomation},
+  System::{ProcessStatus::GetProcessMemoryInfo, StationsAndDesktops::EnumDesktopWindows},
+  UI::{
+    Accessibility::CUIAutomation,
+    WindowsAndMessaging::{
+      GetWindowInfo, GetWindowPlacement, IsWindow, IsWindowVisible, SW_SHOWMAXIMIZED, WINDOWINFO,
+      WINDOWPLACEMENT, WS_ACTIVECAPTION, WS_CAPTION, WS_CHILD, WS_EX_TOOLWINDOW,
+    },
+  },
 };
 use windows::{
   core::{PCWSTR, PWSTR},
-  w,
   Win32::{
     Foundation::HWND,
     Foundation::{CloseHandle, BOOL, LPARAM, RECT},
     Foundation::{HANDLE, MAX_PATH},
     Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW},
     System::{
+      Com::*,
       ProcessStatus::PROCESS_MEMORY_COUNTERS,
       Threading::{
         GetProcessId, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
         PROCESS_QUERY_LIMITED_INFORMATION,
       },
-      Com::*,
     },
+    UI::Accessibility::*,
     UI::WindowsAndMessaging::{
       EnumChildWindows, GetForegroundWindow, GetWindowRect, GetWindowTextW,
       GetWindowThreadProcessId,
     },
-    UI::Accessibility::*,
   },
 };
 
@@ -66,17 +73,17 @@ impl API for WindowsAPI {
     let lparam = unsafe {
       std::mem::transmute::<*mut c_void, LPARAM>(&mut open_windows as *mut Vec<HWND> as *mut c_void)
     };
-
-    let enum_desktop_success =
-      unsafe { EnumDesktopWindows(None, Some(enum_desktop_windows_proc), lparam) };
-
-    if enum_desktop_success.as_bool() && open_windows.len().ne(&0) {
-      for hwnd in open_windows {
-        let window_info = get_window_information(hwnd);
-        if window_info.title.eq(&"") && window_info.info.exec_name.to_lowercase().eq(&"explorer") {
-          continue;
+    unsafe {
+      let enum_desktop = EnumDesktopWindows(None, Some(enum_desktop_windows_proc), lparam);
+      if enum_desktop.is_ok() && open_windows.len().ne(&0) {
+        for hwnd in open_windows {
+          let window_info = get_window_information(hwnd);
+          if window_info.title.eq(&"") && window_info.info.exec_name.to_lowercase().eq(&"explorer")
+          {
+            continue;
+          }
+          results.push(window_info);
         }
-        results.push(window_info);
       }
     }
 
@@ -89,12 +96,13 @@ impl API for WindowsAPI {
  */
 fn is_fullscreen(hwnd: HWND) -> BOOL {
   let mut lpwndpl: WINDOWPLACEMENT = WINDOWPLACEMENT::default();
-  let success = unsafe { GetWindowPlacement(hwnd, &mut lpwndpl) };
-  if success.as_bool() && lpwndpl.showCmd == SW_SHOWMAXIMIZED {
-    return true.into();
-  } else {
-    return false.into();
+
+  unsafe {
+    if GetWindowPlacement(hwnd, &mut lpwndpl).is_ok() && SW_SHOWMAXIMIZED.0.eq(&(lpwndpl.showCmd as i32)) {
+      return true.into();
+    }
   }
+  return false.into();
 }
 
 /** Functions for callback */
@@ -102,16 +110,14 @@ extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL
   let open_windows = unsafe { std::mem::transmute::<LPARAM, &mut Vec<HWND>>(lparam) };
 
   unsafe {
-
-
     if IsWindow(hwnd).as_bool() && IsWindow(hwnd).as_bool() && IsWindowVisible(hwnd).as_bool() {
       let mut pwi: WINDOWINFO = WINDOWINFO::default();
-      GetWindowInfo(hwnd, &mut pwi);
-      if (
-        (pwi.dwExStyle & WS_EX_TOOLWINDOW == windows::Win32::UI::WindowsAndMessaging::WINDOW_EX_STYLE(0) && pwi.dwStyle & WS_CAPTION == WS_CAPTION)
+      let _ = GetWindowInfo(hwnd, &mut pwi);
+      if ((pwi.dwExStyle & WS_EX_TOOLWINDOW
+        == windows::Win32::UI::WindowsAndMessaging::WINDOW_EX_STYLE(0)
+        && pwi.dwStyle & WS_CAPTION == WS_CAPTION)
         || pwi.dwWindowStatus == WS_ACTIVECAPTION.0
-        || is_fullscreen(hwnd).as_bool()
-      )
+        || is_fullscreen(hwnd).as_bool())
         && pwi.dwStyle & WS_CHILD == windows::Win32::UI::WindowsAndMessaging::WINDOW_STYLE(0)
       {
         let mut clocked_val: i32 = 0;
@@ -133,7 +139,8 @@ extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL
 }
 
 extern "system" fn enum_child_windows_func(hwnd: HWND, lparam: LPARAM) -> BOOL {
-  let mut process_info = unsafe { std::mem::transmute::<LPARAM, &mut ProcessInfo>(lparam) };
+  let process_info: &mut ProcessInfo =
+    unsafe { std::mem::transmute::<LPARAM, &mut ProcessInfo>(lparam) };
 
   let mut process_id: u32 = 0;
   let _id: u32 = unsafe { GetWindowThreadProcessId(hwnd, Some(&mut process_id)) };
@@ -174,7 +181,9 @@ fn open_process_handle(process_id: u32) -> Result<HANDLE, ()> {
  * Method to close opend handle
  */
 fn close_process_handle(handle: HANDLE) -> () {
-  unsafe { CloseHandle(handle) };
+  unsafe {
+    let _ = CloseHandle(handle);
+  };
 }
 
 /**
@@ -183,7 +192,7 @@ fn close_process_handle(handle: HANDLE) -> () {
 fn get_rect_window(hwnd: HWND) -> WindowPosition {
   unsafe {
     let mut lprect: RECT = std::mem::zeroed();
-    if GetWindowRect(hwnd, &mut lprect).as_bool() {
+    if GetWindowRect(hwnd, &mut lprect).is_ok() {
       WindowPosition {
         height: lprect.bottom - lprect.top,
         width: lprect.right - lprect.left,
@@ -221,9 +230,9 @@ fn get_process_path(phlde: HANDLE) -> Result<PathBuf, ()> {
   let lpexename: PWSTR = windows::core::PWSTR::from_raw(lpexename_raw.as_mut_ptr());
 
   let process_path: String = unsafe {
-    let success: BOOL =
-      QueryFullProcessImageNameW(phlde, PROCESS_NAME_WIN32, lpexename, &mut lpdwsize);
-    if !success.as_bool() {
+    let failed =
+      QueryFullProcessImageNameW(phlde, PROCESS_NAME_WIN32, lpexename, &mut lpdwsize).is_err();
+    if failed {
       return Err(());
     }
     lpexename.to_string().map_err(|_| ())?
@@ -241,9 +250,9 @@ fn get_process_name_from_path(process_path: &PathBuf) -> Result<String, ()> {
     return Err(());
   }
   let mut lpdata: Vec<u8> = vec![0u8; dwlen.try_into().unwrap()];
-  let version_info_success: BOOL =
-    unsafe { GetFileVersionInfoW(&lptstrfilename, 0, dwlen, lpdata.as_mut_ptr().cast()) };
-  if !version_info_success.as_bool() {
+  let version_info_success =
+    unsafe { GetFileVersionInfoW(&lptstrfilename, 0, dwlen, lpdata.as_mut_ptr().cast()).is_ok() };
+  if !version_info_success {
     return Err(());
   }
   let mut lplpbuffer: *mut c_void = std::ptr::null_mut();
@@ -277,7 +286,11 @@ fn get_process_name_from_path(process_path: &PathBuf) -> Result<String, ()> {
     lang.w_language, lang.w_code_page
   );
   let lang_code_string: String = lang_code.to_string();
-  let lang_code_ptr: *const u16 = lang_code_string.encode_utf16().chain(Some(0)).collect::<Vec<_>>().as_ptr();
+  let lang_code_ptr: *const u16 = lang_code_string
+    .encode_utf16()
+    .chain(Some(0))
+    .collect::<Vec<_>>()
+    .as_ptr();
 
   let lang_code: PCWSTR = PCWSTR::from_raw(lang_code_ptr);
 
@@ -330,7 +343,11 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
       .to_owned();
     process_info.name = process_info.exec_name.clone();
 
-    if process_info.exec_name.to_lowercase().eq(r#"applicationframehost"#) {
+    if process_info
+      .exec_name
+      .to_lowercase()
+      .eq(r#"applicationframehost"#)
+    {
       let lparam = unsafe {
         std::mem::transmute::<*mut c_void, LPARAM>(
           &mut process_info as *mut ProcessInfo as *mut c_void,
@@ -379,11 +396,11 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
     let mut process_memory_counters = PROCESS_MEMORY_COUNTERS::default();
 
     unsafe {
-      GetProcessMemoryInfo(
+      let _ = GetProcessMemoryInfo(
         handle,
         &mut process_memory_counters as *mut _,
         std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
-      )
+      );
     };
     close_process_handle(handle);
     let exec_name = parent_process.exec_name.to_lowercase();
@@ -412,7 +429,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
 fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
   unsafe {
     if CoInitializeEx(None, COINIT_MULTITHREADED).is_ok() {
-      let automation:Result<IUIAutomation, _> = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL);
+      let automation: Result<IUIAutomation, _> = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL);
       if automation.is_ok() {
         let automation: IUIAutomation = automation.unwrap();
         let element: Result<IUIAutomationElement, _> = automation.ElementFromHandle(hwnd);
@@ -436,17 +453,27 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
 /**
  * Get value from automationId
  */
-fn get_url_from_automation_id(automation: &IUIAutomation, element: &IUIAutomationElement, automation_id: String) -> String {
+fn get_url_from_automation_id(
+  automation: &IUIAutomation,
+  element: &IUIAutomationElement,
+  automation_id: String,
+) -> String {
   unsafe {
     let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
     variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from(automation_id));
-    let mut variant2 = VARIANT_0_0::default();
+    let mut variant2: VARIANT_0_0 = VARIANT_0_0::default();
     variant2.vt = VT_BSTR;
     variant2.Anonymous = variant1.clone();
     let mut variant3 = VARIANT_0::default();
     variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
-    let variant = VARIANT { Anonymous: variant3.clone() };
-    let condition = automation.CreatePropertyCondition(UIA_AutomationIdPropertyId, variant).unwrap();
+    let variant = VARIANT {
+      Anonymous: variant3.clone(),
+    };
+
+    let condition = automation
+      .CreatePropertyCondition(UIA_AutomationIdPropertyId, variant)
+      .unwrap();
+
     let test = element.FindFirst(TreeScope_Subtree, &condition);
     if test.is_ok() {
       let test = test.unwrap();
@@ -468,41 +495,81 @@ fn get_url_from_automation_id(automation: &IUIAutomation, element: &IUIAutomatio
 fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
   unsafe {
     let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.lVal = 0xC36E;//0xC376;//UIA_EditControlTypeId.clone_into(target);//0xC354;
+    variant1.lVal = 0xC36E;
     let mut variant2 = VARIANT_0_0::default();
     variant2.vt = VT_I4;
     variant2.Anonymous = variant1.clone();
     let mut variant3 = VARIANT_0::default();
     variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
-    let variant = VARIANT { Anonymous: variant3.clone() };
-    let condition = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, variant).unwrap();
-    let elements = element.FindAll(TreeScope_Subtree, &condition);
+    let variant = VARIANT {
+      Anonymous: variant3.clone(),
+    };
 
-    if elements.is_ok() {
-      let elements = elements.unwrap();
-      let length = {
-        let length = elements.Length();
-        if length.is_ok() {
-          length.unwrap()
-        } else {
-          0
+    let condition = automation
+      .CreatePropertyCondition(UIA_ControlTypePropertyId, variant)
+      .unwrap();
+
+    let test = element.FindFirst(TreeScope_Children, &condition);
+
+    if test.is_ok() {
+      println!("testok");
+      let test = test.unwrap();
+      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
+      if variant.is_ok() {
+        let variant = variant.unwrap();
+        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
+          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
         }
-      };
-      for index in 0..length {
-        let element = elements.GetElement(index);
-        if element.is_ok() {
-          let element = element.unwrap();
-          let value_pattern = element.GetCurrentPatternAs::<IUIAutomationValuePattern>(UIA_ValuePatternId);
-          if value_pattern.is_ok() {
-            let value_pattern = value_pattern.unwrap();
-            {
-              let value = value_pattern.CurrentValue();
-              if value.is_ok() {
-                let value = value.unwrap();
-                return value.to_owned().to_string();
-              }
-            };
-          }
+      }
+    }
+  }
+  return get_url_for_chromium_from_ctrlk(automation, element);
+}
+
+/** Fallback to search url from ctrl+l keyboard access */
+fn get_url_for_chromium_from_ctrlk(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
+  unsafe {
+    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
+    variant1.lVal = 0xC354;
+    let mut variant2 = VARIANT_0_0::default();
+    variant2.vt = VT_I4;
+    variant2.Anonymous = variant1.clone();
+    let mut variant3 = VARIANT_0::default();
+    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
+    let variant = VARIANT {
+      Anonymous: variant3.clone(),
+    };
+
+    let condition1 = automation
+      .CreatePropertyCondition(UIA_ControlTypePropertyId, variant)
+      .unwrap();
+
+    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
+    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from("Ctrl+L"));
+    let mut variant2: VARIANT_0_0 = VARIANT_0_0::default();
+    variant2.vt = VT_BSTR;
+    variant2.Anonymous = variant1.clone();
+    let mut variant3 = VARIANT_0::default();
+    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
+    let variant = VARIANT {
+      Anonymous: variant3.clone(),
+    };
+
+    let condition2 = automation
+    .CreatePropertyCondition(UIA_AccessKeyPropertyId, variant)
+    .unwrap();
+
+    let condition = automation.CreateAndCondition(&condition1, &condition2).unwrap();
+
+    let test = element.FindFirst(TreeScope_Subtree, &condition);
+
+    if test.is_ok() {
+      let test = test.unwrap();
+      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
+      if variant.is_ok() {
+        let variant = variant.unwrap();
+        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
+          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
         }
       }
     }
@@ -510,23 +577,13 @@ fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationEleme
   return "".to_owned();
 }
 
+
 fn is_browser(browser_name: &str) -> bool {
   match browser_name {
-    "chrome"
-    | "msedge"
-    | "opera"
-    | "opera_gx"
-    | "brave"
-    | "vivaldi"
-    | "iron"
-    | "epic"
-    | "chromium"
-    | "ucozmedia"
-    | "blisk"
-    | "maxthon"
-    | "beaker"
-    | "beaker browser"
-    | "firefox" => true,
-    _ => false
+    "chrome" | "msedge" | "opera" | "opera_gx" | "brave" | "vivaldi" | "iron" | "epic"
+    | "chromium" | "ucozmedia" | "blisk" | "maxthon" | "beaker" | "beaker browser" | "firefox" => {
+      true
+    }
+    _ => false,
   }
 }
