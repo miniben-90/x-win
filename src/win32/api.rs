@@ -512,7 +512,6 @@ fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationEleme
     let test = element.FindFirst(TreeScope_Children, &condition);
 
     if test.is_ok() {
-      println!("testok");
       let test = test.unwrap();
       let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
       if variant.is_ok() {
