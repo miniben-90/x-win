@@ -29,23 +29,21 @@ impl API for LinuxAPI {
     let root_window = setup.roots().next();
     if !root_window.is_none() {
       let root_window = root_window.unwrap().root();
-
-      if let Ok(active_window_atom) = get_active_window_atom(&conn) {
-        if active_window_atom != x::ATOM_NONE {
-          let active_window = conn.send_request(&x::GetProperty {
-            delete: false,
-            window: root_window,
-            property: active_window_atom,
-            r#type: x::ATOM_WINDOW,
-            long_offset: 0,
-            long_length: 1,
-          });
-          if let Ok(active_window) = conn.wait_for_reply(active_window) {
-            let active_window: Option<&x::Window> = active_window.value::<x::Window>().get(0);
-            if !active_window.is_none() {
-              let active_window: &x::Window = active_window.unwrap();
-              return Ok(get_window_information(&conn, active_window));
-            }
+      let active_window_atom = get_active_window_atom(&conn);
+      if active_window_atom != x::ATOM_NONE {
+        let active_window = conn.send_request(&x::GetProperty {
+          delete: false,
+          window: root_window,
+          property: active_window_atom,
+          r#type: x::ATOM_WINDOW,
+          long_offset: 0,
+          long_length: 1,
+        });
+        if let Ok(active_window) = conn.wait_for_reply(active_window) {
+          let active_window: Option<&x::Window> = active_window.value::<x::Window>().get(0);
+          if !active_window.is_none() {
+            let active_window: &x::Window = active_window.unwrap();
+            return Ok(get_window_information(&conn, active_window));
           }
         }
       }
@@ -82,27 +80,25 @@ impl API for LinuxAPI {
     let root_window = setup.roots().next();
     if !root_window.is_none() {
       let root_window = root_window.unwrap().root();
-
-      if let Ok(open_windows_atom) = get_client_list_stacking_atom(&conn) {
-        if open_windows_atom != x::ATOM_NONE {
-          let window_list = conn.send_request(&x::GetProperty {
-            delete: false,
-            window: root_window,
-            property: open_windows_atom,
-            r#type: x::ATOM_WINDOW,
-            long_offset: 0,
-            long_length: std::u32::MAX,
-          });
-          if let Ok(windows_reply) = conn.wait_for_reply(window_list) {
-            let window_list: Vec<x::Window> = windows_reply.value::<x::Window>().to_vec();
-            if window_list.len().ne(&0) {
-              for window in window_list {
-                let window: &x::Window = &window;
-                let result = get_window_information(&conn, window);
-                if result.id.ne(&0) {
-                  if is_normal_window(&conn, *window) {
-                    results.push(result);
-                  }
+      let open_windows_atom = get_client_list_stacking_atom(&conn);
+      if open_windows_atom != x::ATOM_NONE {
+        let window_list = conn.send_request(&x::GetProperty {
+          delete: false,
+          window: root_window,
+          property: open_windows_atom,
+          r#type: x::ATOM_WINDOW,
+          long_offset: 0,
+          long_length: std::u32::MAX,
+        });
+        if let Ok(windows_reply) = conn.wait_for_reply(window_list) {
+          let window_list: Vec<x::Window> = windows_reply.value::<x::Window>().to_vec();
+          if window_list.len().ne(&0) {
+            for window in window_list {
+              let window: &x::Window = &window;
+              let result = get_window_information(&conn, window);
+              if result.id.ne(&0) {
+                if is_normal_window(&conn, *window) {
+                  results.push(result);
                 }
               }
             }
@@ -161,40 +157,15 @@ fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> WindowI
 }
 
 /**
- * Get active window
- */
-fn get_active_window_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
-  let active_window_id = conn.send_request(&x::InternAtom {
-    only_if_exists: true,
-    name: b"_NET_ACTIVE_WINDOW",
-  });
-  Ok(conn.wait_for_reply(active_window_id)?.atom())
-}
-
-/**
- * Get list of open windows
- */
-fn get_client_list_stacking_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
-  let active_window_id = conn.send_request(&x::InternAtom {
-    only_if_exists: true,
-    name: b"_NET_CLIENT_LIST_STACKING",
-  });
-  Ok(conn.wait_for_reply(active_window_id)?.atom())
-}
-
-/**
  * Get pid
  */
 fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> u32 {
-  let window_pid = conn.send_request(&x::InternAtom {
-    only_if_exists: true,
-    name: b"_NET_WM_PID",
-  });
-  if let Ok(window_pid) = conn.wait_for_reply(window_pid) {
+  let window_pid_atom = get_window_pid_atom(&conn);
+  if window_pid_atom != x::ATOM_NONE {
     let window_pid = conn.send_request(&x::GetProperty {
       delete: false,
       window,
-      property: window_pid.atom(),
+      property: window_pid_atom,
       r#type: x::ATOM_ANY,
       long_offset: 0,
       long_length: 1,
@@ -240,48 +211,27 @@ fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosit
 }
 
 /**
- * Generate Atom of COMPOUND_TEXT value
- */
-fn get_compound_text_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
-  let compound_text = conn.send_request(&x::InternAtom {
-    only_if_exists: true,
-    name: b"C_STRING",
-  });
-  Ok(conn.wait_for_reply(compound_text)?.atom())
-}
-
-/**
- * Generate Atom of COMPOUND_TEXT value
- */
-fn get_wm_name_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
-  let compound_text = conn.send_request(&x::InternAtom {
-    only_if_exists: true,
-    name: b"_NET_WM_NAME",
-  });
-  Ok(conn.wait_for_reply(compound_text)?.atom())
-}
-
-/**
  * Get window title
  */
 fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
-  if let Ok(atom_wm_name) = get_wm_name_atom(&conn) {
-    if let Ok(atom_compound_text) = get_compound_text_atom(&conn) {
-      let window_title = conn.send_request(&x::GetProperty {
-        delete: false,
-        window,
-        property: atom_wm_name,
-        r#type: atom_compound_text,
-        long_offset: 0,
-        long_length: std::u32::MAX,
-      });
-      if let Ok(window_title) = conn.wait_for_reply(window_title) {
-        let window_title: &[u8] = window_title.value();
-        return unsafe { std::str::from_utf8_unchecked(window_title).to_string() };
-      }
-    }
+  _get_string_response(conn, window, x::ATOM_WM_NAME)
+}
+
+fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::Atom) -> String {
+  let window_title = conn.send_request(&x::GetProperty {
+    delete: false,
+    window,
+    property,
+    r#type: x::ATOM_NONE,
+    long_offset: 0,
+    long_length: std::u32::MAX,
+  });
+  if let Ok(window_title) = conn.wait_for_reply(window_title) {
+    let window_title: &[u8] = window_title.value();
+    unsafe { std::str::from_utf8_unchecked(window_title).to_string() }
+  } else {
+    "".to_owned()
   }
-  return "".to_owned();
 }
 
 /**
@@ -332,47 +282,70 @@ fn get_window_path_name(pid: u32) -> (String, String) {
   return (path, name);
 }
 
+fn get_window_pid_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_WM_PID", true)
+}
+
+/**
+ * Generate Atom of _NET_ACTIVE_WINDOW value
+ */
+fn get_active_window_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_ACTIVE_WINDOW", true)
+}
+
+/**
+ * Generate Atom of _NET_CLIENT_LIST_STACKING value
+ */
+fn get_client_list_stacking_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_CLIENT_LIST_STACKING", true)
+}
+
 /**
  * Generate Atom of _NET_WM_WINDOW_TYPE value
  */
-fn get_window_type_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
-  let state_window = conn.send_request(&x::InternAtom {
-    only_if_exists: true,
-    name: b"_NET_WM_WINDOW_TYPE",
-  });
-  Ok(conn.wait_for_reply(state_window)?.atom())
+fn get_window_type_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_WM_WINDOW_TYPE", true)
 }
 
 /**
  * Generate Atom of _NET_WM_WINDOW_TYPE_NORMAL value
  */
-fn get_window_type_normal_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
-  let invisible = conn.send_request(&x::InternAtom {
-    only_if_exists: true,
-    name: b"_NET_WM_WINDOW_TYPE_NORMAL",
+fn get_window_type_normal_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_WM_WINDOW_TYPE_NORMAL", true)
+}
+
+/**
+ * Generate Atom of name parameter
+ */
+fn get_atom(conn: &xcb::Connection, name: &[u8], only_if_exists: bool) -> x::Atom {
+  let atom_name = conn.send_request(&x::InternAtom {
+    only_if_exists,
+    name,
   });
-  Ok(conn.wait_for_reply(invisible)?.atom())
+  if let Ok(value) = conn.wait_for_reply(atom_name) {
+    value.atom()
+  } else {
+    x::ATOM_NONE
+  }
 }
 
 /**
  * Check if the window is a normal type
  */
 fn is_normal_window(conn: &xcb::Connection, window: x::Window) -> bool {
-  if let Ok(state_window_atom) = get_window_type_atom(&conn) {
-    if state_window_atom != x::ATOM_NONE {
-      if let Ok(type_normal_atom) = get_window_type_normal_atom(&conn) {
-        let window_state = conn.send_request(&x::GetProperty {
-          delete: false,
-          window,
-          property: state_window_atom,
-          r#type: x::ATOM_ATOM,
-          long_offset: 0,
-          long_length: std::u32::MAX,
-        });
-        if let Ok(window_state) = conn.wait_for_reply(window_state) {
-          return window_state.value().contains(&type_normal_atom);
-        }
-      }
+  let state_window_atom = get_window_type_atom(&conn);
+  let type_normal_atom = get_window_type_normal_atom(&conn);
+  if state_window_atom != x::ATOM_NONE && type_normal_atom != x::ATOM_NONE {
+    let window_state = conn.send_request(&x::GetProperty {
+      delete: false,
+      window,
+      property: state_window_atom,
+      r#type: x::ATOM_ATOM,
+      long_offset: 0,
+      long_length: std::u32::MAX,
+    });
+    if let Ok(window_state) = conn.wait_for_reply(window_state) {
+      return window_state.value().contains(&type_normal_atom);
     }
   }
   return false;
