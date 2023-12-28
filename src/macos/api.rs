@@ -190,7 +190,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
 
     if is_browser_bundle_id(&bundle_identifier) {
       let mut command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
-      if is_safari_browser(&bundle_identifier)
+      if is_from_document(&bundle_identifier)
       {
         command = format!("tell app id \"{}\" to get URL of front document", bundle_identifier);
       }
@@ -257,15 +257,20 @@ fn is_browser_bundle_id(bundle_id: &str) -> bool {
     | "com.operasoftware.OperaNext"
     | "com.operasoftware.OperaDeveloper"
     | "com.operasoftware.OperaGX"
-    | "com.vivaldi.Vivaldi" => true,
+    | "com.vivaldi.Vivaldi"
+    | "com.kagi.kagimacOS"
+    | "company.thebrowser.Browser"
+    | "com.sigmaos.sigmaos.macos"
+    | "com.SigmaOS.SigmaOS" => true,
     _ => false,
   }
 }
 
-fn is_safari_browser(bundle_id: &str) -> bool {
+fn is_from_document(bundle_id: &str) -> bool {
   match bundle_id {
     "com.apple.Safari"
-    | "com.apple.SafariTechnologyPreview" => true,
+    | "com.apple.SafariTechnologyPreview"
+    | "com.kagi.kagimacOS" => true,
     _ => false,
   }
 }
