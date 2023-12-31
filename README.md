@@ -96,11 +96,14 @@ console.log(windows);
 
 # Linux
 
-> Dependencies are required to be installed for development purposes.
+Dependencies are required to be installed for development purposes.
 
 ```sh
 sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev
 ```
+
+> ⚠️**Warning**
+> Recovery url is not available for linux dist
 
 # Darwin
 
@@ -163,6 +166,11 @@ It will use AppleScript to get informations for chromium browsers and safari
 | opera software - OperaDeveloper |  |
 | opera software - OperaGX | ✅ |
 | Vivaldi |  |
+
+## Electron
+
+* To prevent potential crashes and issues, it's recommended to execute recovery operations within a worker thread ([https://nodejs.org/api/worker_threads.html](https://nodejs.org/api/worker_threads.html))
+* For macOS, you can utilize functions to check and request screen permissions ([https://www.electronjs.org/fr/docs/latest/api/system-preferences](https://www.electronjs.org/fr/docs/latest/api/system-preferences))
 
 <hr class="padding-top: 30px;padding-bottom:30px">
 
