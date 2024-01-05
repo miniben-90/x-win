@@ -54,7 +54,7 @@ use crate::common::x_win_struct::{
 };
 
 use once_cell::sync::Lazy;
-use std::sync::{Mutex, OnceLock};
+use std::sync::Mutex;
 
 static THREAD_MANAGER: Lazy<Mutex<ThreadManager>> = Lazy::new(|| Mutex::new(ThreadManager::new()));
 
