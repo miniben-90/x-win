@@ -41,3 +41,6 @@ export interface WindowInfo {
 }
 export function activeWindow(): WindowInfo
 export function openWindows(): Array<WindowInfo>
+export function subscribeActiveWindow(callback: (info: WindowInfo) => void): number
+export function unsubscribeActiveWindow(threadId: number): void
+export function unsubscribeAllActiveWindow(): void

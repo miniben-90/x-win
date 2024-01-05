@@ -94,6 +94,36 @@ console.log(windows);
 }]
 ```
 
+### Subscribe to get the current active window
+
+Thread will be start to check every `100ms` for a new active window (checking window title, window id and process id).
+
+* `subscribeActiveWindow`: Create a subscription with a callback function
+* `unsubscribeActiveWindow`: Remove a specific subscription
+* `unsubscribeAllActiveWindow`: Remove all threads
+
+
+```typescript
+import { subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
+
+const a = subscribeActiveWindow(activeWindow => {
+  console.log('test a', activeWindow);
+});
+
+const b = subscribeActiveWindow(activeWindow => {
+  console.log('test b', activeWindow);
+});
+
+
+const c = subscribeActiveWindow(activeWindow => {
+  console.log('test c', activeWindow);
+});
+
+setTimeout(() => unsubscribeActiveWindow(c), 5000);
+
+setTimeout(() => unsubscribeAllActiveWindow(), 10000);
+```
+
 # Linux
 
 Dependencies are required to be installed for development purposes.
@@ -103,7 +133,7 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 ```
 
 > ⚠️**Warning**
-> Recovery url is not available for linux dist
+> Recovery url is not available on linux
 
 # Darwin
 

@@ -281,7 +281,10 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { activeWindow, openWindows } = nativeBinding
+const { activeWindow, openWindows, subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } = nativeBinding
 
 module.exports.activeWindow = activeWindow
 module.exports.openWindows = openWindows
+module.exports.subscribeActiveWindow = subscribeActiveWindow
+module.exports.unsubscribeActiveWindow = unsubscribeActiveWindow
+module.exports.unsubscribeAllActiveWindow = unsubscribeAllActiveWindow
