@@ -11,7 +11,7 @@ extern crate objc;
 extern crate core;
 
 use common::{api::API, thread::ThreadManager, x_win_struct::window_info::WindowInfo};
-use napi::{Env, JsFunction, JsNumber, JsObject, JsUndefined, Result};
+use napi::{JsFunction, Result};
 use napi_derive::napi;
 
 mod common;
@@ -37,14 +37,8 @@ use macos::init_platform_api;
 #[macro_use]
 extern crate napi_derive;
 
-use napi::{
-  bindgen_prelude::*,
-  threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode},
-};
+use napi::threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode};
 use std::{
-  borrow::Borrow,
-  collections::{hash_map::DefaultHasher, HashMap},
-  hash::{Hash, Hasher},
   thread,
   time::Duration,
 };
