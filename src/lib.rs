@@ -52,18 +52,67 @@ use std::sync::Mutex;
 
 static THREAD_MANAGER: Lazy<Mutex<ThreadManager>> = Lazy::new(|| Mutex::new(ThreadManager::new()));
 
+
+/**
+ * Retrieve information about currently active window.
+ * Returns an object of `WindowInfo`.
+ *
+ * # Example
+ * ```javascript
+ * const currentWindow = activeWindow();
+ * console.log(currentWindow);
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+ */
 #[napi]
 pub fn active_window() -> Result<WindowInfo> {
   let api = init_platform_api();
   api.get_active_window()
 }
 
+/**
+ * Retrieve information about currently open windows.
+ * Returns an array of `WindowInfo`, each containing details about a specific open window.
+ *
+ * # Example
+ * ```javascript
+ * const windows = openWindows();
+ * for (let i = 0; i < windows.length; i++) {
+ *   console.log(i, windows[i]);
+ * }
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+ */
 #[napi]
 pub fn open_windows() -> Result<Vec<WindowInfo>> {
   let api = init_platform_api();
   api.get_open_windows()
 }
 
+/**
+ * Subscribe an observer thread to monitor changes in the active window.
+ *
+ * # Example
+ * ```javascript
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ * 
+ * unsubscribeAllActiveWindow();
+ * ```
+ */
 #[napi(ts_args_type = "callback: (info: WindowInfo) => void")]
 pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
   let api = init_platform_api();
@@ -123,12 +172,50 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
   Ok(id.unwrap())
 }
 
+/**
+ * Terminate and unsubscribe a specific observer using their ID.
+ *
+ * # Example
+ * ```javascript
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ * 
+ * unsubscribeActiveWindow(a);
+ * unsubscribeActiveWindow(b);
+ * unsubscribeActiveWindow(c);
+ * ```
+ */
 #[napi]
 pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
   THREAD_MANAGER.lock().unwrap().stop_thread(thread_id).unwrap();
   Ok(())
 }
 
+/**
+ * Terminate and unsubscribe all observer threads monitoring changes in the active window.
+ *
+ * # Example
+ * ```javascript
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ * 
+ * unsubscribeAllActiveWindow();
+ * ```
+ */
 #[napi]
 pub fn unsubscribe_all_active_window() -> Result<()> {
   THREAD_MANAGER.lock().unwrap().stop_all_threads().unwrap();

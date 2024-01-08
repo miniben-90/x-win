@@ -39,8 +39,94 @@ export interface WindowInfo {
   usage: UsageInfo
   url: string
 }
+/**
+ * Retrieve information about currently active window.
+ * Returns an object of `WindowInfo`.
+ *
+ * # Example
+ * ```javascript
+ * const currentWindow = activeWindow();
+ * console.log(currentWindow);
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+*/
 export function activeWindow(): WindowInfo
+/**
+ * Retrieve information about currently open windows.
+ * Returns an array of `WindowInfo`, each containing details about a specific open window.
+ *
+ * # Example
+ * ```javascript
+ * const windows = openWindows();
+ * for (let i = 0; i < windows.length; i++) {
+ *   console.log(i, windows[i]);
+ * }
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+*/
 export function openWindows(): Array<WindowInfo>
+/**
+ * Subscribe an observer thread to monitor changes in the active window.
+ *
+ * # Example
+ * ```javascript
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ *
+ * unsubscribeAllActiveWindow();
+ * ```
+*/
 export function subscribeActiveWindow(callback: (info: WindowInfo) => void): number
+/**
+ * Terminate and unsubscribe a specific observer using their ID.
+ *
+ * # Example
+ * ```javascript
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ *
+ * unsubscribeActiveWindow(a);
+ * unsubscribeActiveWindow(b);
+ * unsubscribeActiveWindow(c);
+ * ```
+*/
 export function unsubscribeActiveWindow(threadId: number): void
+/**
+ * Terminate and unsubscribe all observer threads monitoring changes in the active window.
+ *
+ * # Example
+ * ```javascript
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ *
+ * unsubscribeAllActiveWindow();
+ * ```
+*/
 export function unsubscribeAllActiveWindow(): void
