@@ -23,8 +23,27 @@ pub struct LinuxAPI {}
 impl API for LinuxAPI {
   fn get_active_window(&self) -> WindowInfo {
     let (conn, _) = xcb::Connection::connect(None).unwrap();
-
     let setup = conn.get_setup();
+
+    let mut result: WindowInfo = WindowInfo {
+      id: 0,
+      os: os_name(),
+      title: "".to_string(),
+      position: WindowPosition {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+      },
+      info: ProcessInfo {
+        process_id: 0,
+        path: "".to_string(),
+        name: "".to_string(),
+        exec_name: "".to_string(),
+      },
+      usage: UsageInfo { memory: 0 },
+      url: "".to_string(),
+    };
 
     let root_window = setup.roots().next();
     if !root_window.is_none() {
@@ -43,34 +62,16 @@ impl API for LinuxAPI {
           let active_window: Option<&x::Window> = active_window.value::<x::Window>().get(0);
           if !active_window.is_none() {
             let active_window: &x::Window = active_window.unwrap();
-            get_window_information(&conn, active_window)
+            result = get_window_information(&conn, active_window);
           }
         }
       }
     }
 
-    WindowInfo {
-      id: 0,
-      os: os_name(),
-      title: "".to_string(),
-      position: WindowPosition {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-      info: ProcessInfo {
-        process_id: 0,
-        path: "".to_string(),
-        name: "".to_string(),
-        exec_name: "".to_string(),
-      },
-      usage: UsageInfo { memory: 0 },
-      url: "".to_string(),
-    }
+    result
   }
 
-  fn get_open_windows(&self) -> WindowInfo {
+  fn get_open_windows(&self) -> Vec<WindowInfo> {
     let mut results: Vec<WindowInfo> = Vec::new();
 
     let (conn, _) = xcb::Connection::connect(None).unwrap();
