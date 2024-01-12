@@ -36,13 +36,13 @@ pub struct MacosAPI {}
  * Impl. for windows system
  */
 impl API for MacosAPI {
-  fn get_active_window(&self) -> napi::Result<WindowInfo> {
+  fn get_active_window(&self) -> WindowInfo {
     let windows: Vec<WindowInfo> = get_windows_informations(true);
     if windows.len() > 0 {
       let t: &WindowInfo = windows.first().unwrap();
-      Ok(t.clone() as WindowInfo)
+      t.clone() as WindowInfo
     } else {
-      Ok(WindowInfo {
+      WindowInfo {
         id: 0,
         os: os_name(),
         title: "".to_owned(),
@@ -60,12 +60,12 @@ impl API for MacosAPI {
         },
         usage: UsageInfo { memory: 0 },
         url: "".to_owned(),
-      })
+      }
     }
   }
 
-  fn get_open_windows(&self) -> napi::Result<Vec<WindowInfo>> {
-    Ok(get_windows_informations(false))
+  fn get_open_windows(&self) -> Vec<WindowInfo> {
+    get_windows_informations(false)
   }
 }
 

@@ -16,7 +16,7 @@ npm i @miniben90/x-win
 yarn add @miniben90/x-win
 ```
 
-## How to use
+## How to use x-win
 
 ### Get information about the currently active window
 
@@ -56,6 +56,18 @@ console.log(currentWindow);
 }
 ```
 
+You can also use asynchronous methods instead. To do so, you just have to use `activeWindowAsync`, for example:
+
+```typescript
+import { activeWindowAsync, type WindowInfo } from '@miniben90/x-win';
+
+activeWindow()
+.then((currentWindow: WindowInfo) => {
+  console.log(currentWindow);
+});
+
+```
+
 ### Get a list of open windows with information
 
 `exemple.ts`:
@@ -92,6 +104,18 @@ console.log(windows);
   },
   url: ""
 }]
+```
+
+You can also use asynchronous methods instead. To do so, you just have to use `openWindowsAsync`, for example:
+
+```typescript
+import { openWindowsAsync, type WindowInfo } from '@miniben90/x-win';
+
+openWindowsAsync()
+.then((windows: WindowInfo[]) => {
+  console.log(windows);
+});
+
 ```
 
 ### Subscribe to get the current active window

@@ -1,6 +1,6 @@
 import test from 'ava';
 import os from 'os';
-import { activeWindow, openWindows, subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } from '../index.js';
+import { activeWindow, activeWindowAsync, openWindows, openWindowsAsync, subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } from '../index.js';
 
 const defaultStruct = {
   os: os.platform(),
@@ -112,4 +112,22 @@ test('unsubscribeAllActiveWindow', async (t) => {
   compareStruct(t, data2);
   compareStruct(t, data3);
   unsubscribeAllActiveWindow();
+})
+
+test('activeWindowAsync', async (t) => {
+  console.time('activeWindowAsync');
+  const data = await activeWindowAsync();
+  console.timeEnd('activeWindowAsync');
+  t.log(data);
+  compareStruct(t, data);
+})
+
+test('openWindowsAsync', async (t) => {
+  console.time('openWindowsAsync');
+  const list = await openWindowsAsync();
+  console.timeEnd('openWindowsAsync');
+  t.log(list);
+  for (const data of list) {
+    compareStruct(t, data);
+  }
 })

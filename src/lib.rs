@@ -1,6 +1,6 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 // #![deny(clippy::all)]
-#![allow(unused_imports)]
+//#![allow(unused_imports)]
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -11,7 +11,7 @@ extern crate objc;
 extern crate core;
 
 use common::{api::API, thread::ThreadManager, x_win_struct::window_info::WindowInfo};
-use napi::{JsFunction, Result};
+use napi::{JsFunction, Result, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 mod common;
@@ -52,9 +52,39 @@ use std::sync::Mutex;
 
 static THREAD_MANAGER: Lazy<Mutex<ThreadManager>> = Lazy::new(|| Mutex::new(ThreadManager::new()));
 
+pub struct OpenWindowsTask;
+pub struct ActiveWindowTask;
+
+#[napi]
+impl Task for OpenWindowsTask {
+  type Output = Vec<WindowInfo>;
+  type JsValue = Vec<WindowInfo>;
+
+  fn compute(&mut self) -> Result<Self::Output> {
+    open_windows()
+  }
+
+  fn resolve(&mut self, _: napi::Env, output: Self::Output) -> Result<Self::JsValue> {
+    Ok(output)
+  }
+}
+
+#[napi]
+impl Task for ActiveWindowTask {
+  type Output = WindowInfo;
+  type JsValue = WindowInfo;
+
+  fn compute(&mut self) -> Result<Self::Output> {
+    active_window()
+  }
+
+  fn resolve(&mut self, _: napi::Env, output: Self::Output) -> Result<Self::JsValue> {
+    Ok(output)
+  }
+}
 
 /**
- * Retrieve information about currently active window.
+ * Retrieve information the about currently active window.
  * Returns an object of `WindowInfo`.
  *
  * # Example
@@ -70,11 +100,32 @@ static THREAD_MANAGER: Lazy<Mutex<ThreadManager>> = Lazy::new(|| Mutex::new(Thre
 #[napi]
 pub fn active_window() -> Result<WindowInfo> {
   let api = init_platform_api();
-  api.get_active_window()
+  Ok(api.get_active_window())
 }
 
 /**
- * Retrieve information about currently open windows.
+ * Retrieve information about the currently active window as a promise.
+ * Returns an object of `WindowInfo`.
+ *
+ * # Example
+ * ```javascript
+ * activeWindow()
+ * .then(currentWindow => {
+ *   console.log(currentWindow);
+ * });
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+ */
+#[napi]
+pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
+  AsyncTask::new(ActiveWindowTask { })
+}
+
+/**
+ * Retrieve information about the currently open windows.
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
@@ -92,7 +143,30 @@ pub fn active_window() -> Result<WindowInfo> {
 #[napi]
 pub fn open_windows() -> Result<Vec<WindowInfo>> {
   let api = init_platform_api();
-  api.get_open_windows()
+  Ok(api.get_open_windows())
+}
+
+/**
+ * Retrieve information about the currently open windows as a promise.
+ * Returns an array of `WindowInfo`, each containing details about a specific open window.
+ *
+ * # Example
+ * ```javascript
+ * openWindows()
+ * .then(windows => {
+ *   for (let i = 0; i < windows.length; i++) {
+ *     console.log(i, windows[i]);
+ *   }
+ * });
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+ */
+#[napi]
+pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
+  AsyncTask::new(OpenWindowsTask { })
 }
 
 /**
@@ -152,7 +226,7 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
           break;
         }
         _ => {
-          let new_current_window = api.get_active_window().unwrap();
+          let new_current_window = api.get_active_window();
           if new_current_window.id.ne(&current_window.id)
             || new_current_window.title.ne(&current_window.title)
             || new_current_window
