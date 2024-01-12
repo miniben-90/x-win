@@ -40,7 +40,7 @@ export interface WindowInfo {
   url: string
 }
 /**
- * Retrieve information about currently active window.
+ * Retrieve information the about currently active window.
  * Returns an object of `WindowInfo`.
  *
  * # Example
@@ -55,7 +55,24 @@ export interface WindowInfo {
 */
 export function activeWindow(): WindowInfo
 /**
- * Retrieve information about currently open windows.
+ * Retrieve information about the currently active window as a promise.
+ * Returns an object of `WindowInfo`.
+ *
+ * # Example
+ * ```javascript
+ * activeWindow()
+ * .then(currentWindow => {
+ *   console.log(currentWindow);
+ * });
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+*/
+export function activeWindowAsync(): Promise<WindowInfo>
+/**
+ * Retrieve information about the currently open windows.
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
@@ -71,6 +88,25 @@ export function activeWindow(): WindowInfo
  * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
 */
 export function openWindows(): Array<WindowInfo>
+/**
+ * Retrieve information about the currently open windows as a promise.
+ * Returns an array of `WindowInfo`, each containing details about a specific open window.
+ *
+ * # Example
+ * ```javascript
+ * openWindows()
+ * .then(windows => {
+ *   for (let i = 0; i < windows.length; i++) {
+ *     console.log(i, windows[i]);
+ *   }
+ * });
+ * ```
+ *
+ * # Information about Electron
+ *
+ * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+*/
+export function openWindowsAsync(): Promise<Array<WindowInfo>>
 /**
  * Subscribe an observer thread to monitor changes in the active window.
  *

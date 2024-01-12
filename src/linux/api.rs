@@ -21,7 +21,7 @@ pub struct LinuxAPI {}
  * Impl. for windows system
  */
 impl API for LinuxAPI {
-  fn get_active_window(&self) -> Result<WindowInfo, napi::Error> {
+  fn get_active_window(&self) -> WindowInfo {
     let (conn, _) = xcb::Connection::connect(None).unwrap();
 
     let setup = conn.get_setup();
@@ -43,13 +43,13 @@ impl API for LinuxAPI {
           let active_window: Option<&x::Window> = active_window.value::<x::Window>().get(0);
           if !active_window.is_none() {
             let active_window: &x::Window = active_window.unwrap();
-            return Ok(get_window_information(&conn, active_window));
+            get_window_information(&conn, active_window)
           }
         }
       }
     }
 
-    Ok(WindowInfo {
+    WindowInfo {
       id: 0,
       os: os_name(),
       title: "".to_string(),
@@ -67,10 +67,10 @@ impl API for LinuxAPI {
       },
       usage: UsageInfo { memory: 0 },
       url: "".to_string(),
-    })
+    }
   }
 
-  fn get_open_windows(&self) -> Result<Vec<WindowInfo>, napi::Error> {
+  fn get_open_windows(&self) -> WindowInfo {
     let mut results: Vec<WindowInfo> = Vec::new();
 
     let (conn, _) = xcb::Connection::connect(None).unwrap();
@@ -106,7 +106,7 @@ impl API for LinuxAPI {
         }
       }
     }
-    Ok(results)
+    results
   }
 }
 

@@ -60,13 +60,12 @@ pub struct WindowsAPI {}
  * Impl. for windows system
  */
 impl API for WindowsAPI {
-  fn get_active_window(&self) -> Result<WindowInfo, napi::Error> {
+  fn get_active_window(&self) -> WindowInfo {
     let hwnd = unsafe { GetForegroundWindow() };
-    let active_window = get_window_information(hwnd);
-    Ok(active_window)
+    get_window_information(hwnd)
   }
 
-  fn get_open_windows(&self) -> Result<Vec<WindowInfo>, napi::Error> {
+  fn get_open_windows(&self) -> Vec<WindowInfo> {
     let mut results: Vec<WindowInfo> = Vec::new();
     let mut open_windows: Vec<HWND> = Vec::new();
 
@@ -87,7 +86,7 @@ impl API for WindowsAPI {
       }
     }
 
-    Ok(results)
+    results
   }
 }
 
