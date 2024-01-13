@@ -1,0 +1,28 @@
+{
+  "name": "@miniben90/x-win-linux-arm64-gnu",
+  "version": "0.0.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "x-win.linux-arm64-gnu.node",
+  "files": [
+    "x-win.linux-arm64-gnu.node"
+  ],
+  "description": "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows.",
+  "author": {
+    "name": "BENKHADRA Hocine",
+    "email": "contact@benkhadra.com",
+    "url": "https://benkhadra.com/"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">= 14"
+  },
+  "repository": "https://github.com/miniben-90/x-win.git",
+  "libc": [
+    "glibc"
+  ]
+}

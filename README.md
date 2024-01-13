@@ -1,8 +1,10 @@
+# @miniben90/x-win
+
 [![CI](https://github.com/miniben-90/x-win/actions/workflows/CI.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/CI.yml)
 [![Node version](https://img.shields.io/node/v/@miniben90/x-win.svg)](https://www.npmjs.com/package/@miniben90/x-win)
 ![npm type definitions](https://img.shields.io/npm/types/@miniben90/x-win)
-
-# @miniben90/x-win
+![NPM License](https://img.shields.io/npm/l/@miniben90/x-win)
+![NPM Version](https://img.shields.io/npm/v/%40miniben90%2Fx-win)
 
 This project uses Rust and napi-rs to make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), and [macOS](#darwin).
 

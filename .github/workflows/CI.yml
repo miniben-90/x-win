@@ -1,9 +1,11 @@
-name: CI
+name: Build & Test
+
 env:
   DEBUG: napi:*
   APP_NAME: x-win
   MACOSX_DEPLOYMENT_TARGET: '10.13'
-'on':
+
+on:
   push:
     branches:
       - main
@@ -16,99 +18,120 @@ env:
       - .editorconfig
       - docs/**
   pull_request: null
+  release:
+    types: [published]
+
 jobs:
-  # create-docker-images:
-  #   name: Build nodejs-rust:lts
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #     - name: Log in to the Container registry
-  #       uses: docker/login-action@v2
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Build & Push ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         file: docker/debian.Dockerfile
-  #         platforms: linux/amd64
-  #         push: true
-  #         tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
-  #     - name: Build & Push ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         file: docker/debian-aarch64.Dockerfile
-  #         platforms: linux/amd64
-  #         push: true
-  #         tags: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian-aarch64
   build:
-    # needs:
-    #   - create-docker-images
     strategy:
       fail-fast: false
       matrix:
+        node-version: [18]
+
         settings:
+          # Build matrix for MacOS (x64)
           - host: macos-latest
             target: x86_64-apple-darwin
             build: |
               yarn build
               strip -x *.node
-          - host: windows-latest
-            build: yarn build
-            target: x86_64-pc-windows-msvc
-          - host: windows-latest
-            build: |
-              yarn build --target i686-pc-windows-msvc
-              yarn test
-            target: i686-pc-windows-msvc
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            # docker: ghcr.io/miniben-90/x-win/nodejs-rust:lts-debian
-            build: |-
-              set -e &&
-              yarn build --target x86_64-unknown-linux-gnu &&
-              strip *.node
-          # - host: ubuntu-latest
-          #   target: riscv64gc-unknown-linux-gnu
-          #   build: |
-          #     sudo apt-get update
-          #     sudo apt-get install -y gcc-riscv64-linux-gnu
-          #     set -e
-          #     yarn build --target riscv64gc-unknown-linux-gnu
-          #     strip *.node
+
+          # Build matrix for MacOS (arm64)
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
               yarn build --target aarch64-apple-darwin
               strip -x *.node
+
+          # Build matrix for Windows (x64)
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            build: yarn build
+
+          # Build matrix for Windows (x32)
+          - host: windows-latest
+            target: i686-pc-windows-msvc
+            build: yarn build --target i686-pc-windows-msvc
+            architecture: 'x86'
+
+          # Build matrix for Windows (arm64)
           - host: windows-latest
             target: aarch64-pc-windows-msvc
             build: yarn build --target aarch64-pc-windows-msvc
-    name: stable - ${{ matrix.settings.target }} - node@18
+
+          # Build for linux (using Ubuntu) (x64)
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            build: |-
+              set -e &&
+              yarn build --target x86_64-unknown-linux-gnu &&
+              strip *.node
+
+          # Build for linux (using Ubuntu) (x64)
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            build: |-
+              set -e &&
+              yarn build --target x86_64-unknown-linux-gnu &&
+              strip *.node
+
+          # Build for linux (using Ubuntu) (arm64)
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            build: |
+              export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+              export PKG_CONFIG_SYSROOT_DIR=/
+              set -e
+              rustup target add aarch64-unknown-linux-gnu
+              yarn build --target aarch64-unknown-linux-gnu
+              strip *.node
+
+    name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - name: (Linux) Install libx11-de
+      # Install lib dev required for compilation of the project
+      - name: (Linux) Install libx11 & libxcb for building
         if: ${{ matrix.settings.host == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
-      - uses: actions/checkout@v3
+
+      # Install deps. to compile the project on aarch64 gnu
+      - name: (Linux Aarch64) Install aarch64 for building cross-platform
+        if:  ${{ matrix.settings.host == 'ubuntu-latest' && matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
+        run: |
+          sudo add-apt-repository universe -y
+          sudo apt upgrade -y
+          sudo dpkg --add-architecture arm64
+          sudo apt install gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu -y
+          sudo apt install libxcb1-dev:arm64 libgcc-s1:arm64 -y
+
+      # Add actions/checkout
+      - uses: actions/checkout@v4
+
+      # Setup node version from matrix.node and install deps
       - name: Setup node
-        uses: actions/setup-node@v3
-        if: ${{ !matrix.settings.docker }}
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
           check-latest: true
           cache: yarn
-      - name: Install
+          architecture: ${{ matrix.settings.architecture || '' }}
+
+      # Setup yarn with ia32 for windows x86
+      - name: Setup node x86
+        if: ${{ matrix.settings.target == 'i686-pc-windows-msvc' }}
+        run: yarn config set supportedArchitectures.cpu "ia32"
+        shell: bash
+
+      # Install Rust version
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        if: ${{ !matrix.settings.docker }}
         with:
           toolchain: stable
           targets: ${{ matrix.settings.target }}
+
+      # Set Cache cargo
       - name: Cache cargo
         uses: actions/cache@v3
         with:
@@ -119,47 +142,32 @@ jobs:
             .cargo-cache
             target/
           key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
-      - uses: goto-bus-stop/setup-zig@v2
-        if: ${{ matrix.settings.target == 'armv7-unknown-linux-gnueabihf' }}
-        with:
-          version: 0.10.1
+
+      # Setup toolchain
       - name: Setup toolchain
         run: ${{ matrix.settings.setup }}
         if: ${{ matrix.settings.setup }}
         shell: bash
-      - name: Setup node x86
-        if: matrix.settings.target == 'i686-pc-windows-msvc'
-        run: yarn config set supportedArchitectures.cpu "ia32"
-        shell: bash
+
+      # Install deps
       - name: Install dependencies
         run: yarn install
-      - name: Setup node x86
-        uses: actions/setup-node@v3
-        if: matrix.settings.target == 'i686-pc-windows-msvc'
-        with:
-          node-version: 18
-          check-latest: true
-          cache: yarn
-          architecture: x86
-      - name: Build in docker
-        uses: addnab/docker-run-action@v3
-        if: ${{ matrix.settings.docker }}
-        with:
-          image: ${{ matrix.settings.docker }}
-          options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
-          run: ${{ matrix.settings.build }}
+
+      # Build the project
       - name: Build
         run: ${{ matrix.settings.build }}
-        if: ${{ !matrix.settings.docker }}
         shell: bash
+
+      # Upload artifact for the next steps (macos and test)
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
-  test-macOS-windows-binding:
-    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
+
+  test:
+    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     needs:
       - build
     strategy:
@@ -168,146 +176,182 @@ jobs:
         settings:
           - host: windows-latest
             target: x86_64-pc-windows-msvc
-        node:
-          # - '14'
-          # - '16'
-          - '18'
-          - '20'
+
+          - host: windows-latest
+            target: i686-pc-windows-msvc
+            architecture: 'x86'
+
+          - host: macos-latest
+            target: x86_64-apple-darwin
+
+        node-version: [18, 20]
+
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      # Setup node version from matrix.node and install deps
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ matrix.node-version }}
           check-latest: true
           cache: yarn
+          architecture: ${{ matrix.settings.architecture || '' }}
+
+      # Setup yarn with ia32 for windows x86
+      - name: Setup node x86
+        if: ${{ matrix.settings.target == 'i686-pc-windows-msvc' }}
+        run: yarn config set supportedArchitectures.cpu "ia32"
+        shell: bash
+
+      # Install deps
       - name: Install dependencies
         run: yarn install
+
+      # Download artifacts
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
           path: .
-      - name: List packages
-        run: ls -R .
-        shell: bash
+
       - name: Test bindings
         run: yarn test
-  # test-linux-x64-gnu-binding:
-  #   name: Test bindings on aarch64-unknown-linux-gnu - node@${{ matrix.node }}
-  #   needs:
-  #     - build
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       node:
-  #         - '14'
-  #         - '16'
-  #         - '18'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
-  #     - uses: actions/checkout@v3
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: bindings-aarch64-unknown-linux-gnu
-  #         path: .
-  #     - name: List packages
-  #       run: ls -R .
-  #       shell: bash
-  #     - name: Cache NPM dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: .yarn/cache
-  #         key: npm-cache-test-linux-aarch64-gnu-${{ matrix.node }}
-  #     - name: Install dependencies
-  #       run: |
-  #         yarn config set supportedArchitectures.cpu "arm64"
-  #         yarn config set supportedArchitectures.libc "glibc"
-  #         yarn install
-  #     - name: Setup and run tests
-  #       uses: addnab/docker-run-action@v3
-  #       with:
-  #         image: ghcr.io/miniben-90/x-win/nodejs:aarch64-${{ matrix.node }}
-  #         options: '-v ${{ github.workspace }}:/build -w /build'
-  #         run: |
-  #           set -e
-  #           yarn test
-  #           ls -la
+
   universal-macOS:
     name: Build universal macOS binary
     needs:
       - build
+      - test
+
     runs-on: macos-latest
+    strategy:
+      matrix:
+        node: [18]
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ matrix }}
           check-latest: true
           cache: yarn
+
       - name: Install dependencies
         run: yarn install
+
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-apple-darwin
           path: artifacts
+
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-apple-darwin
           path: artifacts
+
       - name: Combine binaries
         run: yarn universal
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: bindings-universal-apple-darwin
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
+
   publish:
-    name: Publish
+    if: ${{ github.event_name == 'release' && github.ref_type == 'tag' }}
+    name: Publish ${{ github.ref_name }} (${{ github.ref }})
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     needs:
-      - test-macOS-windows-binding
-      # - test-linux-x64-gnu-binding
+      - build
+      - test
       - universal-macOS
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      # Setup node for publishing on npmjs
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
           check-latest: true
           cache: yarn
-      - name: Install dependencies
-        run: yarn install
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@miniben90'
+
+      # Parse version from GITHUB_REF
+      - name: Set version to package.json 
+        run: |
+          TAG=${GITHUB_REF##*/}
+          VERSION=${TAG#v}
+          yarn version ${VERSION}
+
+      # Download artifacts from build part
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      # Move artifacts at there places
       - name: Move artifacts
         run: yarn artifacts
-      - name: List packages
-        run: ls -R ./npm
-        shell: bash
-      - name: Publish
-        run: |
-          if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
-          then
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-            npm publish --access public
-          elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
-          then
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-            npm publish --tag next --access public
-          else
-            echo "Not a release, skipping publish"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish packages on npmjs
+      # - name: Publish packages
+      #   run: npm publish --access public
+
+      # - run: npm ci
+      # - run: npm publish --access public
+
+  # publish:
+  #   name: Publish
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - test-macOS-windows-binding
+  #     # - test-linux-x64-gnu-binding
+  #     - universal-macOS
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 18
+  #         check-latest: true
+  #         cache: yarn
+  #     - name: Install dependencies
+  #       run: yarn install
+  #     - name: Download all artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: artifacts
+  #     - name: Move artifacts
+  #       run: yarn artifacts
+  #     - name: List packages
+  #       run: ls -R ./npm
+  #       shell: bash
+  #     - name: Publish
+  #       run: |
+  #         if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
+  #         then
+  #           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+  #           npm publish --access public
+  #         elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
+  #         then
+  #           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+  #           npm publish --tag next --access public
+  #         else
+  #           echo "Not a release, skipping publish"
+  #         fi
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
