@@ -70,33 +70,33 @@ jobs:
           # Build for linux (using Ubuntu) (arm64)
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: |
-              export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
-              export PKG_CONFIG_SYSROOT_DIR=/
               set -e
-              rustup target add aarch64-unknown-linux-gnu
+              sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
               yarn build --target aarch64-unknown-linux-gnu
-              strip *.node
+              aarch64-unknown-linux-gnu-strip *.node
 
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
     steps:
-      # Install lib dev required for compilation of the project
-      - name: (Linux) update dist
-        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
-        run: sudo apt-get update
+      # # Install lib dev required for compilation of the project
+      # - name: (Linux) update dist
+      #   if: ${{ matrix.settings.host == 'ubuntu-latest' && !matrix.settings.docker }}
+      #   run: sudo apt-get update
 
-      # Install deps. to compile the project on aarch64 gnu
-      - name: (Linux Aarch64) Install aarch64 for building cross-platform
-        if:  ${{ matrix.settings.host == 'ubuntu-latest' && matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get install -y gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+      # # Install deps. to compile the project on aarch64 gnu
+      # - name: (Linux Aarch64) Install aarch64 for building cross-platform
+      #   if:  ${{ matrix.settings.host == 'ubuntu-latest' && matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
+      #   run: |
+      #     sudo dpkg --add-architecture arm64
+      #     sudo apt-get install -y gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
         if: ${{ matrix.settings.host == 'ubuntu-latest' }}
         run: |
+          sudo apt-get update
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
 
       # Add actions/checkout
@@ -104,6 +104,7 @@ jobs:
 
       # Setup node version from matrix.node and install deps
       - name: Setup node
+        if: ${{ !matrix.settings.docker }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -119,6 +120,7 @@ jobs:
 
       # Install Rust version
       - name: Install Rust
+        if: ${{ !matrix.settings.docker }}
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
@@ -136,20 +138,25 @@ jobs:
             target/
           key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
 
-      # Setup toolchain
-      - name: Setup toolchain
-        run: ${{ matrix.settings.setup }}
-        if: ${{ matrix.settings.setup }}
-        shell: bash
-
       # Install deps
       - name: Install dependencies
+        if: ${{ !matrix.settings.docker }}
         run: yarn install
 
       # Build the project
       - name: Build
+        if: ${{ !matrix.settings.docker }}
         run: ${{ matrix.settings.build }}
         shell: bash
+
+      # Build docker
+      - name: Build (Docker)
+        if: ${{ matrix.settings.docker }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ matrix.settings.docker }}
+          options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
+          run: ${{ matrix.settings.build }}
 
       # Upload artifact for the next steps (macos and test)
       - name: Upload artifact
