@@ -67,14 +67,6 @@ jobs:
               yarn build --target x86_64-unknown-linux-gnu &&
               strip *.node
 
-          # Build for linux (using Ubuntu) (x64)
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            build: |-
-              set -e &&
-              yarn build --target x86_64-unknown-linux-gnu &&
-              strip *.node
-
           # Build for linux (using Ubuntu) (arm64)
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
@@ -89,22 +81,21 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
     steps:
+      # Install deps. to compile the project on aarch64 gnu
+      - name: (Linux Aarch64) Install aarch64 for building cross-platform
+        if:  ${{ matrix.settings.host == 'ubuntu-latest' && matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
+        run: |
+          sudo add-apt-repository universe -y
+          sudo apt-get upgrade -y
+          sudo dpkg --add-architecture arm64
+          sudo apt-get install -y gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
         if: ${{ matrix.settings.host == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
-
-      # Install deps. to compile the project on aarch64 gnu
-      - name: (Linux Aarch64) Install aarch64 for building cross-platform
-        if:  ${{ matrix.settings.host == 'ubuntu-latest' && matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
-        run: |
-          sudo add-apt-repository universe -y
-          sudo apt upgrade -y
-          sudo dpkg --add-architecture arm64
-          sudo apt install gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu -y
-          sudo apt install libxcb1-dev:arm64 libgcc-s1:arm64 -y
 
       # Add actions/checkout
       - uses: actions/checkout@v4
