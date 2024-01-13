@@ -73,7 +73,7 @@ jobs:
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
             build: |-
               set -e &&
-              sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev pkg-config libxcb-util-dev libxcb1-dev libxkbcommon-dev &&
+              sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev pkg-config libxcb1 libxcb-util-dev libxcb1-dev libxkbcommon-dev &&
               yarn install &&
               export PKG_CONFIG_SYSROOT_DIR="/usr/aarch64-linux-gnu" &&
               export PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}" &&
