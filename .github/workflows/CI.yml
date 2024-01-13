@@ -81,6 +81,11 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
     steps:
+      # Install lib dev required for compilation of the project
+      - name: (Linux) update dist
+        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
+        run: sudo apt-get update
+
       # Install deps. to compile the project on aarch64 gnu
       - name: (Linux Aarch64) Install aarch64 for building cross-platform
         if:  ${{ matrix.settings.host == 'ubuntu-latest' && matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
@@ -101,7 +106,6 @@ jobs:
       - name: (Linux) Install libx11 & libxcb for building
         if: ${{ matrix.settings.host == 'ubuntu-latest' }}
         run: |
-          sudo apt-get update
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
 
       # Add actions/checkout
