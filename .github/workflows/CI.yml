@@ -220,6 +220,10 @@ jobs:
           name: bindings-${{ matrix.settings.target }}
           path: .
 
+      - name: Open finder to have an active window (MacOS)
+        if: ${{ matrix.settings.host == 'macos-latest' }}
+        run: open .
+
       - name: Test bindings
         run: yarn test
 
