@@ -71,10 +71,11 @@ jobs:
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-            build: |
-              set -e
-              sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
-              yarn build --target aarch64-unknown-linux-gnu
+            build: |-
+              set -e &&
+              sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev &&
+              yarn install &&
+              yarn build --target aarch64-unknown-linux-gnu &&
               aarch64-unknown-linux-gnu-strip *.node
 
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
