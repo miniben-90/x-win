@@ -232,19 +232,14 @@ jobs:
     needs:
       - build
       - test
-
     runs-on: macos-latest
-    strategy:
-      matrix:
-        node: [18]
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix }}
+          node-version: 18
           check-latest: true
           cache: yarn
 
