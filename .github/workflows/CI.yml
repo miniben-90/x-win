@@ -92,15 +92,6 @@ jobs:
         run: |
           sudo dpkg --add-architecture arm64
           sudo apt-get install -y gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
-          export CMAKE_SYSTEM_NAME=Linux
-          export TARGET=aarch64-linux-gnu
-          export TARGET_AR=aarch64-linux-gnu-ar
-          export TARGET_CC=aarch64-linux-gnu-gcc
-          export TARGET_CXX=aarch64-linux-gnu-g++
-          export TARGET_RANLIB=aarch64-linux-gnu-ranlib
-          export TARGET_CPP=aarch64-linux-gnu-cpp
-          export TARGET_LD=aarch64-linux-gnu-ld
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=$TARGET_CC
 
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
