@@ -275,6 +275,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      TAG: ${{ github.ref_name }}
     needs:
       - build
       - test
@@ -295,7 +296,6 @@ jobs:
       # Parse version from GITHUB_REF
       - name: Set version to package.json 
         run: |
-          TAG=${GITHUB_REF##*/}
           VERSION=${TAG#v}
           yarn version ${VERSION}
 
