@@ -295,9 +295,7 @@ jobs:
 
       # Parse version from GITHUB_REF
       - name: Set version to package.json 
-        run: |
-          VERSION=${TAG#v}
-          yarn version ${VERSION}
+        run: yarn version ${TAG#v}
 
       # Download artifacts from build part
       - name: Download all artifacts
