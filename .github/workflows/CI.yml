@@ -292,10 +292,10 @@ jobs:
           cache: yarn
           registry-url: 'https://registry.npmjs.org'
           scope: '@miniben90'
-
-      # Parse version from GITHUB_REF
+      
+      # Update package.json and Cargo.toml version
       - name: Set version to package.json 
-        run: yarn version ${TAG#v}
+        run: node .scripts/before-publish.cjs
 
       # Download artifacts from build part
       - name: Download all artifacts
@@ -310,49 +310,3 @@ jobs:
       # Publish packages on npmjs
       # - name: Publish packages
       #   run: npm publish --access public
-
-      # - run: npm ci
-      # - run: npm publish --access public
-
-  # publish:
-  #   name: Publish
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - test-macOS-windows-binding
-  #     # - test-linux-x64-gnu-binding
-  #     - universal-macOS
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Setup node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 18
-  #         check-latest: true
-  #         cache: yarn
-  #     - name: Install dependencies
-  #       run: yarn install
-  #     - name: Download all artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         path: artifacts
-  #     - name: Move artifacts
-  #       run: yarn artifacts
-  #     - name: List packages
-  #       run: ls -R ./npm
-  #       shell: bash
-  #     - name: Publish
-  #       run: |
-  #         if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
-  #         then
-  #           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-  #           npm publish --access public
-  #         elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
-  #         then
-  #           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-  #           npm publish --tag next --access public
-  #         else
-  #           echo "Not a release, skipping publish"
-  #         fi
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
