@@ -312,5 +312,5 @@ jobs:
         run: yarn artifacts
 
       # Publish packages on npmjs
-      # - name: Publish packages
-      #   run: npm publish --access public
+      - name: Publish packages
+        run: npm publish --access public
