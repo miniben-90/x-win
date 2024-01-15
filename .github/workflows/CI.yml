@@ -239,7 +239,10 @@ jobs:
         with:
           image: ${{ matrix.settings.docker }}
           options: '--user 0:0 -v ${{ github.workspace }}:/test/x-win -w /test-x-win'
-          run: sh /test/x-win/docker-ubuntu-install.sh ${{ matrix.node-version }} && yarn test
+          shell: bash
+          run: |
+            sh /test/x-win/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            yarn test
 
   universal-macOS:
     name: Build universal macOS binary
