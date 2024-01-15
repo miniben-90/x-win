@@ -10,16 +10,9 @@ sudo apt-get install -y nodejs
 # Install yarn glboal
 npm install --global yarn
 
-# Get yarn version
-yarn --version
-
-# curl https://sh.rustup.rs -sSf | sh -s -- -y
-# . $HOME/.cargo/env
-# cargo --version
-
 curl -L -o /tmp/firefox.tar.bz2 "https://download.mozilla.org/?product=firefox-latest&os=linux64"
 
-sudo tar xjf tmp/firefox.tar.bz2 -C /opt/
+sudo tar xjf /tmp/firefox.tar.bz2 -C /opt/
 
 /opt/firefox/firefox --safe-mode https://github.com/ &
 
