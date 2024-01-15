@@ -188,9 +188,9 @@ jobs:
           - host: macos-latest
             target: x86_64-apple-darwin
 
-          # - host: ubuntu-latest
-          #   target: x86_64-unknown-linux-gnu
-          #   image: miniben90/ubuntu-dummy-desktop:latest
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            image: miniben90/ubuntu-dummy-desktop:latest
 
         node-version: [18, 20]
 
@@ -200,7 +200,7 @@ jobs:
 
       # Setup node version from matrix.node and install deps
       - name: Setup node
-        # if: ${{ !matrix.settings.image }}
+        if: ${{ !matrix.settings.image }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -230,19 +230,24 @@ jobs:
         run: open .
 
       - name: Test bindings
-        # if: ${{ !matrix.settings.image }}
+        if: ${{ !matrix.settings.image }}
         run: yarn test
 
-      # - name: Test bindings on docker
-      #   if: ${{ matrix.settings.image }}
-      #   uses: addnab/docker-run-action@v3
-      #   with:
-      #     image: ${{ matrix.settings.image }}
-      #     options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-install.sh:/usr/local/docker-ubuntu-install.sh
-      #     run: |
-      #       ls -ltrh /usr/local/docker-ubuntu-install.sh
-      #       sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
-      #       yarn test
+      - name: Test bindings on docker
+        if: ${{ matrix.settings.image }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ matrix.settings.image }}
+          options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-install.sh:/usr/local/docker-ubuntu-install.sh
+          run: |
+            Xvfb :0 &
+            sleep 1
+            gpg-agent --daemon
+            sleep 1
+            xfce4-session &
+            sleep 1
+            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            yarn test
 
   universal-macOS:
     name: Build universal macOS binary
