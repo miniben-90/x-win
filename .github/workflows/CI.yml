@@ -188,6 +188,10 @@ jobs:
           - host: macos-latest
             target: x86_64-apple-darwin
 
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            image: miniben90/ubuntu-dummy-desktop:latest
+
         node-version: [18, 20]
 
     runs-on: ${{ matrix.settings.host }}
@@ -196,6 +200,7 @@ jobs:
 
       # Setup node version from matrix.node and install deps
       - name: Setup node
+        if: ${{ !matrix.settings.image }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -225,7 +230,16 @@ jobs:
         run: open .
 
       - name: Test bindings
+        if: ${{ !matrix.settings.image }}
         run: yarn test
+
+      - name: Test bindings on docker
+        if: ${{ matrix.settings.image }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ matrix.settings.docker }}
+          options: '--user 0:0 -v ${{ github.workspace }}:/test/x-win -w /test-x-win'
+          run: sh /test/x-win/docker-ubuntu-install.sh ${{ matrix.node-version }} && yarn test
 
   universal-macOS:
     name: Build universal macOS binary
