@@ -240,8 +240,9 @@ jobs:
           image: ${{ matrix.settings.docker }}
           options: '--user 0:0 -v ${{ github.workspace }}:/test/x-win -w /test-x-win'
           shell: bash
-          run: |
-            /test/x-win/.github/docker-ubuntu-install.sh "${{ matrix.node-version }}"
+          run: |-
+            set -e &&
+            sh /test/x-win/.github/docker-ubuntu-install.sh ${{ matrix.node-version }} &&
             yarn test
 
   universal-macOS:
