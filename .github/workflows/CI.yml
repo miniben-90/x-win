@@ -241,7 +241,7 @@ jobs:
           options: '--user 0:0 -v ${{ github.workspace }}:/test/x-win -w /test-x-win'
           shell: bash
           run: |
-            sh /test/x-win/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            /test/x-win/.github/docker-ubuntu-install.sh ${{ matrix.node-version }}
             yarn test
 
   universal-macOS:
