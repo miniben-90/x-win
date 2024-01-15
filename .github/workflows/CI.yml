@@ -237,12 +237,9 @@ jobs:
         if: ${{ matrix.settings.image }}
         uses: addnab/docker-run-action@v3
         with:
-          image: ${{ matrix.settings.docker }}
-          options: '--user 0:0 -v ${{ github.workspace }}:/test/x-win -w /test-x-win'
-          shell: bash
-          run: |-
-            set -e &&
-            sh /test/x-win/.github/docker-ubuntu-install.sh ${{ matrix.node-version }} &&
+          image: ${{ matrix.settings.image }}
+          run: |
+            sh ./.github/docker-ubuntu-install.sh ${{ matrix.node-version }}
             yarn test
 
   universal-macOS:
