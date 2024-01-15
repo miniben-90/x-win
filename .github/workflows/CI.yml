@@ -238,8 +238,10 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ matrix.settings.image }}
+          options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-install.sh:/usr/local/docker-ubuntu-install.sh
           run: |
-            sh ./.github/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            ls -ltrh /usr/local/docker-ubuntu-install.sh
+            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
             yarn test
 
   universal-macOS:
