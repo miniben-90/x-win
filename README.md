@@ -161,7 +161,7 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 > ⚠️**Warning**
 > Recovery url is not available on linux
 
-# Darwin
+# Darwin (version 10.6+)
 
 ## Screen recording permission introduced in macOS 10.15 Catalina
 
