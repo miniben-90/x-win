@@ -2,8 +2,8 @@
 
 use std::process::Command;
 
-use cocoa::base::{id, nil};
-use cocoa::foundation::{NSAutoreleasePool, NSString, NSUInteger, NSURL};
+use cocoa::base::id;
+use cocoa::foundation::{NSString, NSURL};
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::boolean::CFBoolean;
@@ -29,6 +29,8 @@ use crate::common::{
     window_position::WindowPosition,
   },
 };
+
+use objc::runtime::{BOOL, NO};
 
 pub struct MacosAPI {}
 
@@ -76,27 +78,25 @@ fn os_name() -> String {
   r#"darwin"#.to_owned()
 }
 
-// fn get_window_information
-
-fn get_active_window_pid() -> NSUInteger {
-  unsafe {
-    let _pool = NSAutoreleasePool::new(nil);
-    let _shared_app_id: id = msg_send![class!(NSApplication), sharedApplication];
-    // NSApplication::finishLaunching(shared_app_id);
-    let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
-    let frontapp: id = msg_send![workspace, frontmostApplication];
-    let active_window_pid: NSUInteger = msg_send![frontapp, processIdentifier];
-    return active_window_pid;
-  }
-}
+// fn get_active_window_pid() -> NSUInteger {
+//   unsafe {
+//     let _pool = NSAutoreleasePool::new(nil);
+//     let _shared_app_id: id = msg_send![class!(NSApplication), sharedApplication];
+//     // NSApplication::finishLaunching(shared_app_id);
+//     let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
+//     let frontapp: id = msg_send![workspace, frontmostApplication];
+//     let active_window_pid: NSUInteger = msg_send![frontapp, processIdentifier];
+//     return active_window_pid;
+//   }
+// }
 
 fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
   let mut windows: Vec<WindowInfo> = Vec::new();
-  let mut active_window_pid: u64 = 0;
+  // let mut active_window_pid: u64 = 0;
 
-  if only_active {
-    active_window_pid = get_active_window_pid();
-  }
+  // if only_active {
+  //   active_window_pid = get_active_window_pid();
+  // }
 
   let options = kCGWindowListOptionOnScreenOnly
     | kCGWindowListExcludeDesktopElements
@@ -140,9 +140,9 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let process_id = cfd.get(unsafe { kCGWindowOwnerPID });
     let process_id = process_id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
 
-    if only_active && process_id.ne(&(active_window_pid as i64)) {
-      continue;
-    }
+    // if only_active && process_id.ne(&(active_window_pid as i64)) {
+    //   continue;
+    // }
 
     let app: id = unsafe {
       msg_send![
@@ -150,6 +150,15 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
         runningApplicationWithProcessIdentifier: process_id
       ]
     };
+
+    let is_not_active: bool = unsafe {
+      let is_active: BOOL = msg_send![app, isActive];
+      is_active == NO
+    };
+
+    if only_active && is_not_active {
+      continue;
+    }
 
     let bundle_identifier: id = unsafe { msg_send![app, bundleIdentifier] };
     let bundle_identifier = unsafe { NSString::UTF8String(bundle_identifier) };
@@ -224,7 +233,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       url,
     });
 
-    if only_active && process_id.ne(&(active_window_pid as i64)) {
+    if only_active && is_not_active {
       break;
     }
   }
