@@ -427,7 +427,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
 
 fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
   unsafe {
-    if CoInitializeEx(None, COINIT_MULTITHREADED).is_ok() {
+    if CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok() {
       let automation: Result<IUIAutomation, _> = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL);
       if automation.is_ok() {
         let automation: IUIAutomation = automation.unwrap();
@@ -435,13 +435,11 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
         if element.is_ok() {
           let element: IUIAutomationElement = element.unwrap();
           /* Chromium part to get url from search bar */
-          if exec_name.contains(&"firefox") {
-            return get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned());
-          } else if exec_name.contains(&"msedge") {
-            return get_url_from_automation_id(&automation, &element, "view_1020".to_owned());
-          } else {
-            return get_url_for_chromium(&automation, &element);
-          }
+          return match &exec_name.to_lowercase() {
+            x if x.contains(&"firefox") => get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned()),
+            x if x.contains(&"msedge") => get_url_from_automation_id(&automation, &element, "view_1020".to_owned()),
+            _ => get_url_for_chromium(&automation, &element)
+        };
         }
       }
     }
