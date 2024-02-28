@@ -1,9 +1,6 @@
 #![deny(unused_imports)]
 
-use windows::{
-  core::w,
-  Win32::System::Variant::{VARIANT, VARIANT_0, VARIANT_0_0, VARIANT_0_0_0, VT_BSTR, VT_I4},
-};
+use windows::core::{w, VARIANT};
 
 use crate::common::{
   api::API,
@@ -97,7 +94,9 @@ fn is_fullscreen(hwnd: HWND) -> BOOL {
   let mut lpwndpl: WINDOWPLACEMENT = WINDOWPLACEMENT::default();
 
   unsafe {
-    if GetWindowPlacement(hwnd, &mut lpwndpl).is_ok() && SW_SHOWMAXIMIZED.0.eq(&(lpwndpl.showCmd as i32)) {
+    if GetWindowPlacement(hwnd, &mut lpwndpl).is_ok()
+      && SW_SHOWMAXIMIZED.0.eq(&(lpwndpl.showCmd as i32))
+    {
       return true.into();
     }
   }
@@ -436,15 +435,20 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
           let element: IUIAutomationElement = element.unwrap();
           /* Chromium part to get url from search bar */
           return match &exec_name.to_lowercase() {
-            x if x.contains(&"firefox") => get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned()),
-            x if x.contains(&"msedge") => get_url_from_automation_id(&automation, &element, "view_1020".to_owned()),
-            _ => get_url_for_chromium(&automation, &element)
-        };
+            x if x.contains(&"firefox") => {
+              get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())
+            }
+            x if x.contains(&"msedge") => {
+              get_url_from_automation_id(&automation, &element, "view_1020".to_owned())
+            }
+            _ => get_url_for_chromium(&automation, &element),
+          };
         }
       }
     }
   }
-  return "".to_string();
+
+  "".to_string()
 }
 
 /**
@@ -456,123 +460,84 @@ fn get_url_from_automation_id(
   automation_id: String,
 ) -> String {
   unsafe {
-    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from(automation_id));
-    let mut variant2: VARIANT_0_0 = VARIANT_0_0::default();
-    variant2.vt = VT_BSTR;
-    variant2.Anonymous = variant1.clone();
-    let mut variant3 = VARIANT_0::default();
-    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
-    let variant = VARIANT {
-      Anonymous: variant3.clone(),
-    };
-
+    let variant = VARIANT::from(::windows::core::BSTR::from(automation_id));
     let condition = automation
-      .CreatePropertyCondition(UIA_AutomationIdPropertyId, variant)
+      .CreatePropertyCondition(UIA_AutomationIdPropertyId, &variant)
       .unwrap();
-
     let test = element.FindFirst(TreeScope_Subtree, &condition);
     if test.is_ok() {
       let test = test.unwrap();
       let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
       if variant.is_ok() {
         let variant = variant.unwrap();
-        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
-          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
+        if !variant.is_empty() {
+          return variant.to_string();
         }
       }
     }
   }
-  return "".to_string();
+
+  "".to_string()
 }
 
 /**
- * Loop to find out the url
+ * Get url from element id 0xC36E
  */
 fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
   unsafe {
-    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.lVal = 0xC36E;
-    let mut variant2 = VARIANT_0_0::default();
-    variant2.vt = VT_I4;
-    variant2.Anonymous = variant1.clone();
-    let mut variant3 = VARIANT_0::default();
-    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
-    let variant = VARIANT {
-      Anonymous: variant3.clone(),
-    };
-
+    let variant = VARIANT::from(0xC36E);
     let condition = automation
-      .CreatePropertyCondition(UIA_ControlTypePropertyId, variant)
+      .CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)
       .unwrap();
-
     let test = element.FindFirst(TreeScope_Children, &condition);
-
     if test.is_ok() {
       let test = test.unwrap();
       let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
       if variant.is_ok() {
         let variant = variant.unwrap();
-        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
-          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
+        if !variant.is_empty() {
+          return variant.to_string();
         }
       }
     }
   }
-  return get_url_for_chromium_from_ctrlk(automation, element);
+
+  // If not found fallback to use ctrl+l to get it
+  get_url_for_chromium_from_ctrlk(automation, element)
 }
 
-/** Fallback to search url from ctrl+l keyboard access */
-fn get_url_for_chromium_from_ctrlk(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
+/** Fallback to recover url from ctrl+l keyboard access */
+fn get_url_for_chromium_from_ctrlk(
+  automation: &IUIAutomation,
+  element: &IUIAutomationElement,
+) -> String {
   unsafe {
-    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.lVal = 0xC354;
-    let mut variant2 = VARIANT_0_0::default();
-    variant2.vt = VT_I4;
-    variant2.Anonymous = variant1.clone();
-    let mut variant3 = VARIANT_0::default();
-    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
-    let variant = VARIANT {
-      Anonymous: variant3.clone(),
-    };
-
+    let variant = VARIANT::from(0xC354);
     let condition1 = automation
-      .CreatePropertyCondition(UIA_ControlTypePropertyId, variant)
+      .CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)
       .unwrap();
-
-    let mut variant1: VARIANT_0_0_0 = VARIANT_0_0_0::default();
-    variant1.bstrVal = ::std::mem::ManuallyDrop::new(::windows::core::BSTR::from("Ctrl+L"));
-    let mut variant2: VARIANT_0_0 = VARIANT_0_0::default();
-    variant2.vt = VT_BSTR;
-    variant2.Anonymous = variant1.clone();
-    let mut variant3 = VARIANT_0::default();
-    variant3.Anonymous = ::std::mem::ManuallyDrop::new(variant2.into());
-    let variant = VARIANT {
-      Anonymous: variant3.clone(),
-    };
-
+    let variant = VARIANT::from(::windows::core::BSTR::from("Ctrl+L"));
     let condition2 = automation
-    .CreatePropertyCondition(UIA_AccessKeyPropertyId, variant)
-    .unwrap();
-
-    let condition = automation.CreateAndCondition(&condition1, &condition2).unwrap();
-
+      .CreatePropertyCondition(UIA_AccessKeyPropertyId, &variant)
+      .unwrap();
+    let condition = automation
+      .CreateAndCondition(&condition1, &condition2)
+      .unwrap();
     let test = element.FindFirst(TreeScope_Subtree, &condition);
-
     if test.is_ok() {
       let test = test.unwrap();
       let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
       if variant.is_ok() {
         let variant = variant.unwrap();
-        if !variant.Anonymous.Anonymous.Anonymous.bstrVal.is_empty() {
-          return variant.Anonymous.Anonymous.Anonymous.bstrVal.to_string();
+        if !variant.is_empty() {
+          return variant.to_string();
         }
       }
     }
   }
-  return "".to_owned();
-}
 
+  "".to_owned()
+}
 
 fn is_browser(browser_name: &str) -> bool {
   match browser_name {

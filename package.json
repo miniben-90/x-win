@@ -41,11 +41,12 @@
     "open"
   ],
   "devDependencies": {
-    "@napi-rs/cli": "^2.17.0",
-    "ava": "^6.0.1"
+    "@napi-rs/cli": "^2.18.0",
+    "ava": "^6.1.1"
   },
   "ava": {
-    "timeout": "3m"
+    "timeout": "3m",
+    "failFast": true
   },
   "engines": {
     "node": ">= 14"
