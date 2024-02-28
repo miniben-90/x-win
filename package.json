@@ -47,7 +47,6 @@
   "ava": {
     "timeout": "3m",
     "failFast": true
-
   },
   "engines": {
     "node": ">= 14"
