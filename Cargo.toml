@@ -39,7 +39,6 @@ windows = { version = "0.54.0", features = [
 [target.'cfg(target_os = "linux")'.dependencies]
 xcb = "1.3.0"
 x11 = { version = "2.21.0", features = ["xlib"] }
-zbus = { version = "4.0.1" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.25.0"

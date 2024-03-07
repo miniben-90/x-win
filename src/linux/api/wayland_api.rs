@@ -5,22 +5,30 @@ use std::{
   sync::{Arc, Mutex},
 };
 
-use zbus::{blocking::Connection, dbus_interface, dbus_proxy, fdo};
-
 use crate::{
   common::{api::API, x_win_struct::window_info::WindowInfo},
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
 };
 
-use super::common_api::init_entity;
+use super::common_api::{get_gnome_version, init_entity};
 
-const XWIN_WAYLAND_EXTENSION_SCRIPT: &str = include_str!("wayland-extension.js");
+use once_cell::sync::Lazy;
 
-// #[dbus_interface(name = "org.gnome.Shell.Extensions.XWinWaylandExtension")]
-// impl trait WaylandExtension {
-//   fn get_active_window() -> String;
-//   fn get_open_windows() -> String;
-// }
+struct GnomeVersion {
+  version: String,
+  use_eval: bool,
+}
+
+impl GnomeVersion {
+    fn new() -> Self {
+      let version = get_gnome_version();
+      let ver: u32 = version.split(".").collect::<Vec<&str>>()[0].parse().unwrap_or(999);
+      let use_eval = ver < 41;
+      Self { version, use_eval }
+    }
+}
+
+static GNOME_SINGLETON: Lazy<Mutex<GnomeVersion>> = Lazy::new(|| Mutex::new(GnomeVersion::new()));
 
 /**
  * Struct to use similar as API to get active window and open windows for XOrg desktop

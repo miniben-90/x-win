@@ -5,7 +5,9 @@ use std::{
   io::Read,
 };
 
-use crate::common::{x_win_struct::window_info::WindowInfo, api::empty_entity};
+use std::process::Command;
+
+use crate::common::{api::empty_entity, x_win_struct::window_info::WindowInfo};
 
 /**
  * To know the os
@@ -49,4 +51,20 @@ pub fn init_entity() -> WindowInfo {
   let mut window_info: WindowInfo = empty_entity();
   window_info.os = os_name();
   window_info
+}
+
+pub fn get_gnome_version() -> String {
+  let output = Command::new("gnome-shell")
+    .arg("--version")
+    .output()
+    .unwrap();
+  if output.status.success() {
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let version = stdout
+      .split_whitespace()
+      .nth(2)
+      .unwrap_or("999");
+    return version.to_owned();
+  }
+  "999".to_owned()
 }
