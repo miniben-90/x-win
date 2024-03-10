@@ -3,7 +3,9 @@
 mod x11_api;
 mod common_api;
 mod wayland_api;
-mod gnome_shell_extension;
+mod gnome_shell;
+mod wayland_eval_api;
+mod wayland_new_api;
 
 use x11_api::X11Api;
 use wayland_api::WaylandApi;

@@ -10,7 +10,7 @@ use crate::{
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
 };
 
-use super::common_api::{get_gnome_version, init_entity};
+use super::{common_api::{get_gnome_version, init_entity}, gnome_shell, wayland_eval_api, wayland_new_api};
 
 use once_cell::sync::Lazy;
 
@@ -40,14 +40,20 @@ pub struct WaylandApi {}
  */
 impl API for WaylandApi {
   fn get_active_window(&self) -> WindowInfo {
-    let mut result: WindowInfo = init_entity();
-
-    result
+    let gnome_singleton = GNOME_SINGLETON.lock().unwrap();
+    if gnome_singleton.use_eval {
+      wayland_eval_api::get_active_window()
+    } else {
+      wayland_new_api::get_active_window()
+    }
   }
 
   fn get_open_windows(&self) -> Vec<WindowInfo> {
-    let mut results: Vec<WindowInfo> = Vec::new();
-
-    results
+    let gnome_singleton = GNOME_SINGLETON.lock().unwrap();
+    if gnome_singleton.use_eval {
+      wayland_eval_api::get_open_windows()
+    } else {
+      wayland_new_api::get_open_windows()
+    }
   }
 }

@@ -1,10 +1,7 @@
 #![allow(unused_imports)]
 
-// use glib;
-
-
 // Metadata for gnome version > then 41
-const GNOME_XWIN_EXTENSION_META: &str = r#"
+pub const GNOME_XWIN_EXTENSION_META: &str = r#"
 {
   "name": "@mininben90/x-win extended",
   "description": "Get active and open window(s) informations for @miniben90/x-win node package.",
@@ -15,41 +12,8 @@ const GNOME_XWIN_EXTENSION_META: &str = r#"
 }
 "#;
 
-// Javascript extension to get active and open window(s) informations
-const GNOME_XWIN_EXTENSION_SCRIPT: &str = r#"
+pub const GNOME_XWIN_COMMON_FN: &str = r#"
 const { Gio, GLib, Meta } = imports.gi;
-
-const WaylandInterface = `
-<node>
-  <interface name="org.gnome.Shell.Extensions.XWinWaylandExtension">
-    <method name="get_active_window">
-      <arg name="get_active_window" type="object" direction="out" />
-    </method>
-    <method name="get_open_windows">
-      <arg name="get_open_windows" type="object" direction="out" />
-    </method>
-  </interface>
-</node>
-`;
-
-let _dbus = undefined;
-
-function enable() {
-  _dbus = Gio.DBusExportedObject.wrapJSObject(
-    WaylandInterface,
-    this,
-  );
-  _dbus.export(
-    Gio.DBus.session,
-    '/org/gnome/Shell/Extensions/XWinWaylandExtension',
-  );
-}
-
-function disable() {
-  _dbus.flush();
-  _dbus.unexport();
-  _dbus = undefined;
-}
 
 const AllowedWindow = [
   Meta.WindowType.DESKTOP,
@@ -90,7 +54,7 @@ function _strcut_data(window_actor) {
     const process_id = _window.get_pid ? _window.get_pid() : 0;
     const info = _get_process_info(process_id);
 
-    return Object{
+    return {
       id: _window.get_id(),
       os: 'linux',
       info: {
@@ -134,7 +98,7 @@ function _strcut_data(window_actor) {
 function _get_memory_usage(pid) {
   const [isOk, contents] = GLib.file_get_contents(`/proc/${pid}/statm`);
   if (isOk) {
-    return contents.toString().split(' ')[0];
+    return parseInt(contents.toString().split(' ')[0], 10);
   }
   return 0;
 }
@@ -153,6 +117,40 @@ function _get_process_info(pid) {
     path: '',
     exec_name: '',
   };
+}"#;
+
+
+// Javascript extension to get active and open window(s) informations
+pub const GNOME_XWIN_EXTENSION_SCRIPT: &str = r#"const WaylandInterface = `
+<node>
+  <interface name="org.gnome.Shell.Extensions.XWinWaylandExtension">
+    <method name="get_active_window">
+      <arg name="get_active_window" type="object" direction="out" />
+    </method>
+    <method name="get_open_windows">
+      <arg name="get_open_windows" type="object" direction="out" />
+    </method>
+  </interface>
+</node>
+`;
+
+let _dbus = undefined;
+
+function enable() {
+  _dbus = Gio.DBusExportedObject.wrapJSObject(
+    WaylandInterface,
+    this,
+  );
+  _dbus.export(
+    Gio.DBus.session,
+    '/org/gnome/Shell/Extensions/XWinWaylandExtension',
+  );
+}
+
+function disable() {
+  _dbus.flush();
+  _dbus.unexport();
+  _dbus = undefined;
 }
 
 function init() {
