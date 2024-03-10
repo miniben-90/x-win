@@ -52,66 +52,100 @@ test('openWindows', (t) => {
 })
 
 test('subscribeActiveWindow', async (t) => {
-  const data1 = await new Promise((resolve, reject) => {
-    console.time('subscribeActiveWindow1');
-    const r = subscribeActiveWindow((info) => {
-      console.timeEnd('subscribeActiveWindow1');
-      t.log(r, info);
-      resolve(info);
-      unsubscribeActiveWindow(r);
+  try {
+    const data1 = await new Promise((resolve, reject) => {
+      console.time('subscribeActiveWindow1');
+      const r = subscribeActiveWindow((info) => {
+        console.timeEnd('subscribeActiveWindow1');
+        t.log(r, info);
+        if (info?.id) {
+          unsubscribeActiveWindow(r);
+          resolve(info);
+        } else {
+          reject(new Error('Test failed! no id for active window!'));
+        }
+      });
     });
-  });
 
-  const data2 = await new Promise((resolve, reject) => {
-    console.time('subscribeActiveWindow2');
-    const r = subscribeActiveWindow((info) => {
-      console.timeEnd('subscribeActiveWindow2');
-      t.log(r, info);
-      resolve(info);
-      unsubscribeActiveWindow(r);
+    const data2 = await new Promise((resolve, reject) => {
+      console.time('subscribeActiveWindow2');
+      const r = subscribeActiveWindow((info) => {
+        console.timeEnd('subscribeActiveWindow2');
+        t.log(r, info);
+        if (info?.id) {
+          unsubscribeActiveWindow(r);
+          resolve(info);
+        } else {
+          reject(new Error('Test failed! no id for active window!'));
+        }
+      });
     });
-  });
 
-  const data3 = await new Promise((resolve, reject) => {
-    console.time('subscribeActiveWindow3');
-    const r = subscribeActiveWindow((info) => {
-      console.timeEnd('subscribeActiveWindow3');
-      t.log(r, info);
-      resolve(info);
-      unsubscribeActiveWindow(r);
+    const data3 = await new Promise((resolve, reject) => {
+      console.time('subscribeActiveWindow3');
+      const r = subscribeActiveWindow((info) => {
+        console.timeEnd('subscribeActiveWindow3');
+        t.log(r, info);
+        if (info?.id) {
+          unsubscribeActiveWindow(r);
+          resolve(info);
+        } else {
+          reject(new Error('Test failed! no id for active window!'));
+        }
+      });
     });
-  });
-  compareStruct(t, data1);
-  compareStruct(t, data2);
-  compareStruct(t, data3);
+    compareStruct(t, data1);
+    compareStruct(t, data2);
+    compareStruct(t, data3);
+  } catch (error) {
+    unsubscribeAllActiveWindow();
+    throw error;
+  }
 })
 
 
 test('unsubscribeAllActiveWindow', async (t) => {
-  const data1 = await new Promise((resolve, reject) => {
-    const r = subscribeActiveWindow((info) => {
-      t.log(r, info);
-      resolve(info);
+  try {
+    const data1 = await new Promise((resolve, reject) => {
+      const r = subscribeActiveWindow((info) => {
+        t.log(r, info);
+        if (info?.id) {
+          resolve(info);
+        } else {
+          reject(new Error('Test failed! no id for active window!'));
+        }
+      });
     });
-  });
 
-  const data2 = await new Promise((resolve, reject) => {
-    const r = subscribeActiveWindow((info) => {
-      t.log(r, info);
-      resolve(info);
+    const data2 = await new Promise((resolve, reject) => {
+      const r = subscribeActiveWindow((info) => {
+        t.log(r, info);
+        if (info?.id) {
+          resolve(info);
+        } else {
+          reject(new Error('Test failed! no id for active window!'));
+        }
+      });
     });
-  });
 
-  const data3 = await new Promise((resolve, reject) => {
-    const r = subscribeActiveWindow((info) => {
-      t.log(r, info);
-      resolve(info);
+    const data3 = await new Promise((resolve, reject) => {
+      const r = subscribeActiveWindow((info) => {
+        t.log(r, info);
+        if (info?.id) {
+          resolve(info);
+        } else {
+          reject(new Error('Test failed! no id for active window!'));
+        }
+      });
     });
-  });
-  compareStruct(t, data1);
-  compareStruct(t, data2);
-  compareStruct(t, data3);
-  unsubscribeAllActiveWindow();
+    compareStruct(t, data1);
+    compareStruct(t, data2);
+    compareStruct(t, data3);
+    unsubscribeAllActiveWindow();
+  } catch (error) {
+    unsubscribeAllActiveWindow();
+    throw error;
+  }
 })
 
 test('activeWindowAsync', async (t) => {

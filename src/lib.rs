@@ -233,6 +233,7 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
               .info
               .process_id
               .ne(&current_window.info.process_id)
+            || new_current_window.id.eq(&0)
           {
             current_window = new_current_window.clone();
             tsfn_clone.call(new_current_window, ThreadsafeFunctionCallMode::Blocking);
