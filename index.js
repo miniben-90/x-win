@@ -295,7 +295,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { activeWindow, activeWindowAsync, openWindows, openWindowsAsync, subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow, installExtension, uninstallExtension } = nativeBinding
+const { activeWindow, activeWindowAsync, openWindows, openWindowsAsync, subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow, installExtension, uninstallExtension, enableExtension, disableExtension } = nativeBinding
 
 module.exports.activeWindow = activeWindow
 module.exports.activeWindowAsync = activeWindowAsync
@@ -306,3 +306,5 @@ module.exports.unsubscribeActiveWindow = unsubscribeActiveWindow
 module.exports.unsubscribeAllActiveWindow = unsubscribeAllActiveWindow
 module.exports.installExtension = installExtension
 module.exports.uninstallExtension = uninstallExtension
+module.exports.enableExtension = enableExtension
+module.exports.disableExtension = disableExtension

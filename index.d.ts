@@ -303,16 +303,22 @@ export function unsubscribeAllActiveWindow(): void
 /**
  * Install Gnome extensions required for Linux using Gnome > 41.
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
- *
- * # Example
- * ```javascript
- * const currentWindow = activeWindow();
- * console.log(currentWindow);
- * ```
- *
- * # Information about Electron
- *
- * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+ * Restart session will be require to install the gnome extension.
 */
-export function installExtension(): void
-export function uninstallExtension(): void
+export function installExtension(): boolean
+/**
+ * Install Gnome extensions required for Linux using Gnome > 41.
+ * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
+ * Restart session will be require to remove the gnome extension.
+*/
+export function uninstallExtension(): boolean
+/**
+ * Enable Gnome extensions required for Linux using Gnome > 41.
+ * This function will enable extension needed to correctly detect working windows with Wayland desktop environment.
+*/
+export function enableExtension(): boolean
+/**
+ * Disable Gnome extensions required for Linux using Gnome > 41.
+ * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
+*/
+export function disableExtension(): boolean

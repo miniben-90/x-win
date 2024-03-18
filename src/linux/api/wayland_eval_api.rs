@@ -2,7 +2,7 @@ use zbus::Connection;
 
 use crate::{
   common::x_win_struct::window_info::WindowInfo,
-  linux::api::gnome_shell::GNOME_XWIN_COMMON_FN,
+  linux::api::gnome_shell::GNOME_XWIN_EVAL_SCRIPT,
 };
 
 use super::{common_api::init_entity, gnome_shell::value_to_window_info};
@@ -14,7 +14,7 @@ pub fn get_active_window() -> WindowInfo {
 
 get_active_window();
 "#,
-    GNOME_XWIN_COMMON_FN
+    GNOME_XWIN_EVAL_SCRIPT
   );
 
   let response = call_script(&script);
@@ -36,7 +36,7 @@ pub fn get_open_windows() -> Vec<WindowInfo> {
 
 get_open_windows();
 "#,
-    GNOME_XWIN_COMMON_FN
+    GNOME_XWIN_EVAL_SCRIPT
   );
 
   let response = call_script(&script);

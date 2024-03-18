@@ -56,23 +56,43 @@ pub struct OpenWindowsTask;
 pub struct ActiveWindowTask;
 
 #[cfg(not(target_os = "linux"))]
-fn _install_extension() -> () {
-  ()
+fn _install_extension() -> bool {
+  false
 }
 
 #[cfg(not(target_os = "linux"))]
-fn _uninstall_extension() -> () {
-  ()
+fn _uninstall_extension() -> bool {
+  false
+}
+
+#[cfg(not(target_os = "linux"))]
+fn _enable_extension() -> bool {
+  false
+}
+
+#[cfg(not(target_os = "linux"))]
+fn _disable_extension() -> bool {
+  false
 }
 
 #[cfg(target_os = "linux")]
-fn _install_extension() -> () {
+fn _install_extension() -> bool {
   linux::gnome_install_extension()
 }
 
 #[cfg(target_os = "linux")]
-fn _uninstall_extension() -> () {
+fn _uninstall_extension() -> bool {
   linux::gnome_uninstall_extension()
+}
+
+#[cfg(target_os = "linux")]
+fn _enable_extension() -> bool {
+  linux::gnome_enable_extension()
+}
+
+#[cfg(target_os = "linux")]
+fn _disable_extension() -> bool {
+  linux::gnome_disable_extension()
 }
 
 #[napi]
@@ -454,23 +474,37 @@ pub fn unsubscribe_all_active_window() -> Result<()> {
 /**
  * Install Gnome extensions required for Linux using Gnome > 41.
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
- *
- * # Example
- * ```javascript
- * const currentWindow = activeWindow();
- * console.log(currentWindow);
- * ```
- *
- * # Information about Electron
- *
- * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
+ * Restart session will be require to install the gnome extension.
  */
 #[napi]
-pub fn install_extension() -> () {
-  _install_extension()
+pub fn install_extension() -> Result<bool> {
+  Ok(_install_extension())
 }
 
+/**
+ * Install Gnome extensions required for Linux using Gnome > 41.
+ * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
+ * Restart session will be require to remove the gnome extension.
+ */
 #[napi]
-pub fn uninstall_extension() -> () {
-  _uninstall_extension()
+pub fn uninstall_extension() -> Result<bool> {
+  Ok(_uninstall_extension())
+}
+
+/**
+ * Enable Gnome extensions required for Linux using Gnome > 41.
+ * This function will enable extension needed to correctly detect working windows with Wayland desktop environment.
+ */
+#[napi]
+pub fn enable_extension() -> Result<bool> {
+  Ok(_enable_extension())
+}
+
+/**
+ * Disable Gnome extensions required for Linux using Gnome > 41.
+ * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
+ */
+#[napi]
+pub fn disable_extension() -> Result<bool> {
+  Ok(_disable_extension())
 }

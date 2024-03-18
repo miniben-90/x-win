@@ -3,7 +3,7 @@
 use windows::core::{w, VARIANT};
 
 use crate::common::{
-  api::API,
+  api::{empty_entity, os_name, API},
   x_win_struct::{
     process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
@@ -158,13 +158,6 @@ extern "system" fn enum_child_windows_func(hwnd: HWND, lparam: LPARAM) -> BOOL {
   } else {
     true.into()
   }
-}
-
-/**
- * To know the os
- */
-fn os_name() -> String {
-  r#"win32"#.to_owned()
 }
 
 /**
@@ -364,25 +357,7 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
  * Function that construct windowInfo
  */
 fn get_window_information(hwnd: HWND) -> WindowInfo {
-  let mut window_info: WindowInfo = WindowInfo {
-    id: 0,
-    os: os_name(),
-    title: "".to_string(),
-    position: WindowPosition {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-    },
-    info: ProcessInfo {
-      process_id: 0,
-      path: "".to_string(),
-      name: "".to_string(),
-      exec_name: "".to_string(),
-    },
-    usage: UsageInfo { memory: 0 },
-    url: "".to_string(),
-  };
+  let mut window_info: WindowInfo = empty_entity();
   let mut lpdwprocessid: u32 = 0;
   unsafe { GetWindowThreadProcessId(hwnd, Some(&mut lpdwprocessid)) };
 

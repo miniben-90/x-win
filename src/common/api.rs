@@ -14,10 +14,34 @@ pub trait API {
   fn get_open_windows(&self) -> Vec<WindowInfo>;
 }
 
+/**
+ * To know the os
+ */
+#[cfg(target_os = "linux")]
+pub fn os_name() -> String {
+  r#"linux"#.to_owned()
+}
+
+/**
+ * To know the os
+ */
+#[cfg(target_os = "macos")]
+pub fn os_name() -> String {
+  r#"darwin"#.to_owned()
+}
+
+/**
+ * To know the os
+ */
+#[cfg(target_os = "windows")]
+pub fn os_name() -> String {
+  r#"win32"#.to_owned()
+}
+
 pub fn empty_entity() -> WindowInfo {
   WindowInfo {
     id: 0,
-    os: "".to_string(),
+    os: os_name().to_owned(),
     title: "".to_string(),
     position: WindowPosition {
       x: 0,

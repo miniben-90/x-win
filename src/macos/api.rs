@@ -23,7 +23,7 @@ use core_graphics::window::{
 };
 
 use crate::common::{
-  api::API,
+  api::{empty_entity, os_name, API},
   x_win_struct::{
     process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
@@ -44,25 +44,7 @@ impl API for MacosAPI {
       let t: &WindowInfo = windows.first().unwrap();
       t.clone() as WindowInfo
     } else {
-      WindowInfo {
-        id: 0,
-        os: os_name(),
-        title: "".to_owned(),
-        position: WindowPosition {
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0,
-        },
-        info: ProcessInfo {
-          process_id: 0,
-          path: "".to_owned(),
-          name: "".to_owned(),
-          exec_name: "".to_owned(),
-        },
-        usage: UsageInfo { memory: 0 },
-        url: "".to_owned(),
-      }
+      empty_entity()
     }
   }
 
@@ -71,32 +53,8 @@ impl API for MacosAPI {
   }
 }
 
-/**
- * To know the os
- */
-fn os_name() -> String {
-  r#"darwin"#.to_owned()
-}
-
-// fn get_active_window_pid() -> NSUInteger {
-//   unsafe {
-//     let _pool = NSAutoreleasePool::new(nil);
-//     let _shared_app_id: id = msg_send![class!(NSApplication), sharedApplication];
-//     // NSApplication::finishLaunching(shared_app_id);
-//     let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
-//     let frontapp: id = msg_send![workspace, frontmostApplication];
-//     let active_window_pid: NSUInteger = msg_send![frontapp, processIdentifier];
-//     return active_window_pid;
-//   }
-// }
-
 fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
   let mut windows: Vec<WindowInfo> = Vec::new();
-  // let mut active_window_pid: u64 = 0;
-
-  // if only_active {
-  //   active_window_pid = get_active_window_pid();
-  // }
 
   let options = kCGWindowListOptionOnScreenOnly
     | kCGWindowListExcludeDesktopElements
@@ -139,10 +97,6 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
 
     let process_id = cfd.get(unsafe { kCGWindowOwnerPID });
     let process_id = process_id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
-
-    // if only_active && process_id.ne(&(active_window_pid as i64)) {
-    //   continue;
-    // }
 
     let app: id = unsafe {
       msg_send![

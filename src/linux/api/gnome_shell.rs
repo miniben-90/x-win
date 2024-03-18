@@ -1,4 +1,10 @@
+use std::sync::Mutex;
+
+use once_cell::sync::Lazy;
+
 use crate::common::x_win_struct::{process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo, window_position::WindowPosition};
+
+use super::common_api::get_gnome_version;
 
 pub const GNOME_XWIN_UUID: &str = r#"x-win@miniben90.org"#;
 
@@ -16,9 +22,7 @@ pub const GNOME_XWIN_EXTENSION_META: &str = r#"
 
 pub const GNOME_XWIN_EXTENSION_FOLDER_PATH: &str = r#".local/share/gnome-shell/extensions/x-win@miniben90.org"#;
 
-
-
-pub const GNOME_XWIN_COMMON_FN: &str = r#"
+pub const GNOME_XWIN_EVAL_SCRIPT: &str = r#"
 const { Gio, GLib, Meta } = imports.gi;
 
 const AllowedWindow = [
@@ -126,51 +130,7 @@ function _get_process_info(pid) {
 }"#;
 
 
-// Javascript extension to get active and open window(s) informations
-pub const GNOME_XWIN_EXTENSION_SCRIPT: &str = r#"
-const WaylandInterface = `
-<node>
-  <interface name="org.gnome.Shell.Extensions.XWinWaylandExtension">
-    <method name="get_active_window">
-      <arg name="get_active_window" type="object" direction="out" />
-    </method>
-    <method name="get_open_windows">
-      <arg name="get_open_windows" type="object" direction="out" />
-    </method>
-  </interface>
-</node>
-`;
-
-let _dbus = undefined;
-
-function enable() {
-  _dbus = Gio.DBusExportedObject.wrapJSObject(
-    WaylandInterface,
-    this,
-  );
-  _dbus.export(
-    Gio.DBus.session,
-    '/org/gnome/Shell/Extensions/XWinWaylandExtension',
-  );
-}
-
-function disable() {
-  _dbus.flush();
-  _dbus.unexport();
-  _dbus = undefined;
-}
-
-function init() {
-  /** Do nothing */
-}
-"#;
-
-pub const GNOME45_XWIN_EXTENSION_SCRIPT: &str = r#"
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
-import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
-import Meta from 'gi://Meta';
-
+pub const GNOME_XWIN_EXTENSION_COMMON_SCRIPT: &str = r#"
 const WaylandInterface = `
 <node>
   <interface name="org.gnome.Shell.Extensions.XWinWaylandExtension">
@@ -208,12 +168,12 @@ function _get_open_windows() {
 }
 
 function get_open_windows() {
-  return Object(_get_open_windows());
+  return JSON.stringify(_get_open_windows());
 }
 
 function get_active_window() {
   const activeWindow = global.get_window_actors().find(x => x.get_meta_window().has_focus() && _filterWindow(x));
-  return Object(_strcut_data(activeWindow));
+  return JSON.stringify(_strcut_data(activeWindow));
 }
 
 function _strcut_data(window_actor) {
@@ -289,6 +249,39 @@ function _get_process_info(pid) {
     exec_name: '',
   };
 }
+"#;
+
+// Javascript extension to get active and open window(s) informations
+pub const GNOME_XWIN_EXTENSION_SCRIPT: &str = r#"const { Gio, GLib, Meta } = imports.gi;
+
+let _dbus = undefined;
+
+function enable() {
+  _dbus = Gio.DBusExportedObject.wrapJSObject(
+    WaylandInterface,
+    this,
+  );
+  _dbus.export(
+    Gio.DBus.session,
+    '/org/gnome/Shell/Extensions/XWinWaylandExtension',
+  );
+}
+
+function disable() {
+  _dbus.flush();
+  _dbus.unexport();
+  _dbus = undefined;
+}
+
+function init() {
+  /** Do nothing */
+}
+"#;
+
+pub const GNOME45_XWIN_EXTENSION_SCRIPT: &str = r#"import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Meta from 'gi://Meta';
 
 export default class XWinWaylandExtension extends Extension {
 
@@ -312,15 +305,14 @@ export default class XWinWaylandExtension extends Extension {
   }
 
   get_open_windows() {
-    return JSON.stringify(get_open_windows());
+    return get_open_windows();
   }
 
   get_active_window() {
-    return JSON.stringify(get_active_window());
+    return get_active_window();
   }
 }
 "#;
-
 
 pub fn number_to_u32(value: &serde_json::Value) -> u32 {
   if value.is_number() {
@@ -363,3 +355,21 @@ pub fn value_to_window_info(response: &serde_json::Value) -> WindowInfo {
     url: "".to_owned(),
   }
 }
+
+pub struct GnomeVersion {
+  pub version: u32,
+  pub use_eval: bool,
+}
+
+impl GnomeVersion {
+  fn new() -> Self {
+    let version = get_gnome_version();
+    let version: u32 = version.split(".").collect::<Vec<&str>>()[0]
+      .parse()
+      .unwrap_or(999);
+    let use_eval = version < 41;
+    Self { use_eval, version }
+  }
+}
+
+pub static GNOME_SINGLETON: Lazy<Mutex<GnomeVersion>> = Lazy::new(|| Mutex::new(GnomeVersion::new()));
