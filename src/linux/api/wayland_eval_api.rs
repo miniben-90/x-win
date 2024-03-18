@@ -1,14 +1,11 @@
 use zbus::Connection;
 
 use crate::{
-  common::x_win_struct::{
-    process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
-    window_position::WindowPosition,
-  },
+  common::x_win_struct::window_info::WindowInfo,
   linux::api::gnome_shell::GNOME_XWIN_COMMON_FN,
 };
 
-use super::common_api::init_entity;
+use super::{common_api::init_entity, gnome_shell::value_to_window_info};
 
 pub fn get_active_window() -> WindowInfo {
   let script = format!(
@@ -57,48 +54,6 @@ get_open_windows();
   }
 
   vec![]
-}
-
-fn number_to_u32(value: &serde_json::Value) -> u32 {
-  if value.is_number() {
-    return value.as_u64().unwrap() as u32;
-  }
-  0
-}
-
-fn number_to_i32(value: &serde_json::Value) -> i32 {
-  if value.is_number() {
-    return value.as_i64().unwrap() as i32;
-  }
-  0
-}
-
-fn value_to_window_info(response: &serde_json::Value) -> WindowInfo {
-  let response = response.as_object().unwrap();
-  let position = response["position"].as_object().unwrap();
-  let info = response["info"].as_object().unwrap();
-  let usage = response["usage"].as_object().unwrap();
-  WindowInfo {
-    id: number_to_u32(&response["id"]),
-    os: response["os"].as_str().unwrap().to_string(),
-    title: response["title"].as_str().unwrap().to_string(),
-    position: WindowPosition {
-      height: number_to_i32(&position["height"]),
-      width: number_to_i32(&position["width"]),
-      x: number_to_i32(&position["x"]),
-      y: number_to_i32(&position["y"]),
-    },
-    info: ProcessInfo {
-      exec_name: info["exec_name"].as_str().unwrap().to_string(),
-      name: info["name"].as_str().unwrap().to_string(),
-      path: info["path"].as_str().unwrap().to_string(),
-      process_id: number_to_u32(&info["process_id"]),
-    },
-    usage: UsageInfo {
-      memory: number_to_u32(&usage["memory"]),
-    },
-    url: "".to_owned(),
-  }
 }
 
 fn call_script(script: &String) -> String {

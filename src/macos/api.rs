@@ -35,7 +35,7 @@ use objc::runtime::{BOOL, NO};
 pub struct MacosAPI {}
 
 /**
- * Impl. for windows system
+ * Impl. for Darwin system
  */
 impl API for MacosAPI {
   fn get_active_window(&self) -> WindowInfo {
