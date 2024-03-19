@@ -44,7 +44,21 @@ export interface WindowInfo {
  * Returns an object of `WindowInfo`.
  *
  * # Example
+ *
+ * ## Javascript example
+ *
  * ```javascript
+ * const { activeWindow } = require('@miniben90/x-win');
+ *
+ * const currentWindow = activeWindow();
+ * console.log(currentWindow);
+ * ```
+ *
+ * ## Typescript example
+ *
+ * ```typescript
+ * import { activeWindow } from '@miniben90/x-win';
+ *
  * const currentWindow = activeWindow();
  * console.log(currentWindow);
  * ```
@@ -59,8 +73,22 @@ export function activeWindow(): WindowInfo
  * Returns an object of `WindowInfo`.
  *
  * # Example
+ *
+ * ## Javascript example
+ *
  * ```javascript
- * activeWindow()
+ * activeWindowAsync()
+ * .then(currentWindow => {
+ *   console.log(currentWindow);
+ * });
+ * ```
+ *
+ * ## Typescript example
+ *
+ * ```typescript
+ * import { activeWindowAsync } from '@miniben90/x-win';
+ *
+ * activeWindowAsync()
  * .then(currentWindow => {
  *   console.log(currentWindow);
  * });
@@ -76,7 +104,23 @@ export function activeWindowAsync(): Promise<WindowInfo>
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
+ *
+ * ## Javascript example
+ *
  * ```javascript
+ * const { openWindows } = require('@miniben90/x-win');
+ *
+ * const windows = openWindows();
+ * for (let i = 0; i < windows.length; i++) {
+ *   console.log(i, windows[i]);
+ * }
+ * ```
+ *
+ * ## Typescript Example
+ *
+ * ```typescript
+ * import { openWindows } from '@miniben90/x-win';
+ *
  * const windows = openWindows();
  * for (let i = 0; i < windows.length; i++) {
  *   console.log(i, windows[i]);
@@ -93,8 +137,26 @@ export function openWindows(): Array<WindowInfo>
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
+ *
+ * ## Javascript example
+ *
  * ```javascript
- * openWindows()
+ * const { openWindowsAsync } = resuire('@miniben90/x-win');
+ *
+ * openWindowsAsync()
+ * .then(windows => {
+ *   for (let i = 0; i < windows.length; i++) {
+ *     console.log(i, windows[i]);
+ *   }
+ * });
+ * ```
+ *
+ * ## Typescript example
+ *
+ * ```typescript
+ * import { openWindowsAsync } from '@miniben90/x-win';
+ *
+ * openWindowsAsync()
  * .then(windows => {
  *   for (let i = 0; i < windows.length; i++) {
  *     console.log(i, windows[i]);
@@ -111,7 +173,12 @@ export function openWindowsAsync(): Promise<Array<WindowInfo>>
  * Subscribe an observer thread to monitor changes in the active window.
  *
  * # Example
+ *
+ * ## Javascript example
+ *
  * ```javascript
+ * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -124,13 +191,57 @@ export function openWindowsAsync(): Promise<Array<WindowInfo>>
  *
  * unsubscribeAllActiveWindow();
  * ```
+ *
+ * ## Typescript example
+ *
+ * ```typescript
+ * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
+ *
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ *
+ * unsubscribeAllActiveWindow();
+ * ```
+ *
 */
 export function subscribeActiveWindow(callback: (info: WindowInfo) => void): number
 /**
  * Terminate and unsubscribe a specific observer using their ID.
  *
  * # Example
+ *
+ * ## Javascript example
+ *
  * ```javascript
+ * const { subscribeActiveWindow, unsubscribeActiveWindow } = require('@miniben90/x-win');
+ *
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ *
+ * unsubscribeActiveWindow(a);
+ * unsubscribeActiveWindow(b);
+ * unsubscribeActiveWindow(c);
+ * ```
+ *
+ * ## Typescript example
+ *
+ * ```typescript
+ * import { subscribeActiveWindow, unsubscribeActiveWindow } from '@miniben90/x-win';
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -151,7 +262,30 @@ export function unsubscribeActiveWindow(threadId: number): void
  * Terminate and unsubscribe all observer threads monitoring changes in the active window.
  *
  * # Example
+ *
+ * ## Javascript example
+ *
  * ```javascript
+ * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
+ *
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ *
+ * unsubscribeAllActiveWindow();
+ * ```
+ *
+ * ## Typescript example
+ *
+ * ```typescript
+ * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -166,3 +300,25 @@ export function unsubscribeActiveWindow(threadId: number): void
  * ```
 */
 export function unsubscribeAllActiveWindow(): void
+/**
+ * Install Gnome extensions required for Linux using Gnome > 41.
+ * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
+ * Restart session will be require to install the gnome extension.
+*/
+export function installExtension(): boolean
+/**
+ * Install Gnome extensions required for Linux using Gnome > 41.
+ * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
+ * Restart session will be require to remove the gnome extension.
+*/
+export function uninstallExtension(): boolean
+/**
+ * Enable Gnome extensions required for Linux using Gnome > 41.
+ * This function will enable extension needed to correctly detect working windows with Wayland desktop environment.
+*/
+export function enableExtension(): boolean
+/**
+ * Disable Gnome extensions required for Linux using Gnome > 41.
+ * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
+*/
+export function disableExtension(): boolean

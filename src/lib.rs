@@ -55,6 +55,46 @@ static THREAD_MANAGER: Lazy<Mutex<ThreadManager>> = Lazy::new(|| Mutex::new(Thre
 pub struct OpenWindowsTask;
 pub struct ActiveWindowTask;
 
+#[cfg(not(target_os = "linux"))]
+fn _install_extension() -> bool {
+  false
+}
+
+#[cfg(not(target_os = "linux"))]
+fn _uninstall_extension() -> bool {
+  false
+}
+
+#[cfg(not(target_os = "linux"))]
+fn _enable_extension() -> bool {
+  false
+}
+
+#[cfg(not(target_os = "linux"))]
+fn _disable_extension() -> bool {
+  false
+}
+
+#[cfg(target_os = "linux")]
+fn _install_extension() -> bool {
+  linux::gnome_install_extension()
+}
+
+#[cfg(target_os = "linux")]
+fn _uninstall_extension() -> bool {
+  linux::gnome_uninstall_extension()
+}
+
+#[cfg(target_os = "linux")]
+fn _enable_extension() -> bool {
+  linux::gnome_enable_extension()
+}
+
+#[cfg(target_os = "linux")]
+fn _disable_extension() -> bool {
+  linux::gnome_disable_extension()
+}
+
 #[napi]
 impl Task for OpenWindowsTask {
   type Output = Vec<WindowInfo>;
@@ -88,7 +128,21 @@ impl Task for ActiveWindowTask {
  * Returns an object of `WindowInfo`.
  *
  * # Example
+ * 
+ * ## Javascript example
+ * 
  * ```javascript
+ * const { activeWindow } = require('@miniben90/x-win');
+ * 
+ * const currentWindow = activeWindow();
+ * console.log(currentWindow);
+ * ```
+ * 
+ * ## Typescript example
+ * 
+ * ```typescript
+ * import { activeWindow } from '@miniben90/x-win';
+ * 
  * const currentWindow = activeWindow();
  * console.log(currentWindow);
  * ```
@@ -108,8 +162,22 @@ pub fn active_window() -> Result<WindowInfo> {
  * Returns an object of `WindowInfo`.
  *
  * # Example
+ * 
+ * ## Javascript example
+ * 
  * ```javascript
- * activeWindow()
+ * activeWindowAsync()
+ * .then(currentWindow => {
+ *   console.log(currentWindow);
+ * });
+ * ```
+ * 
+ * ## Typescript example
+ *
+ * ```typescript
+ * import { activeWindowAsync } from '@miniben90/x-win';
+ * 
+ * activeWindowAsync()
  * .then(currentWindow => {
  *   console.log(currentWindow);
  * });
@@ -129,7 +197,23 @@ pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
+ * 
+ * ## Javascript example
+ * 
  * ```javascript
+ * const { openWindows } = require('@miniben90/x-win');
+ *
+ * const windows = openWindows();
+ * for (let i = 0; i < windows.length; i++) {
+ *   console.log(i, windows[i]);
+ * }
+ * ```
+ * 
+ * ## Typescript Example
+ *
+ * ```typescript
+ * import { openWindows } from '@miniben90/x-win';
+ *
  * const windows = openWindows();
  * for (let i = 0; i < windows.length; i++) {
  *   console.log(i, windows[i]);
@@ -151,8 +235,26 @@ pub fn open_windows() -> Result<Vec<WindowInfo>> {
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
+ * 
+ * ## Javascript example
+ * 
  * ```javascript
- * openWindows()
+ * const { openWindowsAsync } = resuire('@miniben90/x-win');
+ *
+ * openWindowsAsync()
+ * .then(windows => {
+ *   for (let i = 0; i < windows.length; i++) {
+ *     console.log(i, windows[i]);
+ *   }
+ * });
+ * ```
+ * 
+ * ## Typescript example
+ * 
+ * ```typescript
+ * import { openWindowsAsync } from '@miniben90/x-win';
+ *
+ * openWindowsAsync()
  * .then(windows => {
  *   for (let i = 0; i < windows.length; i++) {
  *     console.log(i, windows[i]);
@@ -173,7 +275,12 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * Subscribe an observer thread to monitor changes in the active window.
  *
  * # Example
+ * 
+ * ## Javascript example
+ * 
  * ```javascript
+ * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
+ * 
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -186,6 +293,25 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * 
  * unsubscribeAllActiveWindow();
  * ```
+ * 
+ * ## Typescript example
+ * 
+ * ```typescript
+ * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
+ * 
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ * 
+ * unsubscribeAllActiveWindow();
+ * ```
+ *
  */
 #[napi(ts_args_type = "callback: (info: WindowInfo) => void")]
 pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
@@ -251,7 +377,32 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
  * Terminate and unsubscribe a specific observer using their ID.
  *
  * # Example
+ * 
+ * ## Javascript example
+ * 
  * ```javascript
+ * const { subscribeActiveWindow, unsubscribeActiveWindow } = require('@miniben90/x-win');
+ * 
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ * 
+ * unsubscribeActiveWindow(a);
+ * unsubscribeActiveWindow(b);
+ * unsubscribeActiveWindow(c);
+ * ```
+ * 
+ * ## Typescript example
+ * 
+ * ```typescript
+ * import { subscribeActiveWindow, unsubscribeActiveWindow } from '@miniben90/x-win';
+ * 
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -277,7 +428,30 @@ pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
  * Terminate and unsubscribe all observer threads monitoring changes in the active window.
  *
  * # Example
+ * 
+ * ## Javascript example
+ * 
  * ```javascript
+ * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
+ * 
+ * const a = subscribeActiveWindow((info) => {
+ *   t.log(a, info);
+ * });
+ * const b = subscribeActiveWindow((info) => {
+ *   t.log(b, info);
+ * });
+ * const c = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * });
+ * 
+ * unsubscribeAllActiveWindow();
+ * ```
+ * 
+ * ## Typescript example
+ * 
+ * ```typescript
+ * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
+ * 
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -295,4 +469,42 @@ pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
 pub fn unsubscribe_all_active_window() -> Result<()> {
   THREAD_MANAGER.lock().unwrap().stop_all_threads().unwrap();
   Ok(())
+}
+
+/**
+ * Install Gnome extensions required for Linux using Gnome > 41.
+ * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
+ * Restart session will be require to install the gnome extension.
+ */
+#[napi]
+pub fn install_extension() -> Result<bool> {
+  Ok(_install_extension())
+}
+
+/**
+ * Install Gnome extensions required for Linux using Gnome > 41.
+ * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
+ * Restart session will be require to remove the gnome extension.
+ */
+#[napi]
+pub fn uninstall_extension() -> Result<bool> {
+  Ok(_uninstall_extension())
+}
+
+/**
+ * Enable Gnome extensions required for Linux using Gnome > 41.
+ * This function will enable extension needed to correctly detect working windows with Wayland desktop environment.
+ */
+#[napi]
+pub fn enable_extension() -> Result<bool> {
+  Ok(_enable_extension())
+}
+
+/**
+ * Disable Gnome extensions required for Linux using Gnome > 41.
+ * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
+ */
+#[napi]
+pub fn disable_extension() -> Result<bool> {
+  Ok(_disable_extension())
 }

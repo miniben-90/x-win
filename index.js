@@ -266,6 +266,20 @@ switch (platform) {
           }
         }
         break
+      case 's390x':
+        localFileExisted = existsSync(
+          join(__dirname, 'x-win.linux-s390x-gnu.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./x-win.linux-s390x-gnu.node')
+          } else {
+            nativeBinding = require('@miniben90/x-win-linux-s390x-gnu')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
       default:
         throw new Error(`Unsupported architecture on Linux: ${arch}`)
     }
@@ -281,7 +295,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { activeWindow, activeWindowAsync, openWindows, openWindowsAsync, subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } = nativeBinding
+const { activeWindow, activeWindowAsync, openWindows, openWindowsAsync, subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow, installExtension, uninstallExtension, enableExtension, disableExtension } = nativeBinding
 
 module.exports.activeWindow = activeWindow
 module.exports.activeWindowAsync = activeWindowAsync
@@ -290,3 +304,7 @@ module.exports.openWindowsAsync = openWindowsAsync
 module.exports.subscribeActiveWindow = subscribeActiveWindow
 module.exports.unsubscribeActiveWindow = unsubscribeActiveWindow
 module.exports.unsubscribeAllActiveWindow = unsubscribeAllActiveWindow
+module.exports.installExtension = installExtension
+module.exports.uninstallExtension = uninstallExtension
+module.exports.enableExtension = enableExtension
+module.exports.disableExtension = disableExtension

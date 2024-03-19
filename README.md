@@ -6,7 +6,7 @@
 ![NPM License](https://img.shields.io/npm/l/@miniben90/x-win)
 ![NPM Version](https://img.shields.io/npm/v/%40miniben90%2Fx-win)
 
-This project uses Rust and napi-rs to make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), and [macOS 10.6+](#darwin).
+This project uses Rust and napi-rs to make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), [Linux (with Gnome =< 45)](#GNOME), and [macOS 10.6+](#darwin).
 
 ## How to install
 
@@ -155,8 +155,14 @@ setTimeout(() => unsubscribeAllActiveWindow(), 10000);
 Dependencies are required to be installed for development purposes.
 
 ```sh
-sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev
+sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev pkg-config build-essential
 ```
+
+## GNOME
+
+In order to recover data, you'll need to install and activate an extension designed for systems running GNOME version 41 or newer (as evaluation is disabled from this version onward).
+The extension can be installed using the `installExtension` function, which will deposit it in `~/.local/share/gnome-shell/extensions/x-win@miniben90.org`.
+After executing this function, it's vital to **restart the user session** to load the new extension and then proceed to enable it using `enableExtension` to be able to use x-win.
 
 > ⚠️**Warning**
 > Recovery url is not available on linux
