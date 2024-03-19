@@ -128,7 +128,6 @@ Thread will be start to check every `100ms` for a new active window (checking wi
 * `unsubscribeActiveWindow`: Remove a specific subscription
 * `unsubscribeAllActiveWindow`: Remove all threads
 
-
 ```typescript
 import { subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
 
@@ -140,7 +139,6 @@ const b = subscribeActiveWindow(activeWindow => {
   console.log('test b', activeWindow);
 });
 
-
 const c = subscribeActiveWindow(activeWindow => {
   console.log('test c', activeWindow);
 });
@@ -150,7 +148,7 @@ setTimeout(() => unsubscribeActiveWindow(c), 5000);
 setTimeout(() => unsubscribeAllActiveWindow(), 10000);
 ```
 
-# Linux
+## Linux
 
 Dependencies are required to be installed for development purposes.
 
@@ -158,26 +156,28 @@ Dependencies are required to be installed for development purposes.
 sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev pkg-config build-essential
 ```
 
-## GNOME
-
-In order to recover data, you'll need to install and activate an extension designed for systems running GNOME version 41 or newer (as evaluation is disabled from this version onward).
-The extension can be installed using the `installExtension` function, which will deposit it in `~/.local/share/gnome-shell/extensions/x-win@miniben90.org`.
-After executing this function, it's vital to **restart the user session** to load the new extension and then proceed to enable it using `enableExtension` to be able to use x-win.
-
 > ⚠️**Warning**
 > Recovery url is not available on linux
 
-# Darwin (version 10.6+)
+### GNOME (Wayland)
+
+In order to recover data, you'll need to install and activate an extension designed for systems running GNOME version 41 or newer (as evaluation is disabled from this version onward).
+
+The extension can be installed using the `installExtension` function, which will deposit it in `~/.local/share/gnome-shell/extensions/x-win@miniben90.org`.
+
+After executing this function, it's vital to **restart the user session** to load the new extension and then proceed to enable it using `enableExtension` to be able to use x-win.
+
+### Darwin (version 10.6+)
 
 ## Screen recording permission introduced in macOS 10.15 Catalina
 
 > macOS requires you to grant access for screen recording. If your project does not have it, the title will be an empty value.
 
-# URLs (Only available for Darwin and Windows Systems)
+## URLs (Only available for Darwin and Windows Systems)
 
 It is possible to get URL of browsers window for macOS and Windows.
 
-## Windows
+### Windows
 
 | Browser name | Tested |
 |---|---|
@@ -198,7 +198,7 @@ It is possible to get URL of browsers window for macOS and Windows.
 | beaker |  |
 | beaker browser |  |
 
-## macOS
+### macOS
 
 It will use AppleScript to get informations for chromium browsers and safari
 
@@ -236,7 +236,7 @@ It will use AppleScript to get informations for chromium browsers and safari
 
 <hr class="padding-top: 30px;padding-bottom:30px">
 
-# Project References
+## Project References
 
 **Project Inspirations:**
 
