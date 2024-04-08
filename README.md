@@ -157,7 +157,9 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 ```
 
 > ⚠️**Warning**
+> libc.so.6 is needed
 > Recovery url is not available on linux
+
 
 ### GNOME (Wayland)
 
@@ -166,6 +168,12 @@ In order to recover data, you'll need to install and activate an extension desig
 The extension can be installed using the `installExtension` function, which will deposit it in `~/.local/share/gnome-shell/extensions/x-win@miniben90.org`.
 
 After executing this function, it's vital to **restart the user session** to load the new extension and then proceed to enable it using `enableExtension` to be able to use x-win.
+
+| Gnome Distrib. | Tested |
+|---|---|
+| Fedora Workstation 39 | ✅ |
+| Ubuntu 22.04.4 Desktop | ✅ |
+| Debian 12 Desktop | ✅ |
 
 ### Darwin (version 10.6+)
 
