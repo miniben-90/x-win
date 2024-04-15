@@ -344,7 +344,7 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
           &mut process_info as *mut ProcessInfo as *mut c_void,
         )
       };
-      unsafe { EnumChildWindows(hwnd, Some(enum_child_windows_func), lparam) };
+      let _ = unsafe { EnumChildWindows(hwnd, Some(enum_child_windows_func), lparam) };
     } else if let Ok(process_name) = get_process_name_from_path(&process_path) {
       process_info.name = process_name;
     }

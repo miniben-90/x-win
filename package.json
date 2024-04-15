@@ -41,7 +41,7 @@
     "open"
   ],
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.0",
+    "@napi-rs/cli": "^2.18.1",
     "ava": "^6.1.2"
   },
   "ava": {
