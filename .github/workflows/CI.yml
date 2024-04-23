@@ -33,7 +33,7 @@ jobs:
           - host: macos-latest
             target: x86_64-apple-darwin
             build: |
-              yarn build
+              yarn build --target x86_64-apple-darwin
               strip -x *.node
 
           # Build matrix for MacOS (arm64)
@@ -164,7 +164,7 @@ jobs:
 
       # Upload artifact for the next steps (macos and test)
       - name: Upload artifact
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ env.APP_NAME }}.*.node
@@ -220,7 +220,7 @@ jobs:
 
       # Download artifacts
       - name: Download artifacts
-        uses: actions/download-artifact@v4.1.6
+        uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
           path: .
@@ -270,13 +270,13 @@ jobs:
         run: yarn install
 
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v4.1.6
+        uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-apple-darwin
           path: artifacts
 
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v4.1.6
+        uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-apple-darwin
           path: artifacts
@@ -285,7 +285,7 @@ jobs:
         run: yarn universal
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-universal-apple-darwin
           path: ${{ env.APP_NAME }}.*.node
@@ -326,7 +326,7 @@ jobs:
 
       # Download artifacts from build part
       - name: Download all artifacts
-        uses: actions/download-artifact@v4.1.6
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 
