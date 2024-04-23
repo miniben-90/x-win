@@ -41,7 +41,7 @@
     "open"
   ],
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.1",
+    "@napi-rs/cli": "^2.18.2",
     "ava": "^6.1.2"
   },
   "ava": {
@@ -60,5 +60,5 @@
     "universal": "napi universal",
     "version": "napi version"
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.1.1"
 }
