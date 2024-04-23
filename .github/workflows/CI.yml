@@ -171,7 +171,7 @@ jobs:
           if-no-files-found: error
 
   test:
-    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
+    name: Test bindings on ${{ matrix.settings.target }} (${{ matrix.settings.host }}) - node@${{ matrix.node-version }}
     needs:
       - build
     strategy:
@@ -187,6 +187,9 @@ jobs:
 
           - host: macos-latest
             target: aarch64-apple-darwin
+
+          - host: macos-latest
+            target: x86_64-apple-darwin
 
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -213,6 +216,11 @@ jobs:
         if: ${{ matrix.settings.target == 'i686-pc-windows-msvc' }}
         run: yarn config set supportedArchitectures.cpu "ia32"
         shell: bash
+
+      # Setup yarn to run as x86_64 for darwin arm64
+      - name: Setup node x86
+        if: ${{ matrix.settings.target == 'x86_64-apple-darwin' }}
+        run: arch -x86_64 zsh
 
       # Install deps
       - name: Install dependencies
