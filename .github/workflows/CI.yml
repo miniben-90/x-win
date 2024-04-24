@@ -69,17 +69,17 @@ jobs:
 
           # Disabled problem with lxcb
           # # Build for linux (using Ubuntu) (arm64)
-          # - host: ubuntu-latest
-          #   target: aarch64-unknown-linux-gnu
-          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-          #   build: |-
-          #     set -e &&
-          #     sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev pkg-config libxcb1 libxcb-util-dev libxcb1-dev libxkbcommon-dev libfreetype6-dev libexpat1-dev libxcb-composite0-dev libssl-dev libx11-dev libfontconfig1-dev &&
-          #     yarn install &&
-          #     export PKG_CONFIG_SYSROOT_DIR="/usr/aarch64-linux-gnu" &&
-          #     export PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}" &&
-          #     yarn build --target aarch64-unknown-linux-gnu &&
-          #     aarch64-unknown-linux-gnu-strip *.node
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
+            build: |-
+              set -e &&
+              sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev pkg-config libxcb1 libxcb-util-dev libxcb1-dev libxkbcommon-dev libfreetype6-dev libexpat1-dev libxcb-composite0-dev libssl-dev libx11-dev libfontconfig1-dev &&
+              yarn install &&
+              export PKG_CONFIG_SYSROOT_DIR="/usr/aarch64-linux-gnu" &&
+              export PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}" &&
+              yarn build --target aarch64-unknown-linux-gnu &&
+              aarch64-unknown-linux-gnu-strip *.node
 
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
