@@ -98,7 +98,7 @@ jobs:
 
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
-        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
+        if: ${{ matrix.settings.host == 'ubuntu-latest' && !matrix.settings.docker }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
