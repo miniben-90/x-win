@@ -188,8 +188,9 @@ jobs:
           - host: macos-latest
             target: aarch64-apple-darwin
 
-          # - host: macos-latest
-          #   target: x86_64-apple-darwin
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            architecture: 'x64'
 
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -200,6 +201,11 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v4
+
+      # Setup yarn to run as x86_64 for darwin arm64
+      - name: Setup node x86
+        if: ${{ matrix.settings.target == 'x86_64-apple-darwin' }}
+        run: arch -x86_64 zsh
 
       # Setup node version from matrix.node and install deps
       - name: Setup node
@@ -216,11 +222,6 @@ jobs:
         if: ${{ matrix.settings.target == 'i686-pc-windows-msvc' }}
         run: yarn config set supportedArchitectures.cpu "ia32"
         shell: bash
-
-      # Setup yarn to run as x86_64 for darwin arm64
-      - name: Setup node x86
-        if: ${{ matrix.settings.target == 'x86_64-apple-darwin' }}
-        run: arch -x86_64 zsh
 
       # Install deps
       - name: Install dependencies
