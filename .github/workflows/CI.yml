@@ -75,7 +75,7 @@ jobs:
             build: |-
               set -e &&
               sudo apt-get install -y --fix-missing --no-install-recommends gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu &&
-              sudo apt-get install -y --fix-missing --no-install-recommends libx11-dev libx11-xcb-dev libxcb1-dev libxcb-ewmh-dev libxcb-randr0-dev &&
+              sudo apt-get install -y --fix-missing --no-install-recommends libx11-dev libx11-dev:arm64 libx11-xcb-dev libx11-xcb-dev:arm64 libxcb1-dev libxcb1-dev:arm64 libxcb-ewmh-dev libxcb-ewmh-dev:arm64 libxcb-randr0-dev libxcb-randr0-dev:arm64 &&
               yarn install &&
               yarn build --target aarch64-unknown-linux-gnu &&
               aarch64-unknown-linux-gnu-strip *.node
