@@ -414,7 +414,11 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
               get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())
             }
             x if x.contains(&"msedge") => {
-              get_url_from_automation_id(&automation, &element, "view_1020".to_owned())
+              let mut value = get_url_from_automation_id(&automation, &element, "view_1022".to_owned());
+              if value.eq(&"") {
+                value = get_url_from_automation_id(&automation, &element, "view_1020".to_owned());
+              }
+              value.to_owned()
             }
             _ => get_url_for_chromium(&automation, &element),
           };
