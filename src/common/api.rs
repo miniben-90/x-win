@@ -48,6 +48,7 @@ pub fn empty_entity() -> WindowInfo {
       y: 0,
       width: 0,
       height: 0,
+      is_full_screen: false,
     },
     info: ProcessInfo {
       process_id: 0,

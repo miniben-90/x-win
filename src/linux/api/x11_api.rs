@@ -151,6 +151,7 @@ fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosit
     y: 0,
     width: 0,
     height: 0,
+    is_full_screen: false,
   };
   let window_geometry = conn.send_request(&x::GetGeometry {
     drawable: x::Drawable::Window(window),

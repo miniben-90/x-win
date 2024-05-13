@@ -174,6 +174,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
         y: bounds.origin.y as i32,
         width: bounds.size.width as i32,
         height: bounds.size.height as i32,
+        is_full_screen: false,
       },
       info: ProcessInfo {
         process_id: process_id as u32,

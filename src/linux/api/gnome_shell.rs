@@ -342,6 +342,7 @@ pub fn value_to_window_info(response: &serde_json::Value) -> WindowInfo {
       width: number_to_i32(&position["width"]),
       x: number_to_i32(&position["x"]),
       y: number_to_i32(&position["y"]),
+      is_full_screen: false,
     },
     info: ProcessInfo {
       exec_name: info["exec_name"].as_str().unwrap().to_string(),

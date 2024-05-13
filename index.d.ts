@@ -26,6 +26,7 @@ export interface WindowPosition {
   y: number
   width: number
   height: number
+  isFullScreen: boolean
 }
 /**
  * Struct to store all informations of the window

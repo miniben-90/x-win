@@ -5,7 +5,7 @@ import { activeWindow, activeWindowAsync, openWindows, openWindowsAsync, subscri
 const defaultStruct = {
   os: os.platform(),
   info: { execName: "", name: "", path: "", processId: 0 },
-  position: { height: 0, width: 0, x: 0, y: 0 },
+  position: { height: 0, width: 0, x: 0, y: 0, isFullScreen: false },
   processId: 0,
   title: "",
   usage: { memory: 0 },

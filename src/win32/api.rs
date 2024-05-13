@@ -189,6 +189,7 @@ fn get_rect_window(hwnd: HWND) -> WindowPosition {
         width: lprect.right - lprect.left,
         x: lprect.left,
         y: lprect.top,
+        is_full_screen: is_fullscreen(hwnd).as_bool()
       }
     } else {
       WindowPosition {
@@ -196,6 +197,7 @@ fn get_rect_window(hwnd: HWND) -> WindowPosition {
         width: 0,
         x: 0,
         y: 0,
+        is_full_screen: false,
       }
     }
   }
