@@ -76,11 +76,9 @@ impl API for X11Api {
         if let Ok(windows_reply) = conn.wait_for_reply(window_list) {
           let window_list: Vec<x::Window> = windows_reply.value::<x::Window>().to_vec();
           if window_list.len().ne(&0) {
-            println!("total: {:?}", window_list.len());
             for window in window_list {
               let window: &x::Window = &window;
               let result = get_window_information(&conn, window);
-              println!("TEST:{:?}", result);
               if result.id.ne(&0) {
                 if is_normal_window(&conn, *window) {
                   results.push(result);
@@ -151,6 +149,7 @@ fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosit
     y: 0,
     width: 0,
     height: 0,
+    is_full_screen: is_full_screen_window(conn, window),
   };
   let window_geometry = conn.send_request(&x::GetGeometry {
     drawable: x::Drawable::Window(window),
@@ -258,6 +257,20 @@ fn get_window_type_normal_atom(conn: &xcb::Connection) -> x::Atom {
 }
 
 /**
+ * Generate Atom of _NET_WM_STATE value
+ */
+fn get_window_state_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_WM_STATE", false)
+}
+
+/**
+ * Generate Atom of _NET_WM_STATE_FULLSCREEN value
+ */
+fn get_window_state_fullscreen_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_WM_STATE_FULLSCREEN", false)
+}
+
+/**
  * Generate Atom of name parameter
  */
 fn get_atom(conn: &xcb::Connection, name: &[u8], only_if_exists: bool) -> x::Atom {
@@ -276,9 +289,31 @@ fn get_atom(conn: &xcb::Connection, name: &[u8], only_if_exists: bool) -> x::Ato
  * Check if the window is a normal type
  */
 fn is_normal_window(conn: &xcb::Connection, window: x::Window) -> bool {
-  let state_window_atom = get_window_type_atom(&conn);
+  let window_type_atom = get_window_type_atom(&conn);
   let type_normal_atom = get_window_type_normal_atom(&conn);
-  if state_window_atom != x::ATOM_NONE && type_normal_atom != x::ATOM_NONE {
+  if window_type_atom != x::ATOM_NONE && type_normal_atom != x::ATOM_NONE {
+    let window_state = conn.send_request(&x::GetProperty {
+      delete: false,
+      window,
+      property: window_type_atom,
+      r#type: x::ATOM_ATOM,
+      long_offset: 0,
+      long_length: std::u32::MAX,
+    });
+    if let Ok(window_state) = conn.wait_for_reply(window_state) {
+      return window_state.value().contains(&type_normal_atom);
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if the window is full screened
+ */
+fn is_full_screen_window(conn: &xcb::Connection, window: x::Window) -> bool {
+  let state_window_atom = get_window_state_atom(&conn);
+  let state_fullscreen_atom = get_window_state_fullscreen_atom(&conn);
+  if state_window_atom != x::ATOM_NONE && state_fullscreen_atom != x::ATOM_NONE {
     let window_state = conn.send_request(&x::GetProperty {
       delete: false,
       window,
@@ -288,7 +323,7 @@ fn is_normal_window(conn: &xcb::Connection, window: x::Window) -> bool {
       long_length: std::u32::MAX,
     });
     if let Ok(window_state) = conn.wait_for_reply(window_state) {
-      return window_state.value().contains(&type_normal_atom);
+      return window_state.value().contains(&state_fullscreen_atom);
     }
   }
   return false;

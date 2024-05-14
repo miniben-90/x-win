@@ -10,7 +10,7 @@ extern crate objc;
 #[macro_use]
 extern crate core;
 
-use common::{api::API, thread::ThreadManager, x_win_struct::window_info::WindowInfo};
+use common::{api::{empty_entity, API}, thread::ThreadManager, x_win_struct::window_info::WindowInfo};
 use napi::{JsFunction, Result, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
@@ -41,10 +41,6 @@ use napi::threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFun
 use std::{
   thread,
   time::Duration,
-};
-
-use crate::common::x_win_struct::{
-  process_info::ProcessInfo, usage_info::UsageInfo, window_position::WindowPosition,
 };
 
 use once_cell::sync::Lazy;
@@ -327,25 +323,7 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
   let thread_manager = THREAD_MANAGER.lock().unwrap();
 
   let id = thread_manager.start_thread(move |receiver| {
-    let mut current_window: WindowInfo = WindowInfo {
-      id: 0,
-      os: "".to_string(),
-      title: "".to_string(),
-      position: WindowPosition {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-      info: ProcessInfo {
-        process_id: 0,
-        path: "".to_string(),
-        name: "".to_string(),
-        exec_name: "".to_string(),
-      },
-      usage: UsageInfo { memory: 0 },
-      url: "".to_string(),
-    };
+    let mut current_window: WindowInfo = empty_entity();
     loop {
       match receiver.try_recv() {
         Ok(_) | Err(std::sync::mpsc::TryRecvError::Disconnected) => {

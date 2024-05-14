@@ -31,7 +31,7 @@ const AllowedWindow = [
   Meta.WindowType.UTILITY,
   Meta.WindowType.MODAL_DIALOG,
   Meta.WindowType.DIALOG,
-  Meta.WindowType.NORMA
+  Meta.WindowType.NORMAL
 ];
 
 function _filterWindow(x, index, array) {
@@ -79,6 +79,7 @@ function _strcut_data(window_actor) {
         height: window_actor.get_height ? window_actor.get_height() : 0,
         x: window_actor.get_x ? window_actor.get_x() : 0,
         y: window_actor.get_y ? window_actor.get_y() : 0,
+        isFullScreen: _window.is_fullscreen(),
       },
       url: '',
       usage: { memory: _get_memory_usage(process_id) },
@@ -99,6 +100,7 @@ function _strcut_data(window_actor) {
         height: 0,
         x: 0,
         y: 0,
+        isFullScreen: false,
       },
       usage: { memory: 0 },
     };
@@ -150,7 +152,7 @@ const AllowedWindow = [
   Meta.WindowType.UTILITY,
   Meta.WindowType.MODAL_DIALOG,
   Meta.WindowType.DIALOG,
-  Meta.WindowType.NORMA
+  Meta.WindowType.NORMAL
 ];
 
 function _filterWindow(x, index, array) {
@@ -198,6 +200,7 @@ function _strcut_data(window_actor) {
         height: window_actor.get_height ? window_actor.get_height() : 0,
         x: window_actor.get_x ? window_actor.get_x() : 0,
         y: window_actor.get_y ? window_actor.get_y() : 0,
+        isFullScreen: _window.is_fullscreen(),
       },
       url: '',
       usage: { memory: _get_memory_usage(process_id) },
@@ -218,6 +221,7 @@ function _strcut_data(window_actor) {
         height: 0,
         x: 0,
         y: 0,
+        isFullScreen: false,
       },
       usage: { memory: 0 },
     };
@@ -342,6 +346,7 @@ pub fn value_to_window_info(response: &serde_json::Value) -> WindowInfo {
       width: number_to_i32(&position["width"]),
       x: number_to_i32(&position["x"]),
       y: number_to_i32(&position["y"]),
+      is_full_screen: position["isFullScreen"].as_bool().unwrap(),
     },
     info: ProcessInfo {
       exec_name: info["exec_name"].as_str().unwrap().to_string(),

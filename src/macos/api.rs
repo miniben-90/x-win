@@ -2,8 +2,9 @@
 
 use std::process::Command;
 
-use cocoa::base::id;
-use cocoa::foundation::{NSString, NSURL};
+use cocoa::base::{id,nil};
+use cocoa::foundation::{NSRect, NSString, NSURL};
+use cocoa::appkit::NSScreen;
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::boolean::CFBoolean;
@@ -61,6 +62,9 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     | kCGWindowListOptionIncludingWindow;
   let window_list_info = unsafe { CGWindowListCopyWindowInfo(options, 0) };
   let windows_count: isize = unsafe { CFArrayGetCount(window_list_info) };
+
+  let screen_rect = get_screen_rect();
+
   for idx in 0..windows_count {
     let dref: CFDictionaryRef =
       unsafe { CFArrayGetValueAtIndex(window_list_info, idx) as CFDictionaryRef };
@@ -174,6 +178,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
         y: bounds.origin.y as i32,
         width: bounds.size.width as i32,
         height: bounds.size.height as i32,
+        is_full_screen: is_full_screen(bounds, screen_rect),
       },
       info: ProcessInfo {
         process_id: process_id as u32,
@@ -238,13 +243,13 @@ fn is_from_document(bundle_id: &str) -> bool {
   }
 }
 
-fn is_firefox_browser(bundle_id: &str) -> bool {
-  match bundle_id {
-    | "org.mozilla.firefox"
-    | "org.mozilla.firefoxdeveloperedition" => true,
-    _ => false,
-  }
-}
+// fn is_firefox_browser(bundle_id: &str) -> bool {
+//   match bundle_id {
+//     | "org.mozilla.firefox"
+//     | "org.mozilla.firefoxdeveloperedition" => true,
+//     _ => false,
+//   }
+// }
 
 fn execute_applescript(script: &str) -> String {
   let output = Command::new("osascript")
@@ -254,4 +259,17 @@ fn execute_applescript(script: &str) -> String {
     return String::from_utf8_lossy(&output.unwrap().stdout).trim().to_owned();
   }
   return "".to_owned();
+}
+
+fn get_screen_rect() -> NSRect {
+  let screen = unsafe { NSScreen::mainScreen(nil) };
+  let frame = unsafe { NSScreen::frame(screen) };
+  frame
+}
+
+fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
+  window_rect.size.height.eq(&screen_rect.size.height) &&
+  window_rect.size.width.eq(&screen_rect.size.width) &&
+  window_rect.origin.y.eq(&screen_rect.origin.y) &&
+  window_rect.origin.x.eq(&screen_rect.origin.x)
 }
