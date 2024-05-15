@@ -48,7 +48,8 @@ console.log(currentWindow);
     height: 1048,
     width: 1936,
     x: -8,
-    y: -8
+    y: -8,
+    isFullScreen: true
   },
   title: "● README.md - x-win - Visual Studio Code",
   usage: {
@@ -98,7 +99,8 @@ console.log(windows);
     height: 1048,
     width: 1936,
     x: -8,
-    y: -8
+    y: -8,
+    isFullScreen: true
   },
   title: "● README.md - x-win - Visual Studio Code",
   usage: {
