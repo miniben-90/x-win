@@ -41,8 +41,8 @@
     "open"
   ],
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.2",
-    "ava": "^6.1.2"
+    "@napi-rs/cli": "^2.18.3",
+    "ava": "^6.1.3"
   },
   "ava": {
     "timeout": "3m",
