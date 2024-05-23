@@ -42,7 +42,7 @@ test('activeWindow', (t) => {
   t.pass();
 })
 
-test.only('openWindows', (t) => {
+test('openWindows', (t) => {
   console.time('openwindows');
   const list = openWindows();
   console.timeEnd('openwindows');
