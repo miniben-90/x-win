@@ -1,6 +1,9 @@
 #![deny(unused_imports)]
 
-use windows::core::{w, VARIANT};
+use windows::{
+  core::{w, VARIANT},
+  Win32::Foundation::{FALSE, TRUE},
+};
 
 use crate::common::{
   api::{empty_entity, os_name, API},
@@ -64,49 +67,25 @@ impl API for WindowsAPI {
 
   fn get_open_windows(&self) -> Vec<WindowInfo> {
     let mut results: Vec<WindowInfo> = Vec::new();
-    let mut open_windows: Vec<HWND> = Vec::new();
 
-    let lparam = unsafe {
-      std::mem::transmute::<*mut c_void, LPARAM>(&mut open_windows as *mut Vec<HWND> as *mut c_void)
-    };
-    unsafe {
-      let enum_desktop = EnumDesktopWindows(None, Some(enum_desktop_windows_proc), lparam);
-      if enum_desktop.is_ok() && open_windows.len().ne(&0) {
-        for hwnd in open_windows {
-          let window_info = get_window_information(hwnd);
-          if window_info.title.eq(&"") && window_info.info.exec_name.to_lowercase().eq(&"explorer")
-          {
-            continue;
-          }
-          results.push(window_info);
-        }
+    enum_desktop_windows(|hwnd| {
+      let window_info = get_window_information(hwnd);
+      if !(window_info.title.eq(&"") && window_info.info.exec_name.to_lowercase().eq(&"explorer")) {
+        results.push(window_info);
       }
-    }
+      true
+    });
 
     results
   }
 }
 
-/**
- * Is the window show as maximized
- */
-fn is_fullscreen(hwnd: HWND) -> BOOL {
-  let mut lpwndpl: WINDOWPLACEMENT = WINDOWPLACEMENT::default();
-
-  unsafe {
-    if GetWindowPlacement(hwnd, &mut lpwndpl).is_ok()
-      && SW_SHOWMAXIMIZED.0.eq(&(lpwndpl.showCmd as i32))
-    {
-      return true.into();
-    }
-  }
-  return false.into();
-}
-
 /** Functions for callback */
-extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
-  let open_windows = unsafe { std::mem::transmute::<LPARAM, &mut Vec<HWND>>(lparam) };
-
+unsafe extern "system" fn enum_desktop_windows_proc<Callback: FnMut(HWND) -> bool>(
+  hwnd: HWND,
+  lparam: LPARAM,
+) -> BOOL {
+  let callback = lparam.0 as *mut Callback;
   unsafe {
     if IsWindow(hwnd).as_bool() && IsWindow(hwnd).as_bool() && IsWindowVisible(hwnd).as_bool() {
       let mut pwi: WINDOWINFO = WINDOWINFO::default();
@@ -127,37 +106,62 @@ extern "system" fn enum_desktop_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL
           cbattribute,
         );
         if result.is_ok() && clocked_val == 0 {
-          open_windows.push(hwnd);
+          // If problem with callback stop loop
+          if !((*callback)(hwnd)) {
+            return FALSE;
+          }
         }
       }
     }
+    return TRUE;
   }
-
-  true.into()
 }
 
 extern "system" fn enum_child_windows_func(hwnd: HWND, lparam: LPARAM) -> BOOL {
-  let process_info: &mut ProcessInfo =
-    unsafe { std::mem::transmute::<LPARAM, &mut ProcessInfo>(lparam) };
-
+  let process_info = lparam.0 as *mut ProcessInfo;
   let mut process_id: u32 = 0;
   let _id: u32 = unsafe { GetWindowThreadProcessId(hwnd, Some(&mut process_id)) };
-
   if let Ok(handle) = open_process_handle(process_id) {
     let new_process_info: ProcessInfo = get_process_path_and_name(handle, hwnd, process_id);
     close_process_handle(handle);
-    if process_info.path.ne(&new_process_info.path) {
-      process_info.exec_name = new_process_info.exec_name;
-      process_info.name = new_process_info.name;
-      process_info.path = new_process_info.path;
-      process_info.process_id = new_process_info.process_id;
-      false.into()
-    } else {
-      true.into()
+    unsafe {
+      if (*process_info).path.ne(&new_process_info.path) {
+        (*process_info).exec_name = new_process_info.exec_name;
+        (*process_info).name = new_process_info.name;
+        (*process_info).path = new_process_info.path;
+        (*process_info).process_id = new_process_info.process_id;
+        FALSE
+      } else {
+        TRUE
+      }
     }
   } else {
-    true.into()
+    TRUE
   }
+}
+
+/** Function with callback as parameter to get open windows */
+fn enum_desktop_windows<Callback: FnMut(HWND) -> bool>(callback: Callback) {
+  unsafe {
+    let lparam = LPARAM(&callback as *const _ as isize);
+    let _ = EnumDesktopWindows(None, Some(enum_desktop_windows_proc::<Callback>), lparam);
+  }
+}
+
+/**
+ * Is the window show as maximized
+ */
+fn is_fullscreen(hwnd: HWND) -> BOOL {
+  let mut lpwndpl: WINDOWPLACEMENT = WINDOWPLACEMENT::default();
+
+  unsafe {
+    if GetWindowPlacement(hwnd, &mut lpwndpl).is_ok()
+      && SW_SHOWMAXIMIZED.0.eq(&(lpwndpl.showCmd as i32))
+    {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 /**
@@ -189,7 +193,7 @@ fn get_rect_window(hwnd: HWND) -> WindowPosition {
         width: lprect.right - lprect.left,
         x: lprect.left,
         y: lprect.top,
-        is_full_screen: is_fullscreen(hwnd).as_bool()
+        is_full_screen: is_fullscreen(hwnd).as_bool(),
       }
     } else {
       WindowPosition {
@@ -341,11 +345,7 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
       .to_lowercase()
       .eq(r#"applicationframehost"#)
     {
-      let lparam = unsafe {
-        std::mem::transmute::<*mut c_void, LPARAM>(
-          &mut process_info as *mut ProcessInfo as *mut c_void,
-        )
-      };
+      let lparam = LPARAM(&mut process_info as *const ProcessInfo as isize);
       let _ = unsafe { EnumChildWindows(hwnd, Some(enum_child_windows_func), lparam) };
     } else if let Ok(process_name) = get_process_name_from_path(&process_path) {
       process_info.name = process_name;
@@ -416,7 +416,8 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
               get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())
             }
             x if x.contains(&"msedge") => {
-              let mut value = get_url_from_automation_id(&automation, &element, "view_1022".to_owned());
+              let mut value =
+                get_url_from_automation_id(&automation, &element, "view_1022".to_owned());
               if value.eq(&"") {
                 value = get_url_from_automation_id(&automation, &element, "view_1020".to_owned());
               }

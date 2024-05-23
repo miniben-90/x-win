@@ -42,11 +42,12 @@ test('activeWindow', (t) => {
   t.pass();
 })
 
-test('openWindows', (t) => {
+test.only('openWindows', (t) => {
   console.time('openwindows');
   const list = openWindows();
   console.timeEnd('openwindows');
   t.log(list);
+  t.not(list.length, 0);
   for (const data of list) {
     compareStruct(t, data);
   }
@@ -166,6 +167,7 @@ test('openWindowsAsync', async (t) => {
   const list = await openWindowsAsync();
   console.timeEnd('openWindowsAsync');
   t.log(list);
+  t.not(list.length, 0);
   for (const data of list) {
     compareStruct(t, data);
   }
