@@ -29,16 +29,12 @@ export interface WindowPosition {
   isFullScreen: boolean
 }
 /**
- * Struct to store all informations of the window
+ * Struct to store process information of the window
 */
-export interface WindowInfo {
-  id: number
-  os: string
-  title: string
-  position: WindowPosition
-  info: ProcessInfo
-  usage: UsageInfo
-  url: string
+export interface IconInfo {
+  data: string
+  height: number
+  width: number
 }
 /**
  * Retrieve information the about currently active window.
@@ -323,3 +319,24 @@ export function enableExtension(): boolean
  * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
 */
 export function disableExtension(): boolean
+/**
+ * Struct to store all informations of the window
+*/
+export class WindowInfo {
+  id: number
+  os: string
+  title: string
+  position: WindowPosition
+  info: ProcessInfo
+  usage: UsageInfo
+  url: string
+  constructor(id: number, os: string, title: string, position: WindowPosition, info: ProcessInfo, usage: UsageInfo, url: string)
+  /**
+  * Funciton who help to recover icon of application and will return `IconInfo`.
+  */
+  getIcon(): IconInfo
+  /**
+  * Promise funciton who help to recover icon of application and will return `IconInfo`.
+  */
+  getIconAsync(): Promise<IconInfo>
+}

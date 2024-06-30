@@ -1,19 +1,31 @@
 #![deny(unused_imports)]
 
+use base64::Engine;
+
 use windows::{
   core::{w, VARIANT},
-  Win32::Foundation::{FALSE, TRUE},
+  Win32::{
+    Foundation::{FALSE, TRUE},
+    Graphics::Gdi::{
+      DeleteDC, DeleteObject, GetObjectW, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
+      DIB_RGB_COLORS,
+    },
+    UI::{
+      Shell::ExtractIconExW,
+      WindowsAndMessaging::{DestroyIcon, GetIconInfo, HICON, ICONINFO},
+    },
+  },
 };
 
 use crate::common::{
   api::{empty_entity, os_name, API},
   x_win_struct::{
-    process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
+    icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
   },
 };
-use std::ffi::c_void;
 use std::path::{Path, PathBuf};
+use std::{ffi::c_void, os::windows::ffi::OsStrExt};
 use windows::Win32::{
   Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED},
   System::{ProcessStatus::GetProcessMemoryInfo, StationsAndDesktops::EnumDesktopWindows},
@@ -77,6 +89,107 @@ impl API for WindowsAPI {
     });
 
     results
+  }
+
+  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
+    if window_info.info.path.ne("") {
+      let lpszfile: Vec<u16> = std::path::Path::new(&window_info.info.path)
+        .as_os_str()
+        .encode_wide()
+        .chain(Some(0))
+        .collect();
+      let mut phiconlarge = HICON::default();
+      unsafe {
+        ExtractIconExW(
+          PCWSTR(lpszfile.as_ptr()),
+          0,
+          Some(&mut phiconlarge as *mut HICON),
+          None,
+          1,
+        );
+      };
+      if phiconlarge.0 != 0 {
+        let mut piconinfo: ICONINFO = ICONINFO::default();
+        let icon_info = unsafe { GetIconInfo(phiconlarge, &mut piconinfo as *mut ICONINFO as _) };
+        if icon_info.is_ok() {
+          let hbm = piconinfo.hbmColor;
+
+          let mut cbitmap = BITMAP::default();
+
+          let objectw = unsafe {
+            GetObjectW(
+              hbm,
+              std::mem::size_of::<BITMAP>() as i32,
+              Some(&mut cbitmap as *mut _ as _),
+            )
+          };
+
+          if objectw > 0 {
+            let mut lpbmi = BITMAPINFO::default();
+            lpbmi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
+            lpbmi.bmiHeader.biWidth = cbitmap.bmWidth;
+            lpbmi.bmiHeader.biHeight = -cbitmap.bmHeight;
+            lpbmi.bmiHeader.biPlanes = 1;
+            lpbmi.bmiHeader.biBitCount = 32;
+            lpbmi.bmiHeader.biCompression = BI_RGB.0 as u32;
+
+            let hdc = unsafe { windows::Win32::Graphics::Gdi::CreateCompatibleDC(None) };
+            let mut buffer: Vec<u8> = vec![0u8; (cbitmap.bmHeight * cbitmap.bmWidth * 4) as usize];
+            let height = unsafe {
+              windows::Win32::Graphics::Gdi::GetDIBits(
+                hdc,
+                hbm,
+                0,
+                cbitmap.bmHeight as u32,
+                Some(buffer.as_mut_ptr().cast()),
+                &mut lpbmi,
+                DIB_RGB_COLORS,
+              )
+            };
+
+            let mut data: String = String::new();
+
+            if height.eq(&cbitmap.bmHeight) {
+              //Reverse table to have rgba value from bgra buffer
+              for chunk in buffer.chunks_mut(4) {
+                let [b, _, r, _] = chunk else { unreachable!() };
+                std::mem::swap(b, r);
+              }
+              let mut png_data = Vec::new();
+              {
+                let cursor = std::io::Cursor::new(&mut png_data);
+                let mut encoder =
+                  png::Encoder::new(cursor, cbitmap.bmWidth as u32, cbitmap.bmHeight as u32);
+                encoder.set_color(png::ColorType::Rgba);
+                encoder.set_depth(png::BitDepth::Eight);
+
+                let mut writer = encoder.write_header().unwrap();
+                writer.write_image_data(&buffer).unwrap();
+              }
+              data = base64::prelude::BASE64_STANDARD.encode(png_data);
+            }
+
+            unsafe {
+              let _ = DeleteDC(hdc);
+              let _ = DeleteObject(hbm);
+            };
+            return IconInfo {
+              data: format!("data:image/png;base64,{}", data).to_owned(),
+              height: cbitmap.bmHeight as u32,
+              width: cbitmap.bmWidth as u32,
+            };
+          }
+        }
+      }
+      unsafe {
+        let _ = DestroyIcon(phiconlarge).unwrap();
+      };
+    }
+    return IconInfo {
+      data: "".to_owned(),
+      height: 0,
+      width: 0,
+    };
   }
 }
 

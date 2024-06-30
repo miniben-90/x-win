@@ -6,7 +6,7 @@ use super::{process_info::ProcessInfo, usage_info::UsageInfo, window_position::W
  * Struct to store all informations of the window
  */
 #[derive(Debug, Clone)]
-#[napi(object)]
+#[napi(constructor)]
 pub struct WindowInfo {
   pub id: u32,
   pub os: String,
@@ -17,6 +17,7 @@ pub struct WindowInfo {
   pub url: String,
 }
 
+#[napi]
 impl WindowInfo {
   pub fn new(
     id: u32,
