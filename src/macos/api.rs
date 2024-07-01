@@ -2,9 +2,10 @@
 
 use std::process::Command;
 
-use cocoa::base::{id,nil};
-use cocoa::foundation::{NSRect, NSString, NSURL};
+use base64::Engine;
 use cocoa::appkit::NSScreen;
+use cocoa::base::{id, nil};
+use cocoa::foundation::{NSRect, NSString, NSURL};
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::boolean::CFBoolean;
@@ -23,6 +24,7 @@ use core_graphics::window::{
   kCGWindowNumber, kCGWindowOwnerName, kCGWindowOwnerPID,
 };
 
+use crate::common::x_win_struct::icon_info::IconInfo;
 use crate::common::{
   api::{empty_entity, os_name, API},
   x_win_struct::{
@@ -51,6 +53,44 @@ impl API for MacosAPI {
 
   fn get_open_windows(&self) -> Vec<WindowInfo> {
     get_windows_informations(false)
+  }
+
+  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
+    if window_info.info.path.ne("") {
+      unsafe {
+        let path = NSString::alloc(nil).init_str(&window_info.info.path);
+        let nsworkspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
+        let nsimage: id = msg_send![nsworkspace, iconForFile: path];
+
+        if !nsimage.is_null() {
+          let cgref: id = msg_send![
+            nsimage,
+            CGImageForProposedRect: nil
+            context: nil
+            hints: nil
+          ];
+          let nsbitmapref: id = msg_send![class!(NSBitmapImageRep), alloc];
+          let imagerep: id = msg_send![nsbitmapref, initWithCGImage: cgref];
+          let imagesize: (f64, f64) = msg_send![nsimage, size];
+          let _: () = msg_send![imagerep, setSize: imagesize];
+          let pngdata: id = msg_send![imagerep, representationUsingType:4 properties:nil];
+          let length: usize = msg_send![pngdata, length];
+          let bytes: *const u8 = msg_send![pngdata, bytes];
+          let byte_slice: &[u8] = std::slice::from_raw_parts(bytes, length);
+          let data = base64::prelude::BASE64_STANDARD.encode(byte_slice);
+          return IconInfo {
+            data: format!("data:image/png;base64,{}", data).to_owned(),
+            width: imagesize.0 as u32,
+            height: imagesize.1 as u32,
+          }
+        }
+      }
+    }
+    IconInfo {
+      data: "".to_owned(),
+      height: 0,
+      width: 0,
+    }
   }
 }
 
@@ -156,10 +196,15 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let mut url: String = String::new();
 
     if is_browser_bundle_id(&bundle_identifier) {
-      let mut command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
-      if is_from_document(&bundle_identifier)
-      {
-        command = format!("tell app id \"{}\" to get URL of front document", bundle_identifier);
+      let mut command = format!(
+        "tell app id \"{}\" to get URL of active tab of front window",
+        bundle_identifier
+      );
+      if is_from_document(&bundle_identifier) {
+        command = format!(
+          "tell app id \"{}\" to get URL of front document",
+          bundle_identifier
+        );
       }
       // else if is_firefox_browser(&bundle_identifier)
       // {
@@ -167,7 +212,6 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       // }
       url = execute_applescript(&command);
     }
-
 
     windows.push(WindowInfo {
       id: id as u32,
@@ -236,9 +280,7 @@ fn is_browser_bundle_id(bundle_id: &str) -> bool {
 
 fn is_from_document(bundle_id: &str) -> bool {
   match bundle_id {
-    "com.apple.Safari"
-    | "com.apple.SafariTechnologyPreview"
-    | "com.kagi.kagimacOS" => true,
+    "com.apple.Safari" | "com.apple.SafariTechnologyPreview" | "com.kagi.kagimacOS" => true,
     _ => false,
   }
 }
@@ -252,11 +294,11 @@ fn is_from_document(bundle_id: &str) -> bool {
 // }
 
 fn execute_applescript(script: &str) -> String {
-  let output = Command::new("osascript")
-  .args(&["-e", script])
-  .output();
+  let output = Command::new("osascript").args(&["-e", script]).output();
   if output.is_ok() {
-    return String::from_utf8_lossy(&output.unwrap().stdout).trim().to_owned();
+    return String::from_utf8_lossy(&output.unwrap().stdout)
+      .trim()
+      .to_owned();
   }
   return "".to_owned();
 }
@@ -268,8 +310,8 @@ fn get_screen_rect() -> NSRect {
 }
 
 fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
-  window_rect.size.height.eq(&screen_rect.size.height) &&
-  window_rect.size.width.eq(&screen_rect.size.width) &&
-  window_rect.origin.y.eq(&screen_rect.origin.y) &&
-  window_rect.origin.x.eq(&screen_rect.origin.x)
+  window_rect.size.height.eq(&screen_rect.size.height)
+    && window_rect.size.width.eq(&screen_rect.size.width)
+    && window_rect.origin.y.eq(&screen_rect.origin.y)
+    && window_rect.origin.x.eq(&screen_rect.origin.x)
 }

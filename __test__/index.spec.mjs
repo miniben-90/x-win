@@ -33,11 +33,16 @@ function compareStruct(t, data) {
   }
 }
 
+function compareIconStruct(t, data) {
+  t.notDeepEqual(data.data, "");
+  t.notDeepEqual(data.width, 0);
+  t.notDeepEqual(data.height, 0);
+}
+
 test('activeWindow', (t) => {
   console.time('activeWindow');
   const data = activeWindow();
   console.timeEnd('activeWindow');
-  t.log(data);
   compareStruct(t, data);
   t.pass();
 })
@@ -171,5 +176,25 @@ test('openWindowsAsync', async (t) => {
   for (const data of list) {
     compareStruct(t, data);
   }
+  t.pass();
+})
+
+test('getIcon', (t) => {
+  const data = activeWindow();
+  console.time('getIcon');
+  const iconInfo = data.getIcon();
+  console.timeEnd('getIcon');
+  t.log(iconInfo);
+  compareIconStruct(t, iconInfo);
+  t.pass();
+})
+
+test('getIconAsync', async (t) => {
+  const data = activeWindow();
+  console.time('getIconAsync');
+  const iconInfo = await data.getIconAsync();
+  console.timeEnd('getIconAsync');
+  t.log(iconInfo);
+  compareIconStruct(t, iconInfo);
   t.pass();
 })

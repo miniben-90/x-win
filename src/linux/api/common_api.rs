@@ -54,17 +54,12 @@ pub fn init_entity() -> WindowInfo {
 }
 
 pub fn get_gnome_version() -> String {
-  let output = Command::new("gnome-shell")
-    .arg("--version")
-    .output()
-    .unwrap();
-  if output.status.success() {
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let version = stdout
-      .split_whitespace()
-      .nth(2)
-      .unwrap_or("999");
-    return version.to_owned();
+  if let Ok(output) = Command::new("gnome-shell").arg("--version").output() {
+    if output.status.success() {
+      let stdout = String::from_utf8_lossy(&output.stdout);
+      let version = stdout.split_whitespace().nth(2).unwrap_or("999");
+      return version.to_owned();
+    }
   }
   "999".to_owned()
 }

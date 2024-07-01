@@ -240,6 +240,10 @@ jobs:
         if: ${{ matrix.settings.host == 'macos-latest' }}
         run: open .
 
+      - name: Open explorer to have an active window (windows)
+        if: ${{ matrix.settings.host == 'windows-latest' }}
+        run: explorer .
+
       - name: Test bindings
         if: ${{ !matrix.settings.image }}
         run: yarn test

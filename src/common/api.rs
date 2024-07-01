@@ -1,6 +1,9 @@
 #![deny(unused_imports)]
 
-use super::x_win_struct::{window_info::WindowInfo, window_position::WindowPosition, process_info::ProcessInfo, usage_info::UsageInfo};
+use super::x_win_struct::{
+  icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
+  window_position::WindowPosition,
+};
 
 pub trait API {
   /**
@@ -12,30 +15,31 @@ pub trait API {
    * Return Array of open windows information
    */
   fn get_open_windows(&self) -> Vec<WindowInfo>;
+
+  /**
+   * Return a base64 icon from window_info.info.path
+   */
+  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo;
 }
 
 /**
  * To know the os
  */
-#[cfg(target_os = "linux")]
 pub fn os_name() -> String {
-  r#"linux"#.to_owned()
-}
+  #[cfg(target_os = "windows")]
+  {
+    r#"win32"#.to_owned()
+  }
 
-/**
- * To know the os
- */
-#[cfg(target_os = "macos")]
-pub fn os_name() -> String {
-  r#"darwin"#.to_owned()
-}
+  #[cfg(target_os = "linux")]
+  {
+    r#"linux"#.to_owned()
+  }
 
-/**
- * To know the os
- */
-#[cfg(target_os = "windows")]
-pub fn os_name() -> String {
-  r#"win32"#.to_owned()
+  #[cfg(target_os = "macos")]
+  {
+    r#"darwin"#.to_owned()
+  }
 }
 
 pub fn empty_entity() -> WindowInfo {
