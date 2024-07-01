@@ -98,19 +98,30 @@ impl API for WindowsAPI {
         .encode_wide()
         .chain(Some(0))
         .collect();
+
       let mut phiconlarge = HICON::default();
-      unsafe {
+      let mut phiconsmall = HICON::default();
+
+      let value = unsafe {
         ExtractIconExW(
           PCWSTR(lpszfile.as_ptr()),
           0,
           Some(&mut phiconlarge as *mut HICON),
-          None,
+          Some(&mut phiconsmall as *mut HICON),
           1,
-        );
+        )
       };
-      if phiconlarge.0 != 0 {
+
+      if value.ne(&0) && (phiconlarge.0 != 0 || phiconsmall.0 != 0) {
         let mut piconinfo: ICONINFO = ICONINFO::default();
-        let icon_info = unsafe { GetIconInfo(phiconlarge, &mut piconinfo as *mut ICONINFO as _) };
+        let phicon = {
+          if phiconlarge.0 != 0 {
+            phiconlarge
+          } else {
+            phiconsmall
+          }
+        };
+        let icon_info = unsafe { GetIconInfo(phicon, &mut piconinfo as *mut ICONINFO as _) };
         if icon_info.is_ok() {
           let hbm = piconinfo.hbmColor;
 
@@ -180,10 +191,15 @@ impl API for WindowsAPI {
             };
           }
         }
+        unsafe {
+          if phiconlarge.0 != 0 {
+            let _ = DestroyIcon(phiconlarge).unwrap();
+          }
+          if phiconsmall.0 != 0 {
+            let _ = DestroyIcon(phiconsmall).unwrap();
+          }
+        };
       }
-      unsafe {
-        let _ = DestroyIcon(phiconlarge).unwrap();
-      };
     }
     return IconInfo {
       data: "".to_owned(),
