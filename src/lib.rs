@@ -118,7 +118,7 @@ fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
 
   #[cfg(target_os = "macos")]
   {
-    Ok("".to_owned())
+    Ok(api.get_app_icon(&window_info))
   }
 }
 
