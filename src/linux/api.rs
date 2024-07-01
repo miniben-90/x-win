@@ -11,7 +11,10 @@ use common_api::is_wayland_desktop;
 use wayland_api::WaylandApi;
 use x11_api::X11Api;
 
-use crate::common::{icon_info::IconInfo, api::API, x_win_struct::window_info::WindowInfo};
+use crate::common::{
+  api::API,
+  x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+};
 
 pub trait APIGnome {
   fn install_extension() -> bool;
@@ -42,10 +45,7 @@ impl API for LinuxAPI {
     }
   }
 
-  fn get_app_icon(
-    &self,
-    window_info: &WindowInfo,
-  ) -> IconInfo {
+  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
     if is_wayland_desktop() {
       (WaylandApi {}).get_app_icon(window_info)
     } else {

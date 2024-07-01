@@ -6,7 +6,10 @@ use std::{
 };
 
 use crate::{
-  common::{api::API, x_win_struct::window_info::WindowInfo},
+  common::{
+    api::API,
+    x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  },
   linux::api::{
     common_api::{get_window_memory_usage, get_window_path_name},
     gnome_shell::GNOME_XWIN_EXTENSION_FOLDER_PATH,
