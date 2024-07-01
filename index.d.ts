@@ -64,7 +64,7 @@ export interface IconInfo {
  *
  * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
 */
-export function activeWindow(): WindowInfo
+export declare function activeWindow(): WindowInfo
 /**
  * Retrieve information about the currently active window as a promise.
  * Returns an object of `WindowInfo`.
@@ -95,7 +95,7 @@ export function activeWindow(): WindowInfo
  *
  * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
 */
-export function activeWindowAsync(): Promise<WindowInfo>
+export declare function activeWindowAsync(): Promise<WindowInfo>
 /**
  * Retrieve information about the currently open windows.
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
@@ -128,7 +128,7 @@ export function activeWindowAsync(): Promise<WindowInfo>
  *
  * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
 */
-export function openWindows(): Array<WindowInfo>
+export declare function openWindows(): Array<WindowInfo>
 /**
  * Retrieve information about the currently open windows as a promise.
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
@@ -165,7 +165,7 @@ export function openWindows(): Array<WindowInfo>
  *
  * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
 */
-export function openWindowsAsync(): Promise<Array<WindowInfo>>
+export declare function openWindowsAsync(): Promise<Array<WindowInfo>>
 /**
  * Subscribe an observer thread to monitor changes in the active window.
  *
@@ -208,7 +208,7 @@ export function openWindowsAsync(): Promise<Array<WindowInfo>>
  * ```
  *
 */
-export function subscribeActiveWindow(callback: (info: WindowInfo) => void): number
+export declare function subscribeActiveWindow(callback: (info: WindowInfo) => void): number
 /**
  * Terminate and unsubscribe a specific observer using their ID.
  *
@@ -254,7 +254,7 @@ export function subscribeActiveWindow(callback: (info: WindowInfo) => void): num
  * unsubscribeActiveWindow(c);
  * ```
 */
-export function unsubscribeActiveWindow(threadId: number): void
+export declare function unsubscribeActiveWindow(threadId: number): void
 /**
  * Terminate and unsubscribe all observer threads monitoring changes in the active window.
  *
@@ -296,29 +296,29 @@ export function unsubscribeActiveWindow(threadId: number): void
  * unsubscribeAllActiveWindow();
  * ```
 */
-export function unsubscribeAllActiveWindow(): void
+export declare function unsubscribeAllActiveWindow(): void
 /**
  * Install Gnome extensions required for Linux using Gnome > 41.
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
  * Restart session will be require to install the gnome extension.
 */
-export function installExtension(): boolean
+export declare function installExtension(): boolean
 /**
  * Install Gnome extensions required for Linux using Gnome > 41.
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
  * Restart session will be require to remove the gnome extension.
 */
-export function uninstallExtension(): boolean
+export declare function uninstallExtension(): boolean
 /**
  * Enable Gnome extensions required for Linux using Gnome > 41.
  * This function will enable extension needed to correctly detect working windows with Wayland desktop environment.
 */
-export function enableExtension(): boolean
+export declare function enableExtension(): boolean
 /**
  * Disable Gnome extensions required for Linux using Gnome > 41.
  * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
 */
-export function disableExtension(): boolean
+export declare function disableExtension(): boolean
 /**
  * Struct to store all informations of the window
 */

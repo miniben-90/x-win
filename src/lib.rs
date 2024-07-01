@@ -105,21 +105,7 @@ impl Task for GetIconTask {
 
 fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
   let api = init_platform_api();
-
-  #[cfg(target_os = "windows")]
-  {
-    Ok(api.get_app_icon(&window_info))
-  }
-
-  #[cfg(target_os = "linux")]
-  {
-    Ok("".to_owned())
-  }
-
-  #[cfg(target_os = "macos")]
-  {
-    Ok(api.get_app_icon(&window_info))
-  }
+  Ok(api.get_app_icon(&window_info))
 }
 
 #[napi]

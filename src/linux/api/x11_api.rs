@@ -1,14 +1,17 @@
 #![deny(unused_imports)]
 
-use xcb::{x, Connection, Xid};
+use base64::Engine;
+use image::ImageFormat;
 
-use crate::{common::{
-  api::API,
-  x_win_struct::{
-    window_info::WindowInfo,
-    window_position::WindowPosition,
+use xcb::{x, Connection, Xid, XidNew};
+
+use crate::{
+  common::{
+    api::API,
+    x_win_struct::{icon_info::IconInfo, window_info::WindowInfo, window_position::WindowPosition},
   },
-}, linux::api::common_api::{get_window_memory_usage, get_window_path_name}};
+  linux::api::common_api::{get_window_memory_usage, get_window_path_name},
+};
 
 use super::common_api::init_entity;
 
@@ -90,6 +93,65 @@ impl API for X11Api {
       }
     }
     results
+  }
+
+  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
+    let conn = connection();
+    let setup = conn.get_setup();
+
+    let root_window = setup.roots().next();
+    if !root_window.is_none() {
+      let window = unsafe { XidNew::new(window_info.id) };
+      let icon_atom = get_window_icon_atom(&conn);
+      if icon_atom != x::ATOM_NONE {
+        let icon_cookie = conn.send_request(&x::GetProperty {
+          delete: false,
+          window,
+          property: icon_atom,
+          r#type: x::ATOM_CARDINAL,
+          long_offset: 0,
+          long_length: std::u32::MAX,
+        });
+        if let Ok(icon_reply) = conn.wait_for_reply(icon_cookie) {
+          let icon_data: &[u32] = icon_reply.value::<u32>();
+          if !icon_data.is_empty() {
+            let width = icon_data[0] as usize;
+            let height = icon_data[1] as usize;
+            let bgra_data: &[u32] = &icon_data[2..2 + (width * height)];
+
+            let mut buffer: Vec<u8> = vec![0u8; height * width * 4];
+
+            for (i, &bgra) in bgra_data.iter().enumerate() {
+              let b = (bgra & 0xFF) as u8;
+              let g = ((bgra >> 8) & 0xFF) as u8;
+              let r = ((bgra >> 16) & 0xFF) as u8;
+              let a = ((bgra >> 24) & 0xFF) as u8;
+              let index = i * 4;
+              buffer[index] = r;
+              buffer[index + 1] = g;
+              buffer[index + 2] = b;
+              buffer[index + 3] = a;
+            }
+            let mut png_data: Vec<u8> = Vec::new();
+            {
+              let buffer = image::RgbaImage::from_raw(width as u32, height as u32, buffer).unwrap();
+              let _ = buffer.write_to(&mut std::io::Cursor::new(&mut png_data), ImageFormat::Png);
+              let data = base64::prelude::BASE64_STANDARD.encode(png_data);
+              return IconInfo {
+                data: format!("data:image/png;base64,{}", data).to_owned(),
+                height: height as u32,
+                width: width as u32,
+              };
+            }
+          }
+        }
+      }
+    }
+    IconInfo {
+      data: "".to_owned(),
+      width: 0,
+      height: 0,
+    }
   }
 }
 
@@ -268,6 +330,13 @@ fn get_window_state_atom(conn: &xcb::Connection) -> x::Atom {
  */
 fn get_window_state_fullscreen_atom(conn: &xcb::Connection) -> x::Atom {
   get_atom(conn, b"_NET_WM_STATE_FULLSCREEN", false)
+}
+
+/**
+ * Generate Atom of _NET_WM_ICON value
+ */
+fn get_window_icon_atom(conn: &xcb::Connection) -> x::Atom {
+  get_atom(conn, b"_NET_WM_ICON", false)
 }
 
 /**
