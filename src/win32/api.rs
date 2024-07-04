@@ -112,10 +112,10 @@ impl API for WindowsAPI {
         )
       };
 
-      if value.ne(&0) && (phiconlarge.0 != 0 || phiconsmall.0 != 0) {
+      if value.ne(&0) && (!phiconlarge.0.is_null() || !phiconsmall.0.is_null()) {
         let mut piconinfo: ICONINFO = ICONINFO::default();
         let phicon = {
-          if phiconlarge.0 != 0 {
+          if !phiconlarge.0.is_null() {
             phiconlarge
           } else {
             phiconsmall
@@ -192,10 +192,10 @@ impl API for WindowsAPI {
           }
         }
         unsafe {
-          if phiconlarge.0 != 0 {
+          if !phiconlarge.0.is_null() {
             let _ = DestroyIcon(phiconlarge).unwrap();
           }
-          if phiconsmall.0 != 0 {
+          if !phiconsmall.0.is_null() {
             let _ = DestroyIcon(phiconsmall).unwrap();
           }
         };
