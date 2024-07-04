@@ -55,10 +55,10 @@ impl API for WaylandApi {
   }
 
   fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
-    IconInfo {
-      data: "".to_owned(),
-      width: 0,
-      height: 0,
+    if gnome_use_eval() {
+      wayland_eval_api::get_icon(window_info)
+    } else {
+      wayland_extension_api::get_icon(window_info)
     }
   }
 }

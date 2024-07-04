@@ -46,7 +46,8 @@
   },
   "ava": {
     "timeout": "3m",
-    "failFast": true
+    "failFast": true,
+    "files": ["__test__/**/*.mjs"]
   },
   "engines": {
     "node": ">= 14"

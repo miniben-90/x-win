@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
 
-use crate::common::x_win_struct::{process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo, window_position::WindowPosition};
+use crate::common::x_win_struct::{icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo, window_position::WindowPosition};
 
 use super::common_api::get_gnome_version;
 
@@ -22,8 +22,49 @@ pub const GNOME_XWIN_EXTENSION_META: &str = r#"
 
 pub const GNOME_XWIN_EXTENSION_FOLDER_PATH: &str = r#".local/share/gnome-shell/extensions/x-win@miniben90.org"#;
 
+pub const GNOME_XWIN_GET_ICON_SCRIPT: &str = r#"function get_icon(window_id) {
+  if (window_id) {
+    let meta_window = global.get_window_actors()
+      .filter(x => _filterWindow)
+      .find(x => x && x.get_meta_window && x.get_meta_window() && x.get_meta_window().get_id() === window_id)
+      .get_meta_window();
+    if (meta_window) { 
+      const tracker = Shell.WindowTracker.get_default();
+      const window_app = tracker.get_window_app(meta_window);
+      if (window_app) {
+        const icon = window_app.get_icon();
+        if (icon) {
+          const iconTheme = new St.IconTheme();
+          const iconInfo = iconTheme.lookup_by_gicon(icon, 128, St.IconLookupFlags.FORCE_SIZE);
+          if (iconInfo) {
+            const pixBuf = iconInfo.load_icon();
+            if (pixBuf) {
+              const [ success, unitArray ] = pixBuf.save_to_bufferv('png', [], []);
+              if(success && unitArray.length) {
+                const data = GLib.base64_encode(unitArray);
+                if (data) {
+                  return JSON.stringify({
+                    data: "data:image/png;base64," + data,
+                    height: pixBuf.get_height(),
+                    width: pixBuf.get_width(),
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return JSON.stringify({
+    data: "",
+    height: 0,
+    width: 0,
+  });
+}"#;
+
 pub const GNOME_XWIN_EVAL_SCRIPT: &str = r#"
-const { Gio, GLib, Meta } = imports.gi;
+const { Gio, GLib, Meta, St, Shell } = imports.gi;
 
 const AllowedWindow = [
   Meta.WindowType.DESKTOP,
@@ -142,6 +183,10 @@ const WaylandInterface = `
     <method name="get_open_windows">
       <arg name="value" type="s" direction="out" />
     </method>
+    <method name="get_icon">
+      <arg name="value" type="d" direction="in" />
+      <arg name="value" type="s" direction="out" />
+    </method>
   </interface>
 </node>
 `;
@@ -240,7 +285,6 @@ function _get_memory_usage(pid) {
 function _get_process_info(pid) {
   try {
     const path = GLib.file_read_link(`/proc/${pid}/exe`);
-    console.log(path);
     if (path) {
       return {
         path,
@@ -252,11 +296,10 @@ function _get_process_info(pid) {
     path: '',
     exec_name: '',
   };
-}
-"#;
+}"#;
 
 // Javascript extension to get active and open window(s) informations
-pub const GNOME_XWIN_EXTENSION_SCRIPT: &str = r#"const { Gio, GLib, Meta } = imports.gi;
+pub const GNOME_XWIN_EXTENSION_SCRIPT: &str = r#"const { Gio, GLib, Meta, Gtk: St, Shell } = imports.gi;
 
 let _dbus = undefined;
 
@@ -286,6 +329,8 @@ pub const GNOME45_XWIN_EXTENSION_SCRIPT: &str = r#"import { Extension } from 're
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
+import St from "gi://St";
+import Shell from "gi://Shell";
 
 export default class XWinWaylandExtension extends Extension {
 
@@ -330,6 +375,15 @@ pub fn number_to_i32(value: &serde_json::Value) -> i32 {
     return value.as_i64().unwrap() as i32;
   }
   0
+}
+
+pub fn value_to_icon_info(response: &serde_json::Value) -> IconInfo {
+  let response = response.as_object().unwrap();
+  IconInfo {
+    data: response["data"].as_str().unwrap().to_string(),
+    height: number_to_u32(&response["height"]),
+    width: number_to_u32(&response["width"]),
+  }
 }
 
 pub fn value_to_window_info(response: &serde_json::Value) -> WindowInfo {
