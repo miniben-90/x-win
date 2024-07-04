@@ -1,17 +1,19 @@
 use zbus::Connection;
 
 use crate::{
-  common::x_win_struct::window_info::WindowInfo,
+  common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   linux::api::gnome_shell::GNOME_XWIN_EVAL_SCRIPT,
 };
 
-use super::{common_api::init_entity, gnome_shell::value_to_window_info};
+use super::{
+  common_api::init_entity,
+  gnome_shell::{value_to_icon_info, value_to_window_info, GNOME_XWIN_GET_ICON_SCRIPT},
+};
 
 pub fn get_active_window() -> WindowInfo {
   let script = format!(
     r#"
 {}
-
 get_active_window();
 "#,
     GNOME_XWIN_EVAL_SCRIPT
@@ -40,7 +42,7 @@ get_open_windows();
   );
 
   let response = call_script(&script);
-  if response.ne(&"") {
+  if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
 
     if response.is_array() {
@@ -73,4 +75,32 @@ fn call_script(script: &String) -> String {
     return json;
   }
   "".to_owned()
+}
+
+pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
+  if window_info.id.ne(&0) {
+    let script = format!(
+      r#"
+{}
+{}
+get_icon({});
+"#,
+      GNOME_XWIN_EVAL_SCRIPT, GNOME_XWIN_GET_ICON_SCRIPT, window_info.id
+    );
+
+    let response = call_script(&script);
+
+    if !response.is_empty() {
+      let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+      if response.is_object() {
+        return value_to_icon_info(&response);
+      }
+    }
+  }
+
+  IconInfo {
+    data: "".to_owned(),
+    height: 0,
+    width: 0,
+  }
 }

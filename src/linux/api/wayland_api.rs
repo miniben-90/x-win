@@ -1,9 +1,15 @@
 #![allow(unused_imports)]
 
-use std::{ops::Deref, path::{Path, PathBuf}};
+use std::{
+  ops::Deref,
+  path::{Path, PathBuf},
+};
 
 use crate::{
-  common::{api::API, x_win_struct::window_info::WindowInfo},
+  common::{
+    api::API,
+    x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  },
   linux::api::{
     common_api::{get_window_memory_usage, get_window_path_name},
     gnome_shell::GNOME_XWIN_EXTENSION_FOLDER_PATH,
@@ -12,7 +18,8 @@ use crate::{
 
 use super::{
   common_api::{get_gnome_version, init_entity},
-  gnome_shell::{self, GNOME_SINGLETON}, wayland_eval_api, wayland_extension_api, APIGnome,
+  gnome_shell::{self, GNOME_SINGLETON},
+  wayland_eval_api, wayland_extension_api, APIGnome,
 };
 
 fn gnome_use_eval() -> bool {
@@ -44,6 +51,14 @@ impl API for WaylandApi {
       wayland_eval_api::get_open_windows()
     } else {
       wayland_extension_api::get_open_windows()
+    }
+  }
+
+  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
+    if gnome_use_eval() {
+      wayland_eval_api::get_icon(window_info)
+    } else {
+      wayland_extension_api::get_icon(window_info)
     }
   }
 }

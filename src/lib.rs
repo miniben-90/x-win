@@ -1,5 +1,5 @@
 #![deny(unsafe_op_in_unsafe_fn)]
-// #![deny(clippy::all)]
+//#![deny(clippy::all)]
 //#![allow(unused_imports)]
 
 #[cfg(target_os = "macos")]
@@ -10,8 +10,12 @@ extern crate objc;
 #[macro_use]
 extern crate core;
 
-use common::{api::{empty_entity, API}, thread::ThreadManager, x_win_struct::window_info::WindowInfo};
-use napi::{JsFunction, Result, Task, bindgen_prelude::AsyncTask};
+use common::{
+  api::{empty_entity, API},
+  thread::ThreadManager,
+  x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+};
+use napi::{bindgen_prelude::AsyncTask, JsFunction, Result, Task};
 use napi_derive::napi;
 
 mod common;
@@ -38,10 +42,7 @@ use macos::init_platform_api;
 extern crate napi_derive;
 
 use napi::threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode};
-use std::{
-  thread,
-  time::Duration,
-};
+use std::{thread, time::Duration};
 
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -50,45 +51,14 @@ static THREAD_MANAGER: Lazy<Mutex<ThreadManager>> = Lazy::new(|| Mutex::new(Thre
 
 pub struct OpenWindowsTask;
 pub struct ActiveWindowTask;
-
-#[cfg(not(target_os = "linux"))]
-fn _install_extension() -> bool {
-  false
+pub struct GetIconTask {
+  data: WindowInfo,
 }
 
-#[cfg(not(target_os = "linux"))]
-fn _uninstall_extension() -> bool {
-  false
-}
-
-#[cfg(not(target_os = "linux"))]
-fn _enable_extension() -> bool {
-  false
-}
-
-#[cfg(not(target_os = "linux"))]
-fn _disable_extension() -> bool {
-  false
-}
-
-#[cfg(target_os = "linux")]
-fn _install_extension() -> bool {
-  linux::gnome_install_extension()
-}
-
-#[cfg(target_os = "linux")]
-fn _uninstall_extension() -> bool {
-  linux::gnome_uninstall_extension()
-}
-
-#[cfg(target_os = "linux")]
-fn _enable_extension() -> bool {
-  linux::gnome_enable_extension()
-}
-
-#[cfg(target_os = "linux")]
-fn _disable_extension() -> bool {
-  linux::gnome_disable_extension()
+impl GetIconTask {
+  pub fn new(data: WindowInfo) -> Self {
+    Self { data }
+  }
 }
 
 #[napi]
@@ -119,26 +89,65 @@ impl Task for ActiveWindowTask {
   }
 }
 
+#[napi]
+impl Task for GetIconTask {
+  type Output = IconInfo;
+  type JsValue = IconInfo;
+
+  fn compute(&mut self) -> Result<Self::Output> {
+    get_icon(&self.data)
+  }
+
+  fn resolve(&mut self, _: napi::Env, output: Self::Output) -> Result<Self::JsValue> {
+    Ok(output)
+  }
+}
+
+fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
+  let api = init_platform_api();
+  Ok(api.get_app_icon(&window_info))
+}
+
+#[napi]
+impl WindowInfo {
+  /**
+   * Funciton who help to recover icon of application and will return `IconInfo`.
+   */
+  #[napi]
+  pub fn get_icon(&self) -> Result<IconInfo> {
+    get_icon(&self)
+  }
+
+  /**
+   * Promise funciton who help to recover icon of application and will return `IconInfo`.
+   */
+  #[napi]
+  pub fn get_icon_async(&self) -> AsyncTask<GetIconTask> {
+    let data = self;
+    AsyncTask::new(GetIconTask { data: data.clone() })
+  }
+}
+
 /**
  * Retrieve information the about currently active window.
  * Returns an object of `WindowInfo`.
  *
  * # Example
- * 
+ *
  * ## Javascript example
- * 
+ *
  * ```javascript
  * const { activeWindow } = require('@miniben90/x-win');
- * 
+ *
  * const currentWindow = activeWindow();
  * console.log(currentWindow);
  * ```
- * 
+ *
  * ## Typescript example
- * 
+ *
  * ```typescript
  * import { activeWindow } from '@miniben90/x-win';
- * 
+ *
  * const currentWindow = activeWindow();
  * console.log(currentWindow);
  * ```
@@ -158,21 +167,21 @@ pub fn active_window() -> Result<WindowInfo> {
  * Returns an object of `WindowInfo`.
  *
  * # Example
- * 
+ *
  * ## Javascript example
- * 
+ *
  * ```javascript
  * activeWindowAsync()
  * .then(currentWindow => {
  *   console.log(currentWindow);
  * });
  * ```
- * 
+ *
  * ## Typescript example
  *
  * ```typescript
  * import { activeWindowAsync } from '@miniben90/x-win';
- * 
+ *
  * activeWindowAsync()
  * .then(currentWindow => {
  *   console.log(currentWindow);
@@ -185,7 +194,7 @@ pub fn active_window() -> Result<WindowInfo> {
  */
 #[napi]
 pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
-  AsyncTask::new(ActiveWindowTask { })
+  AsyncTask::new(ActiveWindowTask {})
 }
 
 /**
@@ -193,9 +202,9 @@ pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
- * 
+ *
  * ## Javascript example
- * 
+ *
  * ```javascript
  * const { openWindows } = require('@miniben90/x-win');
  *
@@ -204,7 +213,7 @@ pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
  *   console.log(i, windows[i]);
  * }
  * ```
- * 
+ *
  * ## Typescript Example
  *
  * ```typescript
@@ -231,9 +240,9 @@ pub fn open_windows() -> Result<Vec<WindowInfo>> {
  * Returns an array of `WindowInfo`, each containing details about a specific open window.
  *
  * # Example
- * 
+ *
  * ## Javascript example
- * 
+ *
  * ```javascript
  * const { openWindowsAsync } = resuire('@miniben90/x-win');
  *
@@ -244,9 +253,9 @@ pub fn open_windows() -> Result<Vec<WindowInfo>> {
  *   }
  * });
  * ```
- * 
+ *
  * ## Typescript example
- * 
+ *
  * ```typescript
  * import { openWindowsAsync } from '@miniben90/x-win';
  *
@@ -264,19 +273,19 @@ pub fn open_windows() -> Result<Vec<WindowInfo>> {
  */
 #[napi]
 pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
-  AsyncTask::new(OpenWindowsTask { })
+  AsyncTask::new(OpenWindowsTask {})
 }
 
 /**
  * Subscribe an observer thread to monitor changes in the active window.
  *
  * # Example
- * 
+ *
  * ## Javascript example
- * 
+ *
  * ```javascript
  * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
- * 
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -286,15 +295,15 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
- * 
+ *
  * unsubscribeAllActiveWindow();
  * ```
- * 
+ *
  * ## Typescript example
- * 
+ *
  * ```typescript
  * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
- * 
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -304,7 +313,7 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
- * 
+ *
  * unsubscribeAllActiveWindow();
  * ```
  *
@@ -355,12 +364,12 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
  * Terminate and unsubscribe a specific observer using their ID.
  *
  * # Example
- * 
+ *
  * ## Javascript example
- * 
+ *
  * ```javascript
  * const { subscribeActiveWindow, unsubscribeActiveWindow } = require('@miniben90/x-win');
- * 
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -370,17 +379,17 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
- * 
+ *
  * unsubscribeActiveWindow(a);
  * unsubscribeActiveWindow(b);
  * unsubscribeActiveWindow(c);
  * ```
- * 
+ *
  * ## Typescript example
- * 
+ *
  * ```typescript
  * import { subscribeActiveWindow, unsubscribeActiveWindow } from '@miniben90/x-win';
- * 
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -390,7 +399,7 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
- * 
+ *
  * unsubscribeActiveWindow(a);
  * unsubscribeActiveWindow(b);
  * unsubscribeActiveWindow(c);
@@ -398,7 +407,11 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
  */
 #[napi]
 pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
-  THREAD_MANAGER.lock().unwrap().stop_thread(thread_id).unwrap();
+  THREAD_MANAGER
+    .lock()
+    .unwrap()
+    .stop_thread(thread_id)
+    .unwrap();
   Ok(())
 }
 
@@ -406,12 +419,12 @@ pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
  * Terminate and unsubscribe all observer threads monitoring changes in the active window.
  *
  * # Example
- * 
+ *
  * ## Javascript example
- * 
+ *
  * ```javascript
  * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
- * 
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -421,15 +434,15 @@ pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
- * 
+ *
  * unsubscribeAllActiveWindow();
  * ```
- * 
+ *
  * ## Typescript example
- * 
+ *
  * ```typescript
  * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
- * 
+ *
  * const a = subscribeActiveWindow((info) => {
  *   t.log(a, info);
  * });
@@ -439,7 +452,7 @@ pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
- * 
+ *
  * unsubscribeAllActiveWindow();
  * ```
  */
@@ -456,7 +469,14 @@ pub fn unsubscribe_all_active_window() -> Result<()> {
  */
 #[napi]
 pub fn install_extension() -> Result<bool> {
-  Ok(_install_extension())
+  #[cfg(not(target_os = "linux"))]
+  {
+    Ok(false)
+  }
+  #[cfg(target_os = "linux")]
+  {
+    Ok(linux::gnome_install_extension())
+  }
 }
 
 /**
@@ -466,7 +486,14 @@ pub fn install_extension() -> Result<bool> {
  */
 #[napi]
 pub fn uninstall_extension() -> Result<bool> {
-  Ok(_uninstall_extension())
+  #[cfg(not(target_os = "linux"))]
+  {
+    Ok(false)
+  }
+  #[cfg(target_os = "linux")]
+  {
+    Ok(linux::gnome_uninstall_extension())
+  }
 }
 
 /**
@@ -475,7 +502,14 @@ pub fn uninstall_extension() -> Result<bool> {
  */
 #[napi]
 pub fn enable_extension() -> Result<bool> {
-  Ok(_enable_extension())
+  #[cfg(not(target_os = "linux"))]
+  {
+    Ok(false)
+  }
+  #[cfg(target_os = "linux")]
+  {
+    Ok(linux::gnome_enable_extension())
+  }
 }
 
 /**
@@ -484,5 +518,12 @@ pub fn enable_extension() -> Result<bool> {
  */
 #[napi]
 pub fn disable_extension() -> Result<bool> {
-  Ok(_disable_extension())
+  #[cfg(not(target_os = "linux"))]
+  {
+    Ok(false)
+  }
+  #[cfg(target_os = "linux")]
+  {
+    Ok(linux::gnome_disable_extension())
+  }
 }

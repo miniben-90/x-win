@@ -150,6 +150,31 @@ setTimeout(() => unsubscribeActiveWindow(c), 5000);
 setTimeout(() => unsubscribeAllActiveWindow(), 10000);
 ```
 
+### Get icon from `WindoInfo`
+
+It is possible to get an icon from the `WindowInfo` class object using `getIcon` or `getIconAsync`, which will return an `IconInfo` struct.
+The icon will be stored in `IconInfo.data` in base64 PNG format.
+
+Example:
+
+```typescript
+import { activeWindow, type WindowInfo, type IconInfo } from '@miniben90/x-win';
+
+const window: WindowInfo = activeWindow();
+const iconInfo: IconInfo = window.getIcon();
+console.log(console);
+```
+
+Response:
+
+```javascript
+{
+  height: 32,
+  width: 32,
+  data: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAD/0lEQVR4Ae3gAZAkSZIkSRKLqpm7R0REZmZmVlVVVVV3d3d3d/fMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMdHd3d3dXV1VVVVVmZkZGRIS7m5kKz0xmV3d1d3dPz8zMzMxMovjvhfjvhfjvhfjvhXimW7+LvwJemhfNLvA6D34f/pp/H8Qz3fpdmH+dXeB1Hvw+/DX/dohneuq3Yf4Vth/0+px59JtC2+NfrTvz17rpw14GQDzT474W8yLoNq9l56aX55pHvQas7+DfJBboEV8mAPFMfupnmBdV2wOP/HvoUd8oAPFMfsIHm/9CevQ3C0A8kx//gea/kB7zrQIQz+THv7/5L6THfLsAxDP5ce9r/gvpsd8pAPFMftx7m/9Ceux3C0A8k//hPc1zsXkW869gkHgWieehF/teAYhn8t+/u3km29iQNjakDeZfRQJJSCCJEEjifnrx7xeAeCb//bsaINO0NK2ZcUpaMy2NDca8KISQoBRRQtQa1CJKiJBAoBf/QQGIZ/LfvbNtyEyGyQxj8nOrD+Kn73gU/x5vfdMTeYvZN9P3ha6KEkISeokfFoB4Jv/dO9pppjTrITlaTrz/rV/L+aPGv8epjcK3P+Qj2ZhXZl1QiggJveSPCkA8k//27W2bqZnlunFwNPEOT/xa/iP8xKM/io1FYd4XahUhoZf8cQGIZ/LfvK1tMzWzXDcOjibe4Ulfz3+En3jUR7AxL8xnhVpFSOilflIA4pn8N29t20zNLFeNg6OJd3jyN/If4Sce9WFszAvzWaEWESH0Uj8tAPFM/uu3tG2mZparxsGy8Q5P/kae2/c96IMoISJEiMvSkGkyzbs/41t4bj/xyA9lY16Yzwq1ipDQS/+sAMQz+a/ezDZMzSzXjYOjxts/8et5bj/2yA9jPiv0XVALl00NhjFZD8nbP/HreW4/+ZgPZ2NWmM+CWoMQ6GV+QQDimfyXb2AnTM0s142Do8bbPeEbeG4/8ZgPY2NWmM+CWgXANJn1kCzXyds87ut5bj/12A9nYx7M+6DWIAR6uV8TgHgm/+mr2IapJct1cnCUvM3jv53n9tOPfX825sG8D7oqAMbJrMfkaJW81T98O8/tZx77/mwsgnkf1CIihF7xjwQgnsl/9BJ/5eSlpzSrdXKwTN7qcd/Lc/u5F3tPFvNg3otaBMDUzHowy7V587//Hp7bz734e7IxC2a9qEWE9Nd61b97GQDxQrz8F/6BeS5//qmvJl6Il//CPzDP5c8/9dXE84f474X474X474X478U/AiZPaTD3cWUhAAAAAElFTkSuQmCC"
+}
+```
+
 ## Linux
 
 Dependencies are required to be installed for development purposes.

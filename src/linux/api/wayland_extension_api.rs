@@ -3,13 +3,13 @@ use zbus::Connection;
 use std::{env, fs, io, ops::Deref, path};
 
 use crate::{
-  common::x_win_struct::window_info::WindowInfo,
+  common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   linux::api::gnome_shell::{
     value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON, GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH, GNOME_XWIN_EXTENSION_META, GNOME_XWIN_EXTENSION_SCRIPT, GNOME_XWIN_UUID
   },
 };
 
-use super::common_api::init_entity;
+use super::{common_api::init_entity, gnome_shell::{value_to_icon_info, GNOME_XWIN_GET_ICON_SCRIPT}};
 
 pub fn get_active_window() -> WindowInfo {
   let response = call_script(&"get_active_window".to_string());
@@ -40,6 +40,23 @@ pub fn get_open_windows() -> Vec<WindowInfo> {
   }
 
   vec![]
+}
+
+pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
+  if window_info.id.ne(&0) {
+    let response = call_script_arg(&"get_icon".to_string(), window_info.id);
+    if response.ne(&"") {
+      let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+      if response.is_object() {
+        return value_to_icon_info(&response);
+      }
+    }
+  }
+  return IconInfo {
+    data: "".to_owned(),
+    width: 0,
+    height: 0,
+  };
 }
 
 pub fn install_extension() -> bool {
@@ -73,8 +90,10 @@ pub fn install_extension() -> bool {
       r#"{}
 
 {}
+
+{}
 "#,
-      script, GNOME_XWIN_EXTENSION_COMMON_SCRIPT
+      script, GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_GET_ICON_SCRIPT
     );
 
     script
@@ -181,6 +200,25 @@ fn call_script(method_name: &String) -> String {
       Some("org.gnome.Shell.Extensions.XWinWaylandExtension"),
       method_name,
       &(),
+    )
+    .unwrap();
+
+  if let Ok(json) = response.body::<String>() {
+    return json;
+  }
+  "".to_owned()
+}
+
+fn call_script_arg(method_name: &String, body: u32) -> String {
+  let connection = Connection::new_session().unwrap();
+
+  let response = connection
+    .call_method(
+      Some("org.gnome.Shell"),
+      "/org/gnome/Shell/Extensions/XWinWaylandExtension",
+      Some("org.gnome.Shell.Extensions.XWinWaylandExtension"),
+      method_name,
+      &(body as f64),
     )
     .unwrap();
 

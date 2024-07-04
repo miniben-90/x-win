@@ -33,13 +33,18 @@ function compareStruct(t, data) {
   }
 }
 
+function compareIconStruct(t, data) {
+  t.notDeepEqual(data.data, "");
+  t.notDeepEqual(data.width, 0);
+  t.notDeepEqual(data.height, 0);
+}
+
 test('activeWindow', (t) => {
   console.time('activeWindow');
   const data = activeWindow();
   console.timeEnd('activeWindow');
-  t.log(data);
   compareStruct(t, data);
-  t.pass();
+  return t.pass();
 })
 
 test('openWindows', (t) => {
@@ -51,7 +56,7 @@ test('openWindows', (t) => {
   for (const data of list) {
     compareStruct(t, data);
   }
-  t.pass();
+  return t.pass();
 })
 
 test('subscribeActiveWindow', async (t) => {
@@ -100,7 +105,7 @@ test('subscribeActiveWindow', async (t) => {
     compareStruct(t, data1);
     compareStruct(t, data2);
     compareStruct(t, data3);
-    t.pass();
+    return t.pass();
   } catch (error) {
     unsubscribeAllActiveWindow();
     throw error;
@@ -146,7 +151,7 @@ test('unsubscribeAllActiveWindow', async (t) => {
     compareStruct(t, data2);
     compareStruct(t, data3);
     unsubscribeAllActiveWindow();
-    t.pass();
+    return t.pass();
   } catch (error) {
     unsubscribeAllActiveWindow();
     throw error;
@@ -159,7 +164,7 @@ test('activeWindowAsync', async (t) => {
   console.timeEnd('activeWindowAsync');
   t.log(data);
   compareStruct(t, data);
-  t.pass();
+  return t.pass();
 })
 
 test('openWindowsAsync', async (t) => {
@@ -171,5 +176,24 @@ test('openWindowsAsync', async (t) => {
   for (const data of list) {
     compareStruct(t, data);
   }
-  t.pass();
+  return t.pass();
+})
+
+test('getIcon', (t) => {
+  const data = activeWindow();
+  console.time('getIcon');
+  const iconInfo = data.getIcon();
+  console.timeEnd('getIcon');
+  t.log(iconInfo);
+  compareIconStruct(t, iconInfo);
+  return t.pass();
+})
+
+test('getIconAsync', async (t) => {
+  const data = activeWindow();
+  console.time('getIconAsync');
+  const iconInfo = await data.getIconAsync();
+  console.timeEnd('getIconAsync');
+  compareIconStruct(t, iconInfo);
+  return t.pass();
 })
