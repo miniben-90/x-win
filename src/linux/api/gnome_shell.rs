@@ -370,6 +370,10 @@ export default class XWinWaylandExtension extends Extension {
   get_active_window() {
     return get_active_window();
   }
+
+  get_icon(window_id) {
+    return get_icon(window_id);
+  }
 }
 "#;
 
