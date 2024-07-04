@@ -42,7 +42,7 @@ get_open_windows();
   );
 
   let response = call_script(&script);
-  if response.ne(&"") {
+  if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
 
     if response.is_array() {
@@ -90,7 +90,7 @@ get_icon({});
 
     let response = call_script(&script);
 
-    if response.ne(&"") {
+    if !response.is_empty() {
       let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
       if response.is_object() {
         return value_to_icon_info(&response);

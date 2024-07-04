@@ -194,7 +194,6 @@ test('getIconAsync', async (t) => {
   console.time('getIconAsync');
   const iconInfo = await data.getIconAsync();
   console.timeEnd('getIconAsync');
-  t.log(iconInfo);
   compareIconStruct(t, iconInfo);
   t.pass();
 })

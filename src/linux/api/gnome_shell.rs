@@ -22,7 +22,7 @@ pub const GNOME_XWIN_EXTENSION_META: &str = r#"
 
 pub const GNOME_XWIN_EXTENSION_FOLDER_PATH: &str = r#".local/share/gnome-shell/extensions/x-win@miniben90.org"#;
 
-pub const GNOME_XWIN_GET_ICON_SCRIPT: &str = r#"function get_icon(window_id) {
+pub const GNOME_XWIN_GET_ICON_SCRIPT: &str = r#"function _get_icon(window_id) {
   if (window_id) {
     let meta_window = global.get_window_actors()
       .filter(x => _filterWindow)
@@ -43,11 +43,11 @@ pub const GNOME_XWIN_GET_ICON_SCRIPT: &str = r#"function get_icon(window_id) {
               if(success && unitArray.length) {
                 const data = GLib.base64_encode(unitArray);
                 if (data) {
-                  return JSON.stringify({
+                  return {
                     data: "data:image/png;base64," + data,
                     height: pixBuf.get_height(),
                     width: pixBuf.get_width(),
-                  });
+                  };
                 }
               }
             }
@@ -56,15 +56,15 @@ pub const GNOME_XWIN_GET_ICON_SCRIPT: &str = r#"function get_icon(window_id) {
       }
     }
   }
-  return JSON.stringify({
+  return {
     data: "",
     height: 0,
     width: 0,
-  });
+  };
 }"#;
 
 pub const GNOME_XWIN_EVAL_SCRIPT: &str = r#"
-const { Gio, GLib, Meta, St, Shell } = imports.gi;
+const { Gio, GLib, Meta, Gtk: St, Shell } = imports.gi;
 
 const AllowedWindow = [
   Meta.WindowType.DESKTOP,
@@ -96,6 +96,11 @@ function get_open_windows() {
 function get_active_window() {
   const activeWindow = global.get_window_actors().find(x => x.get_meta_window().has_focus() && _filterWindow(x));
   return Object(_strcut_data(activeWindow));
+}
+
+function get_icon(window_id) {
+  const iconInfo = _get_icon(window_id);
+  return Object(iconInfo);
 }
 
 function _strcut_data(window_actor) {
@@ -221,6 +226,11 @@ function get_open_windows() {
 function get_active_window() {
   const activeWindow = global.get_window_actors().find(x => x.get_meta_window().has_focus() && _filterWindow(x));
   return JSON.stringify(_strcut_data(activeWindow));
+}
+
+function get_icon(window_id) {
+  const iconInfo = _get_icon(window_id);
+  return JSON.stringify(iconInfo);
 }
 
 function _strcut_data(window_actor) {
