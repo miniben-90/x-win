@@ -44,7 +44,7 @@ test('activeWindow', (t) => {
   const data = activeWindow();
   console.timeEnd('activeWindow');
   compareStruct(t, data);
-  t.pass();
+  return t.pass();
 })
 
 test('openWindows', (t) => {
@@ -56,7 +56,7 @@ test('openWindows', (t) => {
   for (const data of list) {
     compareStruct(t, data);
   }
-  t.pass();
+  return t.pass();
 })
 
 test('subscribeActiveWindow', async (t) => {
@@ -105,7 +105,7 @@ test('subscribeActiveWindow', async (t) => {
     compareStruct(t, data1);
     compareStruct(t, data2);
     compareStruct(t, data3);
-    t.pass();
+    return t.pass();
   } catch (error) {
     unsubscribeAllActiveWindow();
     throw error;
@@ -151,7 +151,7 @@ test('unsubscribeAllActiveWindow', async (t) => {
     compareStruct(t, data2);
     compareStruct(t, data3);
     unsubscribeAllActiveWindow();
-    t.pass();
+    return t.pass();
   } catch (error) {
     unsubscribeAllActiveWindow();
     throw error;
@@ -164,7 +164,7 @@ test('activeWindowAsync', async (t) => {
   console.timeEnd('activeWindowAsync');
   t.log(data);
   compareStruct(t, data);
-  t.pass();
+  return t.pass();
 })
 
 test('openWindowsAsync', async (t) => {
@@ -176,7 +176,7 @@ test('openWindowsAsync', async (t) => {
   for (const data of list) {
     compareStruct(t, data);
   }
-  t.pass();
+  return t.pass();
 })
 
 test('getIcon', (t) => {
@@ -186,7 +186,7 @@ test('getIcon', (t) => {
   console.timeEnd('getIcon');
   t.log(iconInfo);
   compareIconStruct(t, iconInfo);
-  t.pass();
+  return t.pass();
 })
 
 test('getIconAsync', async (t) => {
@@ -195,5 +195,5 @@ test('getIconAsync', async (t) => {
   const iconInfo = await data.getIconAsync();
   console.timeEnd('getIconAsync');
   compareIconStruct(t, iconInfo);
-  t.pass();
+  return t.pass();
 })
