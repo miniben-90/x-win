@@ -185,6 +185,8 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 
 > ⚠️**Warning**
 > libc.so.6 is needed
+
+> ⚠️**Warning**
 > Recovery url is not available on linux
 
 
