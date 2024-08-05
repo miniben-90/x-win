@@ -81,7 +81,7 @@ jobs:
 
       # Set Cache cargo
       - name: Cache cargo
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry/index/
@@ -114,12 +114,12 @@ jobs:
         if: ${{ matrix.settings.host != 'ubuntu-latest' }}
         run: cargo test
 
-      # Upload artifact for the next steps (macos and test)
+      # Upload artifact for the next steps (test and publish)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.settings.target }}
-          path: target
+          path: ./target/${{ matrix.settings.target }}
           if-no-files-found: error
 
 
