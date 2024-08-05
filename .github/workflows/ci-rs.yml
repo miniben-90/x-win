@@ -24,7 +24,7 @@ jobs:
   build-n-test:
     defaults:
       run:
-        working-directory: ./x-win-rs
+        working-directory: ${{ github.workspace }}/x-win-rs
     strategy:
       fail-fast: false
       matrix:
@@ -123,7 +123,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-rs-${{ matrix.settings.host }}-${{ matrix.settings.target }}
-          path: ./target/${{ matrix.settings.target }}/*
+          path: ${{ github.workspace }}/x-win-rs/target/${{ matrix.settings.target }}
           if-no-files-found: error
 
   publish:
