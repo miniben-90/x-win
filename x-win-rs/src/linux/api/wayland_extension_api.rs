@@ -5,11 +5,16 @@ use std::{env, fs, io, ops::Deref, path};
 use crate::{
   common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   linux::api::gnome_shell::{
-    value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON, GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH, GNOME_XWIN_EXTENSION_META, GNOME_XWIN_EXTENSION_SCRIPT, GNOME_XWIN_UUID
+    value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON,
+    GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH,
+    GNOME_XWIN_EXTENSION_META, GNOME_XWIN_EXTENSION_SCRIPT, GNOME_XWIN_UUID,
   },
 };
 
-use super::{common_api::init_entity, gnome_shell::{value_to_icon_info, GNOME_XWIN_GET_ICON_SCRIPT}};
+use super::{
+  common_api::init_entity,
+  gnome_shell::{value_to_icon_info, GNOME_XWIN_GET_ICON_SCRIPT},
+};
 
 pub fn get_active_window() -> WindowInfo {
   let response = call_script(&"get_active_window".to_string());

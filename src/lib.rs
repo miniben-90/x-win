@@ -10,33 +10,15 @@ extern crate objc;
 #[macro_use]
 extern crate core;
 
+mod common;
+
 use common::{
-  api::{empty_entity, API},
   thread::ThreadManager,
   x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
 };
 use napi::{bindgen_prelude::AsyncTask, JsFunction, Result, Task};
 use napi_derive::napi;
-
-mod common;
-
-#[cfg(target_os = "windows")]
-mod win32;
-
-#[cfg(target_os = "linux")]
-mod linux;
-
-#[cfg(target_os = "macos")]
-mod macos;
-
-#[cfg(target_os = "windows")]
-use win32::init_platform_api;
-
-#[cfg(target_os = "linux")]
-use linux::init_platform_api;
-
-#[cfg(target_os = "macos")]
-use macos::init_platform_api;
+use x_win::{empty_entity, get_active_window, get_open_windows, get_window_icon};
 
 #[macro_use]
 extern crate napi_derive;
@@ -104,8 +86,8 @@ impl Task for GetIconTask {
 }
 
 fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
-  let api = init_platform_api();
-  Ok(api.get_app_icon(&window_info))
+  let t: x_win::WindowInfo = window_info.clone().into();
+  Ok(get_window_icon(&t).unwrap().into())
 }
 
 #[napi]
@@ -115,7 +97,7 @@ impl WindowInfo {
    */
   #[napi]
   pub fn get_icon(&self) -> Result<IconInfo> {
-    get_icon(&self)
+    get_icon(self)
   }
 
   /**
@@ -158,8 +140,7 @@ impl WindowInfo {
  */
 #[napi]
 pub fn active_window() -> Result<WindowInfo> {
-  let api = init_platform_api();
-  Ok(api.get_active_window())
+  Ok(get_active_window().unwrap().into())
 }
 
 /**
@@ -231,8 +212,13 @@ pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
  */
 #[napi]
 pub fn open_windows() -> Result<Vec<WindowInfo>> {
-  let api = init_platform_api();
-  Ok(api.get_open_windows())
+  Ok(
+    get_open_windows()
+      .unwrap()
+      .into_iter()
+      .map(WindowInfo::from)
+      .collect(),
+  )
 }
 
 /**
@@ -320,7 +306,6 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  */
 #[napi(ts_args_type = "callback: (info: WindowInfo) => void")]
 pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
-  let api = init_platform_api();
   let tsfn: ThreadsafeFunction<WindowInfo, ErrorStrategy::Fatal> = callback
     .create_threadsafe_function(
       0,
@@ -332,14 +317,14 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
   let thread_manager = THREAD_MANAGER.lock().unwrap();
 
   let id = thread_manager.start_thread(move |receiver| {
-    let mut current_window: WindowInfo = empty_entity();
+    let mut current_window: WindowInfo = empty_entity().into();
     loop {
       match receiver.try_recv() {
         Ok(_) | Err(std::sync::mpsc::TryRecvError::Disconnected) => {
           break;
         }
         _ => {
-          let new_current_window = api.get_active_window();
+          let new_current_window = get_active_window().unwrap();
           if new_current_window.id.ne(&current_window.id)
             || new_current_window.title.ne(&current_window.title)
             || new_current_window
@@ -348,8 +333,11 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
               .ne(&current_window.info.process_id)
             || new_current_window.id.eq(&0)
           {
-            current_window = new_current_window.clone();
-            tsfn_clone.call(new_current_window, ThreadsafeFunctionCallMode::Blocking);
+            current_window = new_current_window.clone().into();
+            tsfn_clone.call(
+              new_current_window.into(),
+              ThreadsafeFunctionCallMode::Blocking,
+            );
           }
           thread::sleep(Duration::from_millis(100));
         }
@@ -469,14 +457,7 @@ pub fn unsubscribe_all_active_window() -> Result<()> {
  */
 #[napi]
 pub fn install_extension() -> Result<bool> {
-  #[cfg(not(target_os = "linux"))]
-  {
-    Ok(false)
-  }
-  #[cfg(target_os = "linux")]
-  {
-    Ok(linux::gnome_install_extension())
-  }
+  Ok(x_win::install_extension().unwrap())
 }
 
 /**
@@ -486,14 +467,7 @@ pub fn install_extension() -> Result<bool> {
  */
 #[napi]
 pub fn uninstall_extension() -> Result<bool> {
-  #[cfg(not(target_os = "linux"))]
-  {
-    Ok(false)
-  }
-  #[cfg(target_os = "linux")]
-  {
-    Ok(linux::gnome_uninstall_extension())
-  }
+  Ok(x_win::uninstall_extension().unwrap())
 }
 
 /**
@@ -502,14 +476,7 @@ pub fn uninstall_extension() -> Result<bool> {
  */
 #[napi]
 pub fn enable_extension() -> Result<bool> {
-  #[cfg(not(target_os = "linux"))]
-  {
-    Ok(false)
-  }
-  #[cfg(target_os = "linux")]
-  {
-    Ok(linux::gnome_enable_extension())
-  }
+  Ok(x_win::enable_extension().unwrap())
 }
 
 /**
@@ -518,12 +485,5 @@ pub fn enable_extension() -> Result<bool> {
  */
 #[napi]
 pub fn disable_extension() -> Result<bool> {
-  #[cfg(not(target_os = "linux"))]
-  {
-    Ok(false)
-  }
-  #[cfg(target_os = "linux")]
-  {
-    Ok(linux::gnome_disable_extension())
-  }
+  Ok(x_win::disable_extension().unwrap())
 }

@@ -35,7 +35,7 @@ impl ThreadManager {
     let sender_ = sender.clone();
 
     let handle = thread::spawn(move || {
-        work(receiver);
+      work(receiver);
     });
     threads_clone.lock().unwrap().insert(key, sender_);
     let threads_clone_for_cleanup = Arc::clone(&self.threads);
@@ -63,7 +63,9 @@ impl ThreadManager {
   pub fn stop_all_threads(&self) -> Result<(), String> {
     let threads = self.threads.lock().unwrap();
     for (_, sender) in threads.iter() {
-      sender.send(()).map_err(|_| "Failed to send stop signal.".to_string())?;
+      sender
+        .send(())
+        .map_err(|_| "Failed to send stop signal.".to_string())?;
     }
     Ok(())
   }

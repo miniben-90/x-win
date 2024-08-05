@@ -1,0 +1,150 @@
+name: Build & Test & publich Rust package "x-win"
+
+env:
+  APP_NAME: x-win
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+
+on:
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - '**'
+    paths-ignore:
+      - '**/*.md'
+      - LICENSE
+      - '**/*.gitignore'
+      - .editorconfig
+      - docs/**
+  pull_request: null
+  release:
+    types: [published]
+
+jobs:
+  build-n-test:
+    defaults:
+      run:
+        working-directory: ./x-win-rs
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          # Build matrix for MacOS (x64)
+          - host: macos-latest
+            target: x86_64-apple-darwin
+
+          # Build matrix for MacOS (arm64)
+          - host: macos-latest
+            target: aarch64-apple-darwin
+
+          # Build matrix for Windows (x64)
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+
+          # Build matrix for Windows (x32)
+          - host: windows-latest
+            target: i686-pc-windows-msvc
+            architecture: 'x86'
+
+          # Build matrix for Windows (arm64)
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+
+          # Build for linux (using Ubuntu) (x64)
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          
+          # Build for linux (using Ubuntu) (x64)
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+
+    name: stable - ${{ matrix.settings.target }}
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      # Add actions/checkout
+      - uses: actions/checkout@v4
+
+      # Install lib dev required for compilation of the project
+      - name: (Linux) Install libx11 & libxcb for building
+        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
+
+      # Install Rust version
+      - name: Install Rust
+        if: ${{ !matrix.settings.docker }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.settings.target }}
+
+      # Set Cache cargo
+      - name: Cache cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            .cargo-cache
+            target/
+          key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
+
+      # Lint Rust code
+      - name: Lint
+        run: cargo fmt -- --check
+
+      # Check clippy code
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.settings.target }}
+
+      - name: Open finder to have an active window (MacOS)
+        if: ${{ matrix.settings.host == 'macos-latest' }}
+        run: open .
+
+      - name: Open explorer to have an active window (windows)
+        if: ${{ matrix.settings.host == 'windows-latest' }}
+        run: explorer .
+
+      - name: Test
+        if: ${{ matrix.settings.host != 'ubuntu-latest' }}
+        run: cargo test
+
+      # Upload artifact for the next steps (macos and test)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.settings.target }}
+          path: target
+          if-no-files-found: error
+
+
+
+  publish:
+    defaults:
+      run:
+        working-directory: ./x-win-rs
+    if: ${{ github.event_name == 'release' && github.ref_type == 'tag' }}
+    name: Publish ${{ github.ref_name }} (${{ github.ref }})
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      TAG: ${{ github.ref_name }}
+    needs:
+      - build-n-test
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Rust version
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Publish package
+        run: cargo publish

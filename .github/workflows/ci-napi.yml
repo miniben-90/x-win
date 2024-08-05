@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build & Test & publich node package "@miniben90/x-win"
 
 env:
   DEBUG: napi:*
@@ -148,6 +148,14 @@ jobs:
       - name: Install dependencies
         if: ${{ !matrix.settings.docker }}
         run: yarn install
+
+      # Lint Rust code
+      - name: Ceheck lint Rust
+        run: cargo fmt -- --check
+
+      # Check clippy code
+      - name: Check clippy code
+        run: cargo clippy -- -D warnings
 
       # Build the project
       - name: Build

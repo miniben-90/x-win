@@ -1,6 +1,6 @@
 # @miniben90/x-win
-
-[![CI](https://github.com/miniben-90/x-win/actions/workflows/CI.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/CI.yml)
+[![ci-rs](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml)
+[![ci-napi](https://github.com/miniben-90/x-win/actions/workflows/ci-napi.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/ci-napi.yml)
 [![Node version](https://img.shields.io/node/v/@miniben90/x-win.svg)](https://www.npmjs.com/package/@miniben90/x-win)
 ![npm type definitions](https://img.shields.io/npm/types/@miniben90/x-win)
 ![NPM License](https://img.shields.io/npm/l/@miniben90/x-win)

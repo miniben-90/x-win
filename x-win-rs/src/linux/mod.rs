@@ -8,7 +8,7 @@ use api::LinuxAPI;
 use self::api::APIGnome;
 
 pub fn init_platform_api() -> impl API {
-  LinuxAPI { }
+  LinuxAPI {}
 }
 
 pub fn gnome_install_extension() -> bool {

@@ -5,7 +5,7 @@ use super::x_win_struct::{
   window_position::WindowPosition,
 };
 
-pub trait API {
+pub trait Api {
   /**
    * Return information of current active Window
    */

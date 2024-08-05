@@ -1,4 +1,4 @@
 #![deny(unused_imports)]
 
-pub mod thread;
+pub mod api;
 pub mod x_win_struct;

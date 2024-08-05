@@ -82,7 +82,7 @@ impl API for MacosAPI {
             data: format!("data:image/png;base64,{}", data).to_owned(),
             width: imagesize.0 as u32,
             height: imagesize.1 as u32,
-          }
+          };
         }
       }
     }

@@ -18,7 +18,7 @@ use windows::{
 };
 
 use crate::common::{
-  api::{empty_entity, os_name, API},
+  api::{empty_entity, os_name, Api},
   x_win_struct::{
     icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
@@ -71,7 +71,7 @@ pub struct WindowsAPI {}
 /**
  * Impl. for windows system
  */
-impl API for WindowsAPI {
+impl Api for WindowsAPI {
   fn get_active_window(&self) -> WindowInfo {
     let hwnd = unsafe { GetForegroundWindow() };
     get_window_information(hwnd)
@@ -142,7 +142,7 @@ impl API for WindowsAPI {
             lpbmi.bmiHeader.biHeight = -cbitmap.bmHeight;
             lpbmi.bmiHeader.biPlanes = 1;
             lpbmi.bmiHeader.biBitCount = 32;
-            lpbmi.bmiHeader.biCompression = BI_RGB.0 as u32;
+            lpbmi.bmiHeader.biCompression = BI_RGB.0;
 
             let hdc = unsafe { windows::Win32::Graphics::Gdi::CreateCompatibleDC(None) };
             let mut buffer: Vec<u8> = vec![0u8; (cbitmap.bmHeight * cbitmap.bmWidth * 4) as usize];
@@ -193,19 +193,20 @@ impl API for WindowsAPI {
         }
         unsafe {
           if !phiconlarge.0.is_null() {
-            let _ = DestroyIcon(phiconlarge).unwrap();
+            DestroyIcon(phiconlarge).unwrap();
           }
           if !phiconsmall.0.is_null() {
-            let _ = DestroyIcon(phiconsmall).unwrap();
+            DestroyIcon(phiconsmall).unwrap();
           }
         };
       }
     }
-    return IconInfo {
+
+    IconInfo {
       data: "".to_owned(),
       height: 0,
       width: 0,
-    };
+    }
   }
 }
 
@@ -242,7 +243,8 @@ unsafe extern "system" fn enum_desktop_windows_proc<Callback: FnMut(HWND) -> boo
         }
       }
     }
-    return TRUE;
+
+    TRUE
   }
 }
 
@@ -290,7 +292,7 @@ fn is_fullscreen(hwnd: HWND) -> BOOL {
       return TRUE;
     }
   }
-  return FALSE;
+  FALSE
 }
 
 /**
@@ -298,13 +300,13 @@ fn is_fullscreen(hwnd: HWND) -> BOOL {
  */
 fn open_process_handle(process_id: u32) -> Result<HANDLE, ()> {
   let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) };
-  Ok(handle.map_err(|_| ())?)
+  handle.map_err(|_| ())
 }
 
 /**
  * Method to close opend handle
  */
-fn close_process_handle(handle: HANDLE) -> () {
+fn close_process_handle(handle: HANDLE) {
   unsafe {
     let _ = CloseHandle(handle);
   };
@@ -340,11 +342,9 @@ fn get_rect_window(hwnd: HWND) -> WindowPosition {
  * Get window title from HWND
  */
 fn get_window_title(hwnd: HWND) -> String {
-  let title: String;
   let mut v: Vec<u16> = vec![0; 255];
   let title_len = unsafe { GetWindowTextW(hwnd, &mut v) };
-  title = String::from_utf16_lossy(&v[0..(title_len as usize)]);
-  title
+  String::from_utf16_lossy(&v[0..(title_len as usize)])
 }
 
 /**
@@ -369,7 +369,7 @@ fn get_process_path(phlde: HANDLE) -> Result<PathBuf, ()> {
 /**
  * Get process name with help of the process path
  */
-fn get_process_name_from_path(process_path: &PathBuf) -> Result<String, ()> {
+fn get_process_name_from_path(process_path: &Path) -> Result<String, ()> {
   let lptstrfilename: windows::core::HSTRING = process_path.as_os_str().into();
   let dwlen: u32 = unsafe { GetFileVersionInfoSizeW(&lptstrfilename, Some(std::ptr::null_mut())) };
   if dwlen == 0 {
@@ -400,13 +400,13 @@ fn get_process_name_from_path(process_path: &PathBuf) -> Result<String, ()> {
   let lang: &[LangCodePage] =
     unsafe { std::slice::from_raw_parts(lplpbuffer as *const LangCodePage, 1) };
 
-  if lang.len() == 0 {
+  if lang.is_empty() {
     return Err(());
   }
 
   let mut query_len: u32 = 0;
 
-  let lang = lang.get(0).unwrap();
+  let lang = lang.first().unwrap();
   let lang_code = format!(
     "\\StringFileInfo\\{:04x}{:04x}\\FileDescription",
     lang.w_language, lang.w_code_page
@@ -440,7 +440,7 @@ fn get_process_name_from_path(process_path: &PathBuf) -> Result<String, ()> {
   let file_description = String::from_utf16_lossy(file_description);
   let file_description = file_description.trim_matches(char::from(0)).to_owned();
 
-  return Ok(file_description);
+  Ok(file_description)
 }
 
 /**
@@ -455,19 +455,19 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
   };
 
   if let Ok(process_path) = get_process_path(phlde) {
-    process_info.exec_name = process_path
+    process_path
       .file_stem()
       .unwrap_or(std::ffi::OsStr::new(""))
       .to_str()
       .unwrap_or("")
-      .to_owned();
-    process_info.path = process_path
+      .clone_into(&mut process_info.exec_name);
+    process_path
       .clone()
       .into_os_string()
       .into_string()
       .unwrap()
-      .to_owned();
-    process_info.name = process_info.exec_name.clone();
+      .clone_into(&mut process_info.path);
+    process_info.exec_name.clone_into(&mut process_info.name);
 
     if process_info
       .exec_name
@@ -510,8 +510,8 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
     let exec_name = parent_process.exec_name.to_lowercase();
     if exec_name.ne(&"searchhost") {
       let mut url: String = "".to_owned();
-      if is_browser(&exec_name.as_str()) {
-        url = get_browser_url(hwnd, exec_name).to_owned();
+      if is_browser(exec_name.as_str()) {
+        get_browser_url(hwnd, exec_name).clone_into(&mut url);
       }
       window_info = WindowInfo {
         id,
@@ -541,10 +541,10 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
           let element: IUIAutomationElement = element.unwrap();
           /* Chromium part to get url from search bar */
           return match &exec_name.to_lowercase() {
-            x if x.contains(&"firefox") => {
+            x if x.contains("firefox") => {
               get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())
             }
-            x if x.contains(&"msedge") => {
+            x if x.contains("msedge") => {
               let mut value =
                 get_url_from_automation_id(&automation, &element, "view_1022".to_owned());
               if value.eq(&"") {
@@ -651,11 +651,22 @@ fn get_url_for_chromium_from_ctrlk(
 }
 
 fn is_browser(browser_name: &str) -> bool {
-  match browser_name {
-    "chrome" | "msedge" | "opera" | "opera_gx" | "brave" | "vivaldi" | "iron" | "epic"
-    | "chromium" | "ucozmedia" | "blisk" | "maxthon" | "beaker" | "beaker browser" | "firefox" => {
-      true
-    }
-    _ => false,
-  }
+  matches!(
+    browser_name,
+    "chrome"
+      | "msedge"
+      | "opera"
+      | "opera_gx"
+      | "brave"
+      | "vivaldi"
+      | "iron"
+      | "epic"
+      | "chromium"
+      | "ucozmedia"
+      | "blisk"
+      | "maxthon"
+      | "beaker"
+      | "beaker browser"
+      | "firefox"
+  )
 }
