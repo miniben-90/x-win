@@ -115,15 +115,15 @@ jobs:
         run: cargo build --release --target ${{ matrix.settings.target }}
 
       # List contents of the target directory for debugging
-      - name: List target directory contents
-        run: ls -R ./target/${{ matrix.settings.target }}
+      # - name: List target directory contents
+      #   run: ls -R ./target/${{ matrix.settings.target }}
 
       # Upload artifact for the next steps (test and publish)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-rs-${{ matrix.settings.host }}-${{ matrix.settings.target }}
-          path: ./target/${{ matrix.settings.target }}
+          path: ./target/${{ matrix.settings.target }}/*
           if-no-files-found: error
 
   publish:
