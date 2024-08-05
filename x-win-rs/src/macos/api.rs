@@ -26,7 +26,7 @@ use core_graphics::window::{
 
 use crate::common::x_win_struct::icon_info::IconInfo;
 use crate::common::{
-  api::{empty_entity, os_name, API},
+  api::{empty_entity, os_name, Api},
   x_win_struct::{
     process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
@@ -40,10 +40,10 @@ pub struct MacosAPI {}
 /**
  * Impl. for Darwin system
  */
-impl API for MacosAPI {
+impl Api for MacosAPI {
   fn get_active_window(&self) -> WindowInfo {
     let windows: Vec<WindowInfo> = get_windows_informations(true);
-    if windows.len() > 0 {
+    if !windows.is_empty() {
       let t: &WindowInfo = windows.first().unwrap();
       t.clone() as WindowInfo
     } else {
@@ -79,7 +79,7 @@ impl API for MacosAPI {
           let byte_slice: &[u8] = std::slice::from_raw_parts(bytes, length);
           let data = base64::prelude::BASE64_STANDARD.encode(byte_slice);
           return IconInfo {
-            data: format!("data:image/png;base64,{}", data).to_owned(),
+            data: format!("data:image/png;base64,{}", data),
             width: imagesize.0 as u32,
             height: imagesize.1 as u32,
           };
@@ -195,12 +195,12 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
 
     let mut url: String = String::new();
 
-    if is_browser_bundle_id(&bundle_identifier) {
+    if is_browser_bundle_id(bundle_identifier) {
       let mut command = format!(
         "tell app id \"{}\" to get URL of active tab of front window",
         bundle_identifier
       );
-      if is_from_document(&bundle_identifier) {
+      if is_from_document(bundle_identifier) {
         command = format!(
           "tell app id \"{}\" to get URL of front document",
           bundle_identifier
@@ -241,48 +241,48 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     }
   }
 
-  return windows;
+  windows
 }
 
 fn is_browser_bundle_id(bundle_id: &str) -> bool {
-  match bundle_id {
+  matches!(
+    bundle_id,
     "com.apple.Safari"
-    | "com.apple.SafariTechnologyPreview"
-    | "com.google.Chrome"
-    | "com.google.Chrome.beta"
-    | "com.google.Chrome.dev"
-    | "com.google.Chrome.canary"
-    | "org.mozilla.firefox"
-    | "org.mozilla.firefoxdeveloperedition"
-    | "com.brave.Browser"
-    | "com.brave.Browser.beta"
-    | "com.brave.Browser.nightly"
-    | "com.microsoft.edgemac"
-    | "com.microsoft.edgemac.Beta"
-    | "com.microsoft.edgemac.Dev"
-    | "com.microsoft.edgemac.Canary"
-    | "com.mighty.app"
-    | "com.ghostbrowser.gb1"
-    | "com.bookry.wavebox"
-    | "com.pushplaylabs.sidekick"
-    | "com.operasoftware.Opera"
-    | "com.operasoftware.OperaNext"
-    | "com.operasoftware.OperaDeveloper"
-    | "com.operasoftware.OperaGX"
-    | "com.vivaldi.Vivaldi"
-    | "com.kagi.kagimacOS"
-    | "company.thebrowser.Browser"
-    | "com.sigmaos.sigmaos.macos"
-    | "com.SigmaOS.SigmaOS" => true,
-    _ => false,
-  }
+      | "com.apple.SafariTechnologyPreview"
+      | "com.google.Chrome"
+      | "com.google.Chrome.beta"
+      | "com.google.Chrome.dev"
+      | "com.google.Chrome.canary"
+      | "org.mozilla.firefox"
+      | "org.mozilla.firefoxdeveloperedition"
+      | "com.brave.Browser"
+      | "com.brave.Browser.beta"
+      | "com.brave.Browser.nightly"
+      | "com.microsoft.edgemac"
+      | "com.microsoft.edgemac.Beta"
+      | "com.microsoft.edgemac.Dev"
+      | "com.microsoft.edgemac.Canary"
+      | "com.mighty.app"
+      | "com.ghostbrowser.gb1"
+      | "com.bookry.wavebox"
+      | "com.pushplaylabs.sidekick"
+      | "com.operasoftware.Opera"
+      | "com.operasoftware.OperaNext"
+      | "com.operasoftware.OperaDeveloper"
+      | "com.operasoftware.OperaGX"
+      | "com.vivaldi.Vivaldi"
+      | "com.kagi.kagimacOS"
+      | "company.thebrowser.Browser"
+      | "com.sigmaos.sigmaos.macos"
+      | "com.SigmaOS.SigmaOS"
+  )
 }
 
 fn is_from_document(bundle_id: &str) -> bool {
-  match bundle_id {
-    "com.apple.Safari" | "com.apple.SafariTechnologyPreview" | "com.kagi.kagimacOS" => true,
-    _ => false,
-  }
+  matches!(
+    bundle_id,
+    "com.apple.Safari" | "com.apple.SafariTechnologyPreview" | "com.kagi.kagimacOS"
+  )
 }
 
 // fn is_firefox_browser(bundle_id: &str) -> bool {
@@ -294,19 +294,16 @@ fn is_from_document(bundle_id: &str) -> bool {
 // }
 
 fn execute_applescript(script: &str) -> String {
-  let output = Command::new("osascript").args(&["-e", script]).output();
-  if output.is_ok() {
-    return String::from_utf8_lossy(&output.unwrap().stdout)
-      .trim()
-      .to_owned();
+  let output = Command::new("osascript").args(["-e", script]).output();
+  if let Ok(output) = output {
+    return String::from_utf8_lossy(&output.stdout).trim().to_owned();
   }
-  return "".to_owned();
+  "".into()
 }
 
 fn get_screen_rect() -> NSRect {
   let screen = unsafe { NSScreen::mainScreen(nil) };
-  let frame = unsafe { NSScreen::frame(screen) };
-  frame
+  unsafe { NSScreen::frame(screen) }
 }
 
 fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {

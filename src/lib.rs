@@ -2,14 +2,6 @@
 //#![deny(clippy::all)]
 //#![allow(unused_imports)]
 
-#[cfg(target_os = "macos")]
-#[macro_use]
-extern crate objc;
-
-#[cfg(target_os = "macos")]
-#[macro_use]
-extern crate core;
-
 mod common;
 
 use common::{
