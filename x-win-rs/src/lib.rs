@@ -151,9 +151,9 @@ mod tests {
     {
       r#"linux"#.to_owned()
     }
-    #[cfg(target_os = "darwin")]
+    #[cfg(target_os = "macos")]
     {
-      r#"macos"#.to_owned()
+      r#"darwin"#.to_owned()
     }
     #[cfg(target_os = "windows")]
     {
