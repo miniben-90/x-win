@@ -7,7 +7,7 @@ use xcb::{x, Connection, Xid, XidNew};
 
 use crate::{
   common::{
-    api::API,
+    api::Api,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo, window_position::WindowPosition},
   },
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
@@ -23,7 +23,7 @@ pub struct X11Api {}
 /**
  * Impl. for windows system
  */
-impl API for X11Api {
+impl Api for X11Api {
   fn get_active_window(&self) -> WindowInfo {
     let conn = connection();
     let setup = conn.get_setup();
@@ -31,7 +31,7 @@ impl API for X11Api {
     let mut result: WindowInfo = init_entity();
 
     let root_window = setup.roots().next();
-    if !root_window.is_none() {
+    if root_window.is_some() {
       let root_window = root_window.unwrap().root();
       let active_window_atom = get_active_window_atom(&conn);
       if active_window_atom != x::ATOM_NONE {
@@ -44,8 +44,8 @@ impl API for X11Api {
           long_length: 1,
         });
         if let Ok(active_window) = conn.wait_for_reply(active_window) {
-          let active_window: Option<&x::Window> = active_window.value::<x::Window>().get(0);
-          if !active_window.is_none() {
+          let active_window: Option<&x::Window> = active_window.value::<x::Window>().first();
+          if active_window.is_some() {
             let active_window: &x::Window = active_window.unwrap();
             result = get_window_information(&conn, active_window);
           }
@@ -63,7 +63,7 @@ impl API for X11Api {
     let setup = conn.get_setup();
 
     let root_window = setup.roots().next();
-    if !root_window.is_none() {
+    if root_window.is_some() {
       let root_window = root_window.unwrap().root();
 
       let open_windows_atom = get_client_list_stacking_atom(&conn);
@@ -74,7 +74,7 @@ impl API for X11Api {
           property: open_windows_atom,
           r#type: x::ATOM_WINDOW,
           long_offset: 0,
-          long_length: std::u32::MAX,
+          long_length: u32::MAX,
         });
         if let Ok(windows_reply) = conn.wait_for_reply(window_list) {
           let window_list: Vec<x::Window> = windows_reply.value::<x::Window>().to_vec();
@@ -82,10 +82,8 @@ impl API for X11Api {
             for window in window_list {
               let window: &x::Window = &window;
               let result = get_window_information(&conn, window);
-              if result.id.ne(&0) {
-                if is_normal_window(&conn, *window) {
-                  results.push(result);
-                }
+              if result.id.ne(&0) && is_normal_window(&conn, *window) {
+                results.push(result);
               }
             }
           }
@@ -100,7 +98,7 @@ impl API for X11Api {
     let setup = conn.get_setup();
 
     let root_window = setup.roots().next();
-    if !root_window.is_none() {
+    if root_window.is_some() {
       let window = unsafe { XidNew::new(window_info.id) };
       let icon_atom = get_window_icon_atom(&conn);
       if icon_atom != x::ATOM_NONE {
@@ -110,7 +108,7 @@ impl API for X11Api {
           property: icon_atom,
           r#type: x::ATOM_CARDINAL,
           long_offset: 0,
-          long_length: std::u32::MAX,
+          long_length: u32::MAX,
         });
         if let Ok(icon_reply) = conn.wait_for_reply(icon_cookie) {
           let icon_data: &[u32] = icon_reply.value::<u32>();
@@ -164,28 +162,28 @@ fn connection() -> Connection {
  * Get window information
  */
 fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> WindowInfo {
-  let window_pid: u32 = get_window_pid(&conn, *window);
+  let window_pid: u32 = get_window_pid(conn, *window);
   let mut window_info: WindowInfo = init_entity();
 
   if window_pid != 0 {
     let (path, exec_name) = get_window_path_name(window_pid);
     window_info.id = window.resource_id();
-    window_info.title = get_window_title(&conn, *window);
-    window_info.info.process_id = window_pid.try_into().unwrap();
+    window_info.title = get_window_title(conn, *window);
+    window_info.info.process_id = window_pid;
     window_info.info.path = path;
     window_info.info.exec_name = exec_name;
-    window_info.info.name = get_window_class_name(&conn, *window);
+    window_info.info.name = get_window_class_name(conn, *window);
     window_info.usage.memory = get_window_memory_usage(window_pid);
-    window_info.position = get_window_position(&conn, *window);
+    window_info.position = get_window_position(conn, *window);
   }
-  return window_info;
+  window_info
 }
 
 /**
  * Get pid
  */
 fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> u32 {
-  let window_pid_atom = get_window_pid_atom(&conn);
+  let window_pid_atom = get_window_pid_atom(conn);
   if window_pid_atom != x::ATOM_NONE {
     let window_pid = conn.send_request(&x::GetProperty {
       delete: false,
@@ -196,10 +194,10 @@ fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> u32 {
       long_length: 1,
     });
     if let Ok(window_pid) = conn.wait_for_reply(window_pid) {
-      return window_pid.value::<u32>().get(0).unwrap_or(&0).to_owned();
+      return window_pid.value::<u32>().first().unwrap().to_owned();
     }
   }
-  return 0;
+  0
 }
 
 /**
@@ -250,7 +248,7 @@ fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::
     property,
     r#type: x::ATOM_NONE,
     long_offset: 0,
-    long_length: std::u32::MAX,
+    long_length: u32::MAX,
   });
   if let Ok(window_title) = conn.wait_for_reply(window_title) {
     let window_title: &[u8] = window_title.value();
@@ -270,7 +268,7 @@ fn get_window_class_name(conn: &xcb::Connection, window: x::Window) -> String {
     property: x::ATOM_WM_CLASS,
     r#type: x::ATOM_STRING,
     long_offset: 0,
-    long_length: std::u32::MAX,
+    long_length: u32::MAX,
   });
   if let Ok(window_class) = conn.wait_for_reply(window_class) {
     let window_class = window_class.value();
@@ -279,11 +277,11 @@ fn get_window_class_name(conn: &xcb::Connection, window: x::Window) -> String {
     let mut process_name = window_class
       .unwrap_or("")
       .split('\u{0}')
-      .filter(|str| str.len() > 0)
+      .filter(|str| !str.is_empty())
       .collect::<Vec<&str>>();
     return process_name.pop().unwrap_or("").to_owned();
   }
-  return "".to_owned();
+  "".into()
 }
 
 fn get_window_pid_atom(conn: &xcb::Connection) -> x::Atom {
@@ -358,8 +356,8 @@ fn get_atom(conn: &xcb::Connection, name: &[u8], only_if_exists: bool) -> x::Ato
  * Check if the window is a normal type
  */
 fn is_normal_window(conn: &xcb::Connection, window: x::Window) -> bool {
-  let window_type_atom = get_window_type_atom(&conn);
-  let type_normal_atom = get_window_type_normal_atom(&conn);
+  let window_type_atom = get_window_type_atom(conn);
+  let type_normal_atom = get_window_type_normal_atom(conn);
   if window_type_atom != x::ATOM_NONE && type_normal_atom != x::ATOM_NONE {
     let window_state = conn.send_request(&x::GetProperty {
       delete: false,
@@ -367,21 +365,21 @@ fn is_normal_window(conn: &xcb::Connection, window: x::Window) -> bool {
       property: window_type_atom,
       r#type: x::ATOM_ATOM,
       long_offset: 0,
-      long_length: std::u32::MAX,
+      long_length: u32::MAX,
     });
     if let Ok(window_state) = conn.wait_for_reply(window_state) {
       return window_state.value().contains(&type_normal_atom);
     }
   }
-  return false;
+  false
 }
 
 /**
  * Check if the window is full screened
  */
 fn is_full_screen_window(conn: &xcb::Connection, window: x::Window) -> bool {
-  let state_window_atom = get_window_state_atom(&conn);
-  let state_fullscreen_atom = get_window_state_fullscreen_atom(&conn);
+  let state_window_atom = get_window_state_atom(conn);
+  let state_fullscreen_atom = get_window_state_fullscreen_atom(conn);
   if state_window_atom != x::ATOM_NONE && state_fullscreen_atom != x::ATOM_NONE {
     let window_state = conn.send_request(&x::GetProperty {
       delete: false,
@@ -389,11 +387,11 @@ fn is_full_screen_window(conn: &xcb::Connection, window: x::Window) -> bool {
       property: state_window_atom,
       r#type: x::ATOM_ATOM,
       long_offset: 0,
-      long_length: std::u32::MAX,
+      long_length: u32::MAX,
     });
     if let Ok(window_state) = conn.wait_for_reply(window_state) {
       return window_state.value().contains(&state_fullscreen_atom);
     }
   }
-  return false;
+  false
 }

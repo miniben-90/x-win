@@ -12,7 +12,7 @@ use wayland_api::WaylandApi;
 use x11_api::X11Api;
 
 use crate::common::{
-  api::API,
+  api::Api,
   x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
 };
 
@@ -28,7 +28,7 @@ pub struct LinuxAPI {}
 /**
  * Impl. for windows system
  */
-impl API for LinuxAPI {
+impl Api for LinuxAPI {
   fn get_active_window(&self) -> WindowInfo {
     if is_wayland_desktop() {
       (WaylandApi {}).get_active_window()
