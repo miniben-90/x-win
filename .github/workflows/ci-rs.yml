@@ -99,9 +99,6 @@ jobs:
       - name: Clippy
         run: cargo clippy -- -D warnings
 
-      - name: Build
-        run: cargo build --release --target ${{ matrix.settings.target }}
-
       - name: Open finder to have an active window (MacOS)
         if: ${{ matrix.settings.host == 'macos-latest' }}
         run: open .
@@ -114,15 +111,16 @@ jobs:
         if: ${{ matrix.settings.host != 'ubuntu-latest' }}
         run: cargo test
 
+      - name: Build
+        run: cargo build --release --target ${{ matrix.settings.target }}
+
       # Upload artifact for the next steps (test and publish)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.settings.target }}
+          name: build-rs-${{ matrix.settings.host }}-${{ matrix.settings.target }}
           path: ./target/${{ matrix.settings.target }}
           if-no-files-found: error
-
-
 
   publish:
     defaults:
