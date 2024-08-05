@@ -114,6 +114,10 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.settings.target }}
 
+      # List contents of the target directory for debugging
+      - name: List target directory contents
+        run: ls -R ./target/${{ matrix.settings.target }}
+
       # Upload artifact for the next steps (test and publish)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
