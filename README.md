@@ -183,12 +183,10 @@ Dependencies are required to be installed for development purposes.
 sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev pkg-config build-essential
 ```
 
-> ⚠️**Warning**
-> libc.so.6 is needed
-
-> ⚠️**Warning**
+> ⚠️**Warning**<br />
+> libc.so.6 is needed<br />
+> ⚠️**Warning**<br />
 > Recovery url is not available on linux
-
 
 ### GNOME (Wayland)
 
