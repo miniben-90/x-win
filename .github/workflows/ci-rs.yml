@@ -117,14 +117,7 @@ jobs:
         with:
           image: ${{ matrix.settings.image }}
           options: --user 0:0 -e CARGO_TARGET_ENV=${{ matrix.settings.target }} -v ${{ github.workspace }}/.github/docker-ubuntu-install.sh:/usr/local/docker-ubuntu-install.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
-          run: |
-            Xvfb :0 &
-            sleep 1
-            gpg-agent --daemon
-            sleep 1
-            xfce4-session &
-            sleep 1
-            sh /usr/local/docker-ubuntu-install.sh
+          run: sh /usr/local/docker-ubuntu-install.sh
 
       - name: Build
         run: cargo build --release --target ${{ matrix.settings.target }}

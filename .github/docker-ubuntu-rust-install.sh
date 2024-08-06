@@ -1,5 +1,17 @@
 #!bin/bash
 
+Xvfb :0 &
+
+sleep 1
+
+gpg-agent --daemon
+
+sleep 1
+
+xfce4-session &
+
+sleep 1
+
 curl https://sh.rustup.rs -sSf | bash -s -- -y
 
 sudo apt install musl-tools -y
