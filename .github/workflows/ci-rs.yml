@@ -110,13 +110,29 @@ jobs:
       - name: Test
         if: ${{ matrix.settings.host != 'ubuntu-latest' }}
         run: cargo test
+      
+      - name: Test (x86_64-unknown-linux-gnu & x86_64-unknown-linux-musl)
+        if: ${{ matrix.settings.target == 'x86_64-unknown-linux-gnu' || matrix.settings.target == 'x86_64-unknown-linux-musl' }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ matrix.settings.image }}
+          options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-install.sh:/usr/local/docker-ubuntu-install.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
+          run: |
+            Xvfb :0 &
+            sleep 1
+            gpg-agent --daemon
+            sleep 1
+            xfce4-session &
+            sleep 1
+            curl https://sh.rustup.rs -sSf | bash -s -- -y
+            sudo apt install  musl-tools -y
+            rustup target add ${{ matrix.settings.target }}
+            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            cd /work
+            cargo test --target ${{ matrix.settings.target }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.settings.target }}
-
-      # List contents of the target directory for debugging
-      # - name: List target directory contents
-      #   run: ls -R ./target/${{ matrix.settings.target }}
 
       # Upload artifact for the next steps (test and publish)
       - name: Upload artifact
@@ -129,7 +145,7 @@ jobs:
   publish:
     defaults:
       run:
-        working-directory: ./x-win-rs
+        working-directory: ${{ github.workspace }}/x-win-rs
     if: ${{ github.event_name == 'release' && github.ref_type == 'tag' }}
     name: Publish ${{ github.ref_name }} (${{ github.ref }})
     runs-on: ubuntu-latest
@@ -142,11 +158,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Download artifacts from build part
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ github.workspace }}/x-win-rs/target
+
+      # Setup node version from matrix.node and install deps
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          check-latest: true
+          cache: yarn
+
       # Install Rust version
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+
+      # Update Cargo.toml version
+      - name: Set version to package.json 
+        run: node ${{ github.workspace }}/.scripts/before-publish.cjs x-win-rs
 
       - name: Publish package
         run: cargo publish
