@@ -67,6 +67,14 @@ jobs:
               yarn build --target x86_64-unknown-linux-gnu &&
               strip *.node
 
+          # Build for linux (using Ubuntu) (x64)
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            build: |-
+              set -e &&
+              yarn build --target x86_64-unknown-linux-musl &&
+              strip *.node
+
           # Disabled problem with lxcb
           # # Build for linux (using Ubuntu) (arm64)
           # - host: ubuntu-latest
@@ -177,7 +185,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: ${{ env.APP_NAME }}.*.node
+          path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
 
   test:
@@ -311,7 +319,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bindings-universal-apple-darwin
-          path: ${{ env.APP_NAME }}.*.node
+          path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
 
   publish:

@@ -17,7 +17,8 @@
         "aarch64-apple-darwin",
         "aarch64-pc-windows-msvc",
         "i686-pc-windows-msvc",
-        "universal-apple-darwin"
+        "universal-apple-darwin",
+        "x86_64-unknown-linux-musl"
       ]
     }
   },
