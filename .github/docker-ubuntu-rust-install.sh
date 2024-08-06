@@ -6,6 +6,10 @@ curl https://sh.rustup.rs -sSf | bash -s -- -y
 
 . "$HOME/.cargo/env"
 
+sudo apt update
+
+sudo apt upgrade -y
+
 sudo apt install musl-tools -y
 
 rustup target add $target
