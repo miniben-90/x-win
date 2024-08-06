@@ -5,7 +5,7 @@ node_version=${1:-20}
 # Install nodejs version x.x
 curl -fsSL https://deb.nodesource.com/setup_$node_version.x | sudo -E bash
 
-sudo apt-get install -y nodejs musl-tools
+sudo apt-get install -y nodejs
 
 # Install yarn glboal
 npm install --global yarn
