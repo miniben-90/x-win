@@ -11,7 +11,8 @@ sudo apt update
 sudo apt upgrade -y
 
 sudo apt install musl-tools -y
-sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev pkg-config build-essential
+
+sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev pkg-config build-essential -y
 
 rustup target add $target
 
