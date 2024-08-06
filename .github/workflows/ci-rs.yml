@@ -53,10 +53,12 @@ jobs:
           # Build for linux (using Ubuntu) (x64)
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            image: miniben90/ubuntu-dummy-desktop:latest
 
           # Build for linux (using Ubuntu) (x64)
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
+            image: miniben90/ubuntu-dummy-desktop:latest
 
     name: stable - ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
@@ -116,9 +118,17 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ matrix.settings.image }}
-          options: --user 0:0
-          # -v ${{ github.workspace }}/.github/docker-ubuntu-rust-install.sh:/usr/local/docker-ubuntu-rust-install.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
-          run: ls -ltrh
+          options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-rust-install.sh:/usr/local/docker-ubuntu-rust-install.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
+          run: |
+            Xvfb :0 &
+            sleep 1
+            gpg-agent --daemon
+            sleep 1
+            xfce4-session &
+            sleep 1
+            sh /usr/local/docker-ubuntu-rust-install.sh ${{ matrix.settings.target }}
+            cd /work
+            cargo test --target ${{ matrix.settings.target }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.settings.target }}
