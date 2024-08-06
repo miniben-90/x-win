@@ -4,6 +4,8 @@ target=${1:-''}
 
 curl https://sh.rustup.rs -sSf | bash -s -- -y
 
+. "$HOME/.cargo/env"
+
 sudo apt install musl-tools -y
 
 rustup target add $target
