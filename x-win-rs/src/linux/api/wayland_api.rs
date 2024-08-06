@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
   common::{
-    api::API,
+    api::Api,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   },
   linux::api::{
@@ -24,7 +24,7 @@ use super::{
 
 fn gnome_use_eval() -> bool {
   let gnome_singleton = GNOME_SINGLETON.lock().unwrap();
-  let use_eval: bool = gnome_singleton.use_eval.clone();
+  let use_eval: bool = gnome_singleton.use_eval;
   let _ = gnome_singleton.deref();
   use_eval
 }
@@ -37,7 +37,7 @@ pub struct WaylandApi {}
 /**
  * Impl. for Linux system
  */
-impl API for WaylandApi {
+impl Api for WaylandApi {
   fn get_active_window(&self) -> WindowInfo {
     if gnome_use_eval() {
       wayland_eval_api::get_active_window()

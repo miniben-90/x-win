@@ -17,7 +17,8 @@
         "aarch64-apple-darwin",
         "aarch64-pc-windows-msvc",
         "i686-pc-windows-msvc",
-        "universal-apple-darwin"
+        "universal-apple-darwin",
+        "x86_64-unknown-linux-musl"
       ]
     }
   },
@@ -42,12 +43,15 @@
   ],
   "devDependencies": {
     "@napi-rs/cli": "^2.18.3",
-    "ava": "^6.1.3"
+    "ava": "^6.1.3",
+    "husky": "^9.1.4"
   },
   "ava": {
     "timeout": "3m",
     "failFast": true,
-    "files": ["__test__/**/*.mjs"]
+    "files": [
+      "__test__/**/*.mjs"
+    ]
   },
   "engines": {
     "node": ">= 14"
@@ -59,7 +63,8 @@
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
     "universal": "napi universal",
-    "version": "napi version"
+    "version": "napi version",
+    "prepare": "husky"
   },
   "packageManager": "yarn@4.1.1"
 }

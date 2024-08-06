@@ -5,7 +5,7 @@ use super::x_win_struct::{
   window_position::WindowPosition,
 };
 
-pub trait API {
+pub trait Api {
   /**
    * Return information of current active Window
    */
@@ -45,7 +45,7 @@ pub fn os_name() -> String {
 pub fn empty_entity() -> WindowInfo {
   WindowInfo {
     id: 0,
-    os: os_name().to_owned(),
+    os: os_name(),
     title: "".to_string(),
     position: WindowPosition {
       x: 0,

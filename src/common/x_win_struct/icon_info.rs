@@ -21,3 +21,23 @@ impl IconInfo {
     }
   }
 }
+
+impl From<x_win::IconInfo> for IconInfo {
+  fn from(value: x_win::IconInfo) -> Self {
+    IconInfo {
+      data: value.data,
+      height: value.height,
+      width: value.width,
+    }
+  }
+}
+
+impl From<IconInfo> for x_win::IconInfo {
+  fn from(value: IconInfo) -> Self {
+    x_win::IconInfo {
+      data: value.data,
+      height: value.height,
+      width: value.width,
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # @miniben90/x-win
-
-[![CI](https://github.com/miniben-90/x-win/actions/workflows/CI.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/CI.yml)
+[![ci-rs](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml)
+[![ci-napi](https://github.com/miniben-90/x-win/actions/workflows/ci-napi.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/ci-napi.yml)
 [![Node version](https://img.shields.io/node/v/@miniben90/x-win.svg)](https://www.npmjs.com/package/@miniben90/x-win)
 ![npm type definitions](https://img.shields.io/npm/types/@miniben90/x-win)
 ![NPM License](https://img.shields.io/npm/l/@miniben90/x-win)
@@ -183,12 +183,10 @@ Dependencies are required to be installed for development purposes.
 sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxcb-shm0-dev pkg-config build-essential
 ```
 
-> ⚠️**Warning**
-> libc.so.6 is needed
-
-> ⚠️**Warning**
+> ⚠️**Warning**<br />
+> libc.so.6 is needed<br />
+> ⚠️**Warning**<br />
 > Recovery url is not available on linux
-
 
 ### GNOME (Wayland)
 

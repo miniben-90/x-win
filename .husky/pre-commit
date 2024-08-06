@@ -1,0 +1,4 @@
+cd x-win-rs && cargo fmt -- --check && cargo clippy -- -D warnings && cargo test
+cargo fmt -- --check
+cargo clippy -- -D warnings
+yarn test

@@ -2,7 +2,10 @@ use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
 
-use crate::common::x_win_struct::{icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo, window_position::WindowPosition};
+use crate::common::x_win_struct::{
+  icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
+  window_position::WindowPosition,
+};
 
 use super::common_api::get_gnome_version;
 
@@ -20,7 +23,8 @@ pub const GNOME_XWIN_EXTENSION_META: &str = r#"
 }
 "#;
 
-pub const GNOME_XWIN_EXTENSION_FOLDER_PATH: &str = r#".local/share/gnome-shell/extensions/x-win@miniben90.org"#;
+pub const GNOME_XWIN_EXTENSION_FOLDER_PATH: &str =
+  r#".local/share/gnome-shell/extensions/x-win@miniben90.org"#;
 
 pub const GNOME_XWIN_GET_ICON_SCRIPT: &str = r#"function _get_icon(window_id) {
   if (window_id) {
@@ -176,7 +180,6 @@ function _get_process_info(pid) {
     exec_name: '',
   };
 }"#;
-
 
 pub const GNOME_XWIN_EXTENSION_COMMON_SCRIPT: &str = r#"
 const WaylandInterface = `
@@ -445,4 +448,5 @@ impl GnomeVersion {
   }
 }
 
-pub static GNOME_SINGLETON: Lazy<Mutex<GnomeVersion>> = Lazy::new(|| Mutex::new(GnomeVersion::new()));
+pub static GNOME_SINGLETON: Lazy<Mutex<GnomeVersion>> =
+  Lazy::new(|| Mutex::new(GnomeVersion::new()));

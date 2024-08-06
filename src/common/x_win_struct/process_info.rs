@@ -15,6 +15,33 @@ pub struct ProcessInfo {
 
 impl ProcessInfo {
   pub fn new(process_id: u32, path: String, name: String, exec_name: String) -> Self {
-    Self { process_id, path, name, exec_name }
+    Self {
+      process_id,
+      path,
+      name,
+      exec_name,
+    }
+  }
+}
+
+impl From<x_win::ProcessInfo> for ProcessInfo {
+  fn from(value: x_win::ProcessInfo) -> Self {
+    ProcessInfo {
+      exec_name: value.exec_name,
+      name: value.name,
+      path: value.path,
+      process_id: value.process_id,
+    }
+  }
+}
+
+impl From<ProcessInfo> for x_win::ProcessInfo {
+  fn from(value: ProcessInfo) -> Self {
+    x_win::ProcessInfo {
+      exec_name: value.exec_name,
+      name: value.name,
+      path: value.path,
+      process_id: value.process_id,
+    }
   }
 }

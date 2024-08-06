@@ -22,7 +22,7 @@ get_active_window();
   let response = call_script(&script);
 
   if response.ne(&"") {
-    let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+    let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
     if response.is_object() {
       return value_to_window_info(&response);
     }
@@ -43,14 +43,14 @@ get_open_windows();
 
   let response = call_script(&script);
   if !response.is_empty() {
-    let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+    let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
 
     if response.is_array() {
       return response
         .as_array()
         .unwrap()
         .iter()
-        .map(|val| value_to_window_info(&val))
+        .map(value_to_window_info)
         .collect();
     }
   }
@@ -91,7 +91,7 @@ get_icon({});
     let response = call_script(&script);
 
     if !response.is_empty() {
-      let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+      let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
       if response.is_object() {
         return value_to_icon_info(&response);
       }

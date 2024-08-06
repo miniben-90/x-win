@@ -33,7 +33,7 @@ pub fn get_window_memory_usage(pid: u32) -> u32 {
   let mut statm_content = String::new();
   statm_file.read_to_string(&mut statm_content).unwrap();
   let statm_parts: Vec<&str> = statm_content.split(" ").collect();
-  return statm_parts[0].parse().unwrap();
+  statm_parts[0].parse().unwrap()
 }
 
 /**
@@ -44,7 +44,7 @@ pub fn get_window_path_name(pid: u32) -> (String, String) {
   let path = executable_path.display().to_string();
   let name = executable_path.file_name().unwrap();
   let name = name.to_string_lossy().to_string();
-  return (path, name);
+  (path, name)
 }
 
 pub fn init_entity() -> WindowInfo {
@@ -61,5 +61,5 @@ pub fn get_gnome_version() -> String {
       return version.to_owned();
     }
   }
-  "999".to_owned()
+  "999".into()
 }

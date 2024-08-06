@@ -24,3 +24,27 @@ impl WindowPosition {
     }
   }
 }
+
+impl From<x_win::WindowPosition> for WindowPosition {
+  fn from(value: x_win::WindowPosition) -> Self {
+    WindowPosition {
+      x: value.x,
+      y: value.y,
+      width: value.width,
+      height: value.height,
+      is_full_screen: value.is_full_screen,
+    }
+  }
+}
+
+impl From<WindowPosition> for x_win::WindowPosition {
+  fn from(value: WindowPosition) -> Self {
+    x_win::WindowPosition {
+      x: value.x,
+      y: value.y,
+      width: value.width,
+      height: value.height,
+      is_full_screen: value.is_full_screen,
+    }
+  }
+}

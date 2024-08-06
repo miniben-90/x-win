@@ -5,17 +5,22 @@ use std::{env, fs, io, ops::Deref, path};
 use crate::{
   common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   linux::api::gnome_shell::{
-    value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON, GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH, GNOME_XWIN_EXTENSION_META, GNOME_XWIN_EXTENSION_SCRIPT, GNOME_XWIN_UUID
+    value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON,
+    GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH,
+    GNOME_XWIN_EXTENSION_META, GNOME_XWIN_EXTENSION_SCRIPT, GNOME_XWIN_UUID,
   },
 };
 
-use super::{common_api::init_entity, gnome_shell::{value_to_icon_info, GNOME_XWIN_GET_ICON_SCRIPT}};
+use super::{
+  common_api::init_entity,
+  gnome_shell::{value_to_icon_info, GNOME_XWIN_GET_ICON_SCRIPT},
+};
 
 pub fn get_active_window() -> WindowInfo {
-  let response = call_script(&"get_active_window".to_string());
+  let response = call_script("get_active_window");
 
   if response.ne(&"") {
-    let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+    let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
     if response.is_object() {
       return value_to_window_info(&response);
     }
@@ -25,16 +30,16 @@ pub fn get_active_window() -> WindowInfo {
 }
 
 pub fn get_open_windows() -> Vec<WindowInfo> {
-  let response = call_script(&"get_open_windows".to_string());
+  let response = call_script("get_open_windows");
   if response.ne(&"") {
-    let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+    let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
 
     if response.is_array() {
       return response
         .as_array()
         .unwrap()
         .iter()
-        .map(|val| value_to_window_info(&val))
+        .map(value_to_window_info)
         .collect();
     }
   }
@@ -44,42 +49,40 @@ pub fn get_open_windows() -> Vec<WindowInfo> {
 
 pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
   if window_info.id.ne(&0) {
-    let response = call_script_arg(&"get_icon".to_string(), window_info.id);
+    let response = call_script_arg("get_icon", window_info.id);
     if response.ne(&"") {
-      let response: serde_json::Value = serde_json::from_str(&response.as_str()).unwrap();
+      let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
       if response.is_object() {
         return value_to_icon_info(&response);
       }
     }
   }
-  return IconInfo {
+  IconInfo {
     data: "".to_owned(),
     width: 0,
     height: 0,
-  };
+  }
 }
 
 pub fn install_extension() -> bool {
   if std::fs::metadata(get_extension_path()).is_ok() {
     if std::fs::metadata(get_extension_file_path()).is_ok() {
-      let _t = remove_extension_file().unwrap();
+      remove_extension_file().unwrap();
     }
     if std::fs::metadata(get_medata_file_path()).is_ok() {
-      let _t = remove_metadata_file().unwrap();
+      remove_metadata_file().unwrap();
     }
-  } else {
-    if let Err(create_folder_err) = std::fs::create_dir_all(get_extension_path()) {
-      panic!(
-        "Not possible to create extension folder to \"{}\"!\nRaison: {}",
-        get_extension_path().to_string_lossy(),
-        create_folder_err.to_string()
-      );
-    }
+  } else if let Err(create_folder_err) = std::fs::create_dir_all(get_extension_path()) {
+    panic!(
+      "Not possible to create extension folder to \"{}\"!\nRaison: {}",
+      get_extension_path().to_string_lossy(),
+      create_folder_err
+    );
   }
 
   let script: String = {
     let gnome_singleton = GNOME_SINGLETON.lock().unwrap();
-    let version: u32 = gnome_singleton.version.clone();
+    let version: u32 = gnome_singleton.version;
     let _ = gnome_singleton.deref();
     let script: String = match version {
       x if x.lt(&45) => GNOME_XWIN_EXTENSION_SCRIPT.to_string(),
@@ -103,7 +106,7 @@ pub fn install_extension() -> bool {
     if fs::write(get_medata_file_path(), GNOME_XWIN_EXTENSION_META).is_ok() {
       true
     } else {
-      let _t = remove_extension_file().unwrap();
+      remove_extension_file().unwrap();
       panic!(
         "Not possible to write \"{}\" file!",
         get_medata_file_path().to_string_lossy()
@@ -190,7 +193,7 @@ fn remove_extension_file() -> Result<(), std::io::Error> {
   fs::remove_file(get_extension_file_path())
 }
 
-fn call_script(method_name: &String) -> String {
+fn call_script(method_name: &str) -> String {
   let connection = Connection::new_session().unwrap();
 
   let response = connection
@@ -209,7 +212,7 @@ fn call_script(method_name: &String) -> String {
   "".to_owned()
 }
 
-fn call_script_arg(method_name: &String, body: u32) -> String {
+fn call_script_arg(method_name: &str, body: u32) -> String {
   let connection = Connection::new_session().unwrap();
 
   let response = connection
