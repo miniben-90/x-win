@@ -118,7 +118,7 @@ jobs:
           image: ${{ matrix.settings.image }}
           options: --user 0:0
           # -v ${{ github.workspace }}/.github/docker-ubuntu-rust-install.sh:/usr/local/docker-ubuntu-rust-install.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
-          run: echo "hello world!"
+          run: ls -ltrh
 
       - name: Build
         run: cargo build --release --target ${{ matrix.settings.target }}
