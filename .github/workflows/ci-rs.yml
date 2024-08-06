@@ -117,7 +117,16 @@ jobs:
         with:
           image: ${{ matrix.settings.image }}
           options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-rust-install.sh:/usr/local/docker-ubuntu-rust-install.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
-          run: echo "hello world!"
+          run: |
+            Xvfb :0 &
+            sleep 1
+            gpg-agent --daemon
+            sleep 1
+            xfce4-session &
+            sleep 1
+            sh /usr/local/docker-ubuntu-rust-install.sh ${{ matrix.settings.target }}
+            cd /work
+            cargo test --target ${{ matrix.settings.target }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.settings.target }}
