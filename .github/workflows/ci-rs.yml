@@ -124,10 +124,7 @@ jobs:
             sleep 1
             xfce4-session &
             sleep 1
-            curl https://sh.rustup.rs -sSf | bash -s -- -y
-            sudo apt install  musl-tools -y
-            rustup target add ${{ matrix.settings.target }}
-            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.settings.target }}
             cd /work
             cargo test --target ${{ matrix.settings.target }}
 
