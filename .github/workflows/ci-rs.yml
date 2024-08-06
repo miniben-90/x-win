@@ -125,8 +125,6 @@ jobs:
             xfce4-session &
             sleep 1
             sh /usr/local/docker-ubuntu-install.sh ${{ matrix.settings.target }}
-            cd /work
-            cargo test --target ${{ matrix.settings.target }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.settings.target }}

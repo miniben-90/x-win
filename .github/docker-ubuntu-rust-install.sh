@@ -15,3 +15,7 @@ sudo tar xjf /tmp/firefox.tar.bz2 -C /opt/
 /opt/firefox/firefox --safe-mode https://github.com/ &
 
 sleep 1
+
+cd /work
+
+cargo test --target $target
