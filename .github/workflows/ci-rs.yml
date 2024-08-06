@@ -128,7 +128,8 @@ jobs:
             sleep 1
             sh /usr/local/docker-ubuntu-rust-install.sh ${{ matrix.settings.target }}
             . "$HOME/.cargo/env"
-            cd /work
+            cp /work /x-win -Rf
+            cd /x-win
             cargo test --target ${{ matrix.settings.target }}
 
       - name: Build
