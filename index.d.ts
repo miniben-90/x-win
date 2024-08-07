@@ -298,15 +298,15 @@ export declare function unsubscribeActiveWindow(threadId: number): void
 */
 export declare function unsubscribeAllActiveWindow(): void
 /**
- * Install Gnome extensions required for Linux using Gnome > 41.
+ * Install "@mininben90/x-win" Gnome extension required for Linux using Gnome > 41.
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
- * Restart session will be require to install the gnome extension.
+ * **Restart session will be require to install the gnome extension.**
 */
 export declare function installExtension(): boolean
 /**
- * Install Gnome extensions required for Linux using Gnome > 41.
- * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
- * Restart session will be require to remove the gnome extension.
+ * Uninstall "@mininben90/x-win" Gnome extension.
+ * This function will disable and remove extension files.
+ * **Restart session will be require to remove the gnome extension.**
 */
 export declare function uninstallExtension(): boolean
 /**
@@ -322,7 +322,7 @@ export declare function disableExtension(): boolean
 /**
  * Struct to store all informations of the window
 */
-export class WindowInfo {
+export declare class WindowInfo {
   id: number
   os: string
   title: string

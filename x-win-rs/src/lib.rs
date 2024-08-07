@@ -54,8 +54,8 @@ impl fmt::Display for XWinError {
 impl std::error::Error for XWinError {}
 
 /**
- * Retrieve information the about currently active window.
- * Returns an object of `WindowInfo`.
+ * Recover icon of window.
+ * Return `IconInfo`
  */
 pub fn get_window_icon(window_info: &WindowInfo) -> Result<IconInfo, XWinError> {
   let api = init_platform_api();
@@ -64,7 +64,7 @@ pub fn get_window_icon(window_info: &WindowInfo) -> Result<IconInfo, XWinError> 
 
 /**
  * Retrieve information the about currently active window.
- * Returns an object of `WindowInfo`.
+ * Return `WindowInfo` containing details about a specific active window.
  */
 pub fn get_active_window() -> Result<WindowInfo, XWinError> {
   let api = init_platform_api();
@@ -72,8 +72,8 @@ pub fn get_active_window() -> Result<WindowInfo, XWinError> {
 }
 
 /**
- * Retrieve information the about currently active window.
- * Returns an object of `WindowInfo`.
+ * Retrieve information about the currently open windows.
+ * Return `Vec<WindowInfo>` each containing details about a specific open window.
  */
 pub fn get_open_windows() -> Result<Vec<WindowInfo>, XWinError> {
   let api = init_platform_api();
@@ -81,9 +81,9 @@ pub fn get_open_windows() -> Result<Vec<WindowInfo>, XWinError> {
 }
 
 /**
- * Install Gnome extensions required for Linux using Gnome > 41.
+ * Install "@mininben90/x-win" Gnome extensions required for Linux using Gnome > 41.
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
- * Restart session will be require to install the gnome extension.
+ * **Restart session will be require to install the gnome extension.**
  */
 pub fn install_extension() -> Result<bool, XWinError> {
   #[cfg(not(target_os = "linux"))]
@@ -97,9 +97,9 @@ pub fn install_extension() -> Result<bool, XWinError> {
 }
 
 /**
- * Install Gnome extensions required for Linux using Gnome > 41.
- * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
- * Restart session will be require to remove the gnome extension.
+ * Uninstall "@mininben90/x-win" Gnome extensions.
+ * This function will disable and remove extension files.
+ * **Restart session will be require to remove the gnome extension.**
  */
 pub fn uninstall_extension() -> Result<bool, XWinError> {
   #[cfg(not(target_os = "linux"))]

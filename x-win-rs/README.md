@@ -1,10 +1,11 @@
 # x-win
 
 [![CI](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml)
+[![crates.io version](https://img.shields.io/crates/v/x-win.svg)](https://crates.io/crates/x-win)
+[![docs](https://docs.rs/x-win/badge.svg)](https://docs.rs/x-win/)
+![License](https://img.shields.io/crates/l/x-win)
 
-This package make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), [Linux (with Gnome =< 45)](#GNOME), and [macOS 10.6+](#darwin).
-
-# How to use x-win
+This package make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), [Linux (with Gnome =< 45)](#gnome), and [macOS 10.6+](#darwin).
 
 ## Get information about the currently active window
 

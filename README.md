@@ -1,12 +1,13 @@
 # @miniben90/x-win
+
 [![ci-rs](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/ci-rs.yml)
 [![ci-napi](https://github.com/miniben-90/x-win/actions/workflows/ci-napi.yml/badge.svg)](https://github.com/miniben-90/x-win/actions/workflows/ci-napi.yml)
 [![Node version](https://img.shields.io/node/v/@miniben90/x-win.svg)](https://www.npmjs.com/package/@miniben90/x-win)
 ![npm type definitions](https://img.shields.io/npm/types/@miniben90/x-win)
-![NPM License](https://img.shields.io/npm/l/@miniben90/x-win)
+![License](https://img.shields.io/npm/l/@miniben90/x-win)
 ![NPM Version](https://img.shields.io/npm/v/%40miniben90%2Fx-win)
 
-This project uses Rust and napi-rs to make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), [Linux (with Gnome =< 45)](#GNOME), and [macOS 10.6+](#darwin).
+This project uses Rust and napi-rs to make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), [Linux (with Gnome =< 45)](#wayland), and [macOS 10.6+](#darwin).
 
 ## How to install
 
@@ -188,7 +189,7 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 > ⚠️**Warning**<br />
 > Recovery url is not available on linux
 
-### GNOME (Wayland)
+### Wayland
 
 In order to recover data, you'll need to install and activate an extension designed for systems running GNOME version 41 or newer (as evaluation is disabled from this version onward).
 
@@ -202,7 +203,9 @@ After executing this function, it's vital to **restart the user session** to loa
 | Ubuntu 22.04.4 Desktop | ✅ |
 | Debian 12 Desktop | ✅ |
 
-### Darwin (version 10.6+)
+## Darwin
+
+> ⚠️**Warning**<br /> This project work only for macos version 10.6+
 
 ## Screen recording permission introduced in macOS 10.15 Catalina
 
