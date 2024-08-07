@@ -28,18 +28,18 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@miniben90/x-win@workspace:."
   dependencies:
-    "@napi-rs/cli": "npm:^2.18.3"
+    "@napi-rs/cli": "npm:^2.18.4"
     ava: "npm:^6.1.3"
     husky: "npm:^9.1.4"
   languageName: unknown
   linkType: soft
 
-"@napi-rs/cli@npm:^2.18.3":
-  version: 2.18.3
-  resolution: "@napi-rs/cli@npm:2.18.3"
+"@napi-rs/cli@npm:^2.18.4":
+  version: 2.18.4
+  resolution: "@napi-rs/cli@npm:2.18.4"
   bin:
     napi: scripts/index.js
-  checksum: 10c0/4d91fe84551a3775cbf93f6340c8b6a87dc653248f90c459fb996ea689ff52ba698a7620ad08713b3b97baf0a675fe2d4cac83a9e842e56cdfbf204c7f5f01d5
+  checksum: 10c0/cb80bc86687ba01077a0faa8d38198bc632b7caacf3a42ec42c3ec04700084ca26be9eec13bf7ac7da90e6afb46c65a39de8a86825a53b74dec2f2f459c0a7ea
   languageName: node
   linkType: hard
 
