@@ -184,4 +184,4 @@ jobs:
         run: node ${{ github.workspace }}/.scripts/before-publish.cjs x-win-rs
 
       - name: Publish package
-        run: cargo publish
+        run: cargo publish --allow-dirty
