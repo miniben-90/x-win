@@ -4,6 +4,7 @@
 [![crates.io version](https://img.shields.io/crates/v/x-win.svg)](https://crates.io/crates/x-win)
 [![docs](https://docs.rs/x-win/badge.svg)](https://docs.rs/x-win/)
 ![License](https://img.shields.io/crates/l/x-win)
+[![Sponsor me!](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/miniben-90/button)
 
 This package make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), [Linux (with Gnome =< 45)](#gnome), and [macOS 10.6+](#darwin).
 

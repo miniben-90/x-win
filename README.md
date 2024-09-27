@@ -6,6 +6,7 @@
 ![npm type definitions](https://img.shields.io/npm/types/@miniben90/x-win)
 ![License](https://img.shields.io/npm/l/@miniben90/x-win)
 ![NPM Version](https://img.shields.io/npm/v/%40miniben90%2Fx-win)
+[![Sponsor me!](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/miniben-90/button)
 
 This project uses Rust and napi-rs to make it easy to obtain the active window or an array of open windows. It works on Microsoft Windows (10, 11), [Linux (with X server)](#linux), [Linux (with Gnome =< 45)](#wayland), and [macOS 10.6+](#darwin).
 
