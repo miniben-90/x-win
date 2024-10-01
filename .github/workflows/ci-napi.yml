@@ -352,8 +352,12 @@ jobs:
         run: yarn install
           
       # Update package.json and Cargo.toml version
-      - name: Set version to package.json 
+      - name: Set version to package.json
         run: node .scripts/before-publish.cjs
+
+      # Cleanup package.json before publishing it
+      - name: Cleanup package.json before publishing
+        run: node .scripts/cleanup-package.cjs
 
       # Download artifacts from build part
       - name: Download all artifacts
@@ -362,8 +366,12 @@ jobs:
           path: artifacts
 
       # Move artifacts at there places
-      - name: Move artifacts
-        run: yarn artifacts
+      - name: Run napi artifacts to struct deps
+        run: napi artifacts
+
+      # Run prepublish to update sub deps to patch version on it
+      - name: Run napi prepublish to update deps. version & add optionnal deps
+        run: napi prepublish -t npm
 
       # Publish packages on npmjs
       - name: Publish packages
