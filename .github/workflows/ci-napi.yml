@@ -367,11 +367,11 @@ jobs:
 
       # Move artifacts at there places
       - name: Run napi artifacts to struct deps
-        run: napi artifacts
+        run: ./node_modules/.bin/napi artifacts
 
       # Run prepublish to update sub deps to patch version on it
       - name: Run napi prepublish to update deps. version & add optionnal deps
-        run: napi prepublish -t npm
+        run: ./node_modules/.bin/napi prepublish -t npm
 
       # Publish packages on npmjs
       - name: Publish packages
