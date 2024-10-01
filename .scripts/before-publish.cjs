@@ -42,6 +42,14 @@ if (process.env.TAG) {
     console.log('[BEFORE-PUBLISH]', 'Updating package.json...');
 
     packageJson.version = version;
+
+    // Clean up package.json for publish version to avoid installing none required deps for developers
+    delete packageJson.devDependencies.ava;
+    delete packageJson.devDependencies.husky;
+    delete packageJson.ava;
+    delete packageJson.packageManager;
+    packageJson.scripts = {};
+
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, undefined, 2));
 
     console.log('[BEFORE-PUBLISH]', 'package.json updated.');
