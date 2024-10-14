@@ -52,6 +52,10 @@ impl Api for LinuxAPI {
       (X11Api {}).get_app_icon(window_info)
     }
   }
+
+  fn get_browser_url(&self, window_info: &WindowInfo) -> String {
+    "URL Recovery not supported on linux dist!".to_owned()
+  }
 }
 
 impl APIGnome for LinuxAPI {

@@ -20,6 +20,11 @@ pub trait Api {
    * Return a base64 icon from window_info.info.path
    */
   fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo;
+
+  /**
+   * Return a String if the window is a browser and can recover url from it (Work only with Windows 10/11 and Darwin systems)
+   */
+  fn get_browser_url(&self, window_info: &WindowInfo) -> String;
 }
 
 /**
@@ -61,6 +66,5 @@ pub fn empty_entity() -> WindowInfo {
       exec_name: "".to_string(),
     },
     usage: UsageInfo { memory: 0 },
-    url: "".to_string(),
   }
 }

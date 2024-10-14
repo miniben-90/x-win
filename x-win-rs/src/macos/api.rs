@@ -92,6 +92,10 @@ impl Api for MacosAPI {
       width: 0,
     }
   }
+
+  fn get_browser_url(&self, window_info: &WindowInfo) -> String {
+    get_browser_url(window_info.id, window_info.info.process_id)
+  }
 }
 
 fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
@@ -193,26 +197,6 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let id = cfd.get(unsafe { kCGWindowNumber });
     let id = id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
 
-    let mut url: String = String::new();
-
-    if is_browser_bundle_id(bundle_identifier) {
-      let mut command = format!(
-        "tell app id \"{}\" to get URL of active tab of front window",
-        bundle_identifier
-      );
-      if is_from_document(bundle_identifier) {
-        command = format!(
-          "tell app id \"{}\" to get URL of front document",
-          bundle_identifier
-        );
-      }
-      // else if is_firefox_browser(&bundle_identifier)
-      // {
-      //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
-      // }
-      url = execute_applescript(&command);
-    }
-
     windows.push(WindowInfo {
       id: id as u32,
       os: os_name(),
@@ -233,7 +217,6 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       usage: UsageInfo {
         memory: memory as u32,
       },
-      url,
     });
 
     if only_active && is_not_active {
@@ -311,4 +294,26 @@ fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
     && window_rect.size.width.eq(&screen_rect.size.width)
     && window_rect.origin.y.eq(&screen_rect.origin.y)
     && window_rect.origin.x.eq(&screen_rect.origin.x)
+}
+
+fn get_browser_url(window_id: u32, process_id: u32) -> String {
+  let mut url: String = String::new();
+
+  if is_browser_bundle_id(bundle_identifier) {
+    let mut command = format!(
+      "tell app id \"{}\" to get URL of active tab of front window",
+      bundle_identifier
+    );
+    if is_from_document(bundle_identifier) {
+      command = format!(
+        "tell app id \"{}\" to get URL of front document",
+        bundle_identifier
+      );
+    }
+    // else if is_firefox_browser(&bundle_identifier)
+    // {
+    //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
+    // }
+    url = execute_applescript(&command);
+  }
 }

@@ -62,6 +62,11 @@ pub fn get_window_icon(window_info: &WindowInfo) -> Result<IconInfo, XWinError> 
   Ok(api.get_app_icon(window_info))
 }
 
+pub fn get_browser_url(window_info: &WindowInfo) -> Result<String, XWinError> {
+  let api = init_platform_api();
+  Ok(api.get_browser_url(window_info))
+}
+
 /**
  * Retrieve information the about currently active window.
  * Return `WindowInfo` containing details about a specific active window.
@@ -145,6 +150,8 @@ pub fn disable_extension() -> Result<bool, XWinError> {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use std::process::Command;
+  use std::{thread, time};
 
   fn test_osname() -> String {
     #[cfg(target_os = "linux")]
@@ -211,6 +218,37 @@ mod tests {
     assert_ne!(icon_info.data, "");
     assert_ne!(icon_info.height, 0);
     assert_ne!(icon_info.width, 0);
+    Ok(())
+  }
+
+  #[cfg(not(target_os = "linux"))]
+  #[test]
+  fn test_get_brower_url() -> Result<(), String> {
+    if cfg!(target_os = "windows") {
+      Command::new("cmd")
+        .args([
+          "/C",
+          "start",
+          "microsoft-edge:https://github.com",
+          "--inprivate",
+          "--no-first-run",
+          "--restore-last-session",
+        ])
+        .output()
+        .expect("failed to execute process");
+      thread::sleep(time::Duration::from_millis(2000));
+    }
+    let window_info: &WindowInfo = &get_active_window().unwrap();
+    test_struct(window_info.clone()).unwrap();
+    let url = get_browser_url(&window_info).unwrap();
+    if cfg!(target_os = "windows") {
+      Command::new("cmd")
+        .args(["/C", "taskkill", "/f", "/im", "msedge.exe"])
+        .output()
+        .expect("failed to execute process");
+      thread::sleep(time::Duration::from_millis(2000));
+    }
+    assert!(url.starts_with("http"));
     Ok(())
   }
 }

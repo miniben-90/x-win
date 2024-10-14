@@ -64,7 +64,13 @@
     "test": "ava",
     "universal": "napi universal",
     "version": "napi version",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint:rs": "cd ./x-win-rs && cargo fmt -- --check",
+    "lint:napi": "cargo fmt -- --check",
+    "lint": "yarn lint:rs && yarn lint:napi",
+    "clippy:rs": "cd ./x-win-rs && cargo clippy -- -D warnings",
+    "clippy:napi": "cargo clippy -- -D warnings",
+    "clippy": "yarn clippy:rs && yarn clippy:napi"
   },
   "packageManager": "yarn@4.5.0"
 }
