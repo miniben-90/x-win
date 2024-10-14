@@ -94,7 +94,7 @@ impl Api for MacosAPI {
   }
 
   fn get_browser_url(&self, window_info: &WindowInfo) -> String {
-    get_browser_url(window_info.id, window_info.info.process_id)
+    get_browser_url(window_info.info.process_id)
   }
 }
 
@@ -296,8 +296,18 @@ fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
     && window_rect.origin.x.eq(&screen_rect.origin.x)
 }
 
-fn get_browser_url(window_id: u32, process_id: u32) -> String {
-  let mut url: String = String::new();
+fn get_browser_url(process_id: u32) -> String {
+  let process_id = process_id as i64;
+  let app: id = unsafe {
+    msg_send![
+      class!(NSRunningApplication),
+      runningApplicationWithProcessIdentifier: process_id
+    ]
+  };
+  let bundle_identifier: id = unsafe { msg_send![app, bundleIdentifier] };
+  let bundle_identifier = unsafe { NSString::UTF8String(bundle_identifier) };
+  let bundle_identifier =
+    std::str::from_utf8(unsafe { std::ffi::CStr::from_ptr(bundle_identifier).to_bytes() }).unwrap();
 
   if is_browser_bundle_id(bundle_identifier) {
     let mut command = format!(
@@ -314,6 +324,8 @@ fn get_browser_url(window_id: u32, process_id: u32) -> String {
     // {
     //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
     // }
-    url = execute_applescript(&command);
+    execute_applescript(&command)
+  } else {
+    "".to_owned()
   }
 }

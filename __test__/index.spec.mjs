@@ -4,71 +4,40 @@ import { activeWindow, activeWindowAsync, openWindows, openWindowsAsync, subscri
 import { exec } from 'node:child_process';
 
 const Browsers = [
-  "chrome",
   "msedge",
-  "opera",
-  "opera_gx",
-  "brave",
-  "vivaldi",
-  "iron",
-  "epic",
-  "chromium",
-  "ucozmedia",
-  "blisk",
-  "maxthon",
-  "beaker",
-  "beaker browser",
-  "firefox",
-  "com.apple.Safari",
-  "com.apple.SafariTechnologyPreview",
-  "com.google.Chrome",
-  "com.google.Chrome.beta",
-  "com.google.Chrome.dev",
-  "com.google.Chrome.canary",
-  "org.mozilla.firefox",
-  "org.mozilla.firefoxdeveloperedition",
-  "com.brave.Browser",
-  "com.brave.Browser.beta",
-  "com.brave.Browser.nightly",
-  "com.microsoft.edgemac",
-  "com.microsoft.edgemac.Beta",
-  "com.microsoft.edgemac.Dev",
-  "com.microsoft.edgemac.Canary",
-  "com.mighty.app",
-  "com.ghostbrowser.gb1",
-  "com.bookry.wavebox",
-  "com.pushplaylabs.sidekick",
-  "com.operasoftware.Opera",
-  "com.operasoftware.OperaNext",
-  "com.operasoftware.OperaDeveloper",
-  "com.operasoftware.OperaGX",
-  "com.vivaldi.Vivaldi",
-  "com.kagi.kagimacOS",
-  "company.thebrowser.Browser",
-  "com.sigmaos.sigmaos.macos",
-  "com.SigmaOS.SigmaOS"
+  "Safari"
 ]
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function isWinOrDarwinOs() {
+  return ['darwin', 'win32'].findIndex(t => t === os.platform()) !== -1;
+}
+
 async function runBrowserToTest() {
   if (os.platform() === 'win32') {
     exec('start microsoft-edge:https://github.com');
-    await sleep(2000);
+  } else if (os.platform() === 'darwin') {
+    exec('open -a Safari https://github.com');
   }
+  await sleep(2000);
 }
 
 async function killBrowserToTest() {
   if (os.platform() === 'win32') {
     exec('taskkill /f /im msedge.exe');
-    await sleep(2000);
+  } else if (os.platform() === 'darwin') {
+    exec('killall Safari');
   }
+  await sleep(2000);
 }
 
 test.before(async (t) => {
-  await runBrowserToTest();
+  if (isWinOrDarwinOs()) {
+    await runBrowserToTest();
+  }
 })
 
 const defaultStruct = {
@@ -278,12 +247,17 @@ if (os.platform() === 'win32' || os.platform() === 'darwin') {
     const list = openWindows();
     console.timeEnd('openwindows');
     t.not(list.length, 0);
-    const filtred = list.filter(window_info => Browsers.findIndex(browser => browser === window_info.info.execName && window_info.url.startsWith('http')) !== -1);
+    const filtred = list.filter(window_info => Browsers.findIndex(browser => {
+      t.log(window_info.info.execName);
+      return browser === window_info.info.execName && window_info.url.startsWith('http')
+    }) !== -1);
     t.not(filtred.length, 0);
     return t.pass();
   })
 }
 
 test.after.always(async () => {
-  await killBrowserToTest();
+  if (isWinOrDarwinOs()) {
+    await killBrowserToTest();
+  }
 })
