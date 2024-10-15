@@ -18,7 +18,7 @@ function isWinOrDarwinOs() {
 
 async function runBrowserToTest() {
   if (os.platform() === 'win32') {
-    exec('start microsoft-edge:https://github.com');
+    exec('start microsoft-edge:https://github.com --no-first-run --restore-last-session');
   } else if (os.platform() === 'darwin') {
     exec('open -a Safari https://github.com');
   }

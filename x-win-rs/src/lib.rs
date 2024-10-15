@@ -171,7 +171,6 @@ mod tests {
             "/C",
             "start",
             "microsoft-edge:https://github.com",
-            "--inprivate",
             "--no-first-run",
             "--restore-last-session",
           ])
@@ -185,7 +184,15 @@ mod tests {
       };
       println!(
         "[START] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
-        output.status, output.stdout, output.stderr
+        output.status,
+        (match std::str::from_utf8(&output.stdout) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        }),
+        (match std::str::from_utf8(&output.stderr) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        })
       );
       thread::sleep(time::Duration::from_secs(3));
       TestContext
@@ -208,7 +215,15 @@ mod tests {
       };
       println!(
         "[DONE] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
-        output.status, output.stdout, output.stderr
+        output.status,
+        (match std::str::from_utf8(&output.stdout) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        }),
+        (match std::str::from_utf8(&output.stderr) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        })
       );
       thread::sleep(time::Duration::from_secs(3));
     }

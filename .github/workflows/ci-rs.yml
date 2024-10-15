@@ -101,13 +101,13 @@ jobs:
       - name: Clippy
         run: cargo clippy -- -D warnings
 
-      # - name: Open finder to have an active window (MacOS)
-      #   if: ${{ matrix.settings.host == 'macos-latest' }}
-      #   run: open 
+      - name: Open finder to have an active window (MacOS)
+        if: ${{ matrix.settings.host == 'macos-latest' }}
+        run: open -a Safari https://github.com
 
-      # - name: Open explorer to have an active window (windows)
-      #   if: ${{ matrix.settings.host == 'windows-latest' }}
-      #   run: explorer .
+      - name: Open explorer to have an active window (windows)
+        if: ${{ matrix.settings.host == 'windows-latest' }}
+        run: cmd /C start microsoft-edge:https://github.com --no-first-run --restore-last-session
 
       - name: Test
         if: ${{ matrix.settings.host != 'ubuntu-latest' }}
