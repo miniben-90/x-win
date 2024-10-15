@@ -183,7 +183,7 @@ mod tests {
           .output()
           .expect("failed to execute process");
       }
-      thread::sleep(time::Duration::from_secs(2));
+      thread::sleep(time::Duration::from_secs(3));
       TestContext
     }
   }
@@ -202,8 +202,7 @@ mod tests {
           .output()
           .expect("failed to execute process");
       }
-      println!("close safari");
-      thread::sleep(time::Duration::from_secs(2));
+      thread::sleep(time::Duration::from_secs(3));
     }
   }
 
@@ -290,9 +289,11 @@ mod tests {
     assert_ne!(open_windows.len(), 0);
     let window_info = open_windows.first().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
+    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.starts_with("http"));
     let window_info = &get_active_window().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
+    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.starts_with("http"));
     Ok(())
   }
@@ -304,9 +305,11 @@ mod tests {
     assert_ne!(open_windows.len(), 0);
     let window_info = open_windows.first().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
+    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.eq("URL Recovery not supported on linux dist!"));
     let window_info = &get_active_window().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
+    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.eq("URL Recovery not supported on linux dist!"));
     Ok(())
   }
