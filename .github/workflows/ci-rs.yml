@@ -103,11 +103,11 @@ jobs:
 
       - name: Open finder to have an active window (MacOS)
         if: ${{ matrix.settings.host == 'macos-latest' }}
-        run: open -a Safari https://github.com
+        run: open .
 
       - name: Open explorer to have an active window (windows)
         if: ${{ matrix.settings.host == 'windows-latest' }}
-        run: cmd /C start microsoft-edge:https://github.com --no-first-run --restore-last-session
+        run: explorer .
 
       - name: Test
         if: ${{ matrix.settings.host != 'ubuntu-latest' }}

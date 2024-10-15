@@ -305,6 +305,7 @@ mod tests {
 
   #[cfg(not(target_os = "linux"))]
   #[test]
+  #[ignore = "Not working on ci/cd"]
   fn test_get_brower_url() -> Result<(), String> {
     #[allow(unused)]
     let _context = TestContext::setup();

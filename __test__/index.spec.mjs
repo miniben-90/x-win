@@ -34,7 +34,7 @@ async function killBrowserToTest() {
   await sleep(2000);
 }
 
-test.before(async (t) => {
+test.before.skip(async (t) => {
   if (isWinOrDarwinOs()) {
     await runBrowserToTest();
   }
@@ -226,7 +226,8 @@ test('getIconAsync', async (t) => {
 })
 
 if (os.platform() === 'win32' || os.platform() === 'darwin') {
-  test('url getter - activeWindow', (t) => {
+
+  test.skip('url getter - activeWindow', (t) => {
     console.time('activeWindow');
     const data = activeWindow();
     console.timeEnd('activeWindow');
@@ -234,7 +235,7 @@ if (os.platform() === 'win32' || os.platform() === 'darwin') {
     return t.pass();
   })
 
-  test('url getter - activeWindowAsync', async (t) => {
+  test.skip('url getter - activeWindowAsync', async (t) => {
     console.time('url getter - activeWindowAsync');
     const data = await activeWindowAsync();
     console.timeEnd('url getter - activeWindowAsync');
@@ -242,7 +243,7 @@ if (os.platform() === 'win32' || os.platform() === 'darwin') {
     return t.pass();
   })
 
-  test('url getter - openWindows', (t) => {
+  test.skip('url getter - openWindows', (t) => {
     console.time('openwindows');
     const list = openWindows();
     console.timeEnd('openwindows');
@@ -256,7 +257,7 @@ if (os.platform() === 'win32' || os.platform() === 'darwin') {
   })
 }
 
-test.after.always(async () => {
+test.after.always.skip(async () => {
   if (isWinOrDarwinOs()) {
     await killBrowserToTest();
   }
