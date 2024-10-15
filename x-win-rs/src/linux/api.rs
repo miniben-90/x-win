@@ -54,7 +54,11 @@ impl Api for LinuxAPI {
   }
 
   fn get_browser_url(&self, window_info: &WindowInfo) -> String {
-    "URL Recovery not supported on linux dist!".to_owned()
+    if is_wayland_desktop() {
+      (WaylandApi {}).get_browser_url(window_info)
+    } else {
+      (X11Api {}).get_browser_url(window_info)
+    }
   }
 }
 

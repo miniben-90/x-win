@@ -151,6 +151,10 @@ impl Api for X11Api {
       height: 0,
     }
   }
+
+  fn get_browser_url(&self, _: &WindowInfo) -> String {
+    "URL recovery not supported on Linux distribution!".to_owned()
+  }
 }
 
 fn connection() -> Connection {

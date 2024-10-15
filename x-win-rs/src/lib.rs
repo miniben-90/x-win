@@ -154,11 +154,15 @@ pub fn disable_extension() -> Result<bool, XWinError> {
 #[cfg(test)]
 mod tests {
   use super::*;
+  #[cfg(not(target_os = "linux"))]
   use std::process::Command;
+  #[cfg(not(target_os = "linux"))]
   use std::{thread, time};
 
+  #[cfg(not(target_os = "linux"))]
   struct TestContext;
 
+  #[cfg(not(target_os = "linux"))]
   impl TestContext {
     fn setup() -> Self {
       if cfg!(target_os = "windows") {
@@ -184,6 +188,7 @@ mod tests {
     }
   }
 
+  #[cfg(not(target_os = "linux"))]
   impl Drop for TestContext {
     fn drop(&mut self) {
       if cfg!(target_os = "windows") {
@@ -289,6 +294,20 @@ mod tests {
     let window_info = &get_active_window().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
     assert!(url.starts_with("http"));
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  fn test_get_brower_url() -> Result<(), String> {
+    let open_windows = &get_open_windows().unwrap();
+    assert_ne!(open_windows.len(), 0);
+    let window_info = open_windows.first().unwrap().to_owned();
+    let url = get_browser_url(&window_info).unwrap();
+    assert!(url.eq("URL Recovery not supported on linux dist!"));
+    let window_info = &get_active_window().unwrap().to_owned();
+    let url = get_browser_url(&window_info).unwrap();
+    assert!(url.eq("URL Recovery not supported on linux dist!"));
     Ok(())
   }
 }
