@@ -329,8 +329,7 @@ export declare class WindowInfo {
   position: WindowPosition
   info: ProcessInfo
   usage: UsageInfo
-  url: string
-  constructor(id: number, os: string, title: string, position: WindowPosition, info: ProcessInfo, usage: UsageInfo, url: string)
+  constructor(id: number, os: string, title: string, position: WindowPosition, info: ProcessInfo, usage: UsageInfo)
   /**
   * Funciton who help to recover icon of application and will return `IconInfo`.
   */
@@ -339,4 +338,8 @@ export declare class WindowInfo {
   * Promise funciton who help to recover icon of application and will return `IconInfo`.
   */
   getIconAsync(): Promise<IconInfo>
+  /**
+  * Getter to recover browser url
+  */
+  get url(): string
 }

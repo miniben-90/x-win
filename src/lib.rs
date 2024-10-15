@@ -10,7 +10,7 @@ use common::{
 };
 use napi::{bindgen_prelude::AsyncTask, JsFunction, Result, Task};
 use napi_derive::napi;
-use x_win::{empty_entity, get_active_window, get_open_windows, get_window_icon};
+use x_win::{empty_entity, get_active_window, get_browser_url, get_open_windows, get_window_icon};
 
 #[macro_use]
 extern crate napi_derive;
@@ -82,6 +82,11 @@ fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
   Ok(get_window_icon(&t).unwrap().into())
 }
 
+fn get_url(window_info: &WindowInfo) -> Result<String> {
+  let t: x_win::WindowInfo = window_info.clone().into();
+  Ok(get_browser_url(&t).unwrap())
+}
+
 #[napi]
 impl WindowInfo {
   /**
@@ -99,6 +104,14 @@ impl WindowInfo {
   pub fn get_icon_async(&self) -> AsyncTask<GetIconTask> {
     let data = self;
     AsyncTask::new(GetIconTask { data: data.clone() })
+  }
+
+  /**
+   * Getter to recover browser url
+   */
+  #[napi(getter)]
+  pub fn url(&self) -> Result<String> {
+    get_url(self)
   }
 }
 

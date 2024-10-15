@@ -12,7 +12,7 @@ use windows::{
     },
     UI::{
       Shell::ExtractIconExW,
-      WindowsAndMessaging::{DestroyIcon, GetIconInfo, HICON, ICONINFO},
+      WindowsAndMessaging::{DestroyIcon, FindWindowW, GetIconInfo, HICON, ICONINFO},
     },
   },
 };
@@ -24,8 +24,11 @@ use crate::common::{
     window_position::WindowPosition,
   },
 };
-use std::path::{Path, PathBuf};
 use std::{ffi::c_void, os::windows::ffi::OsStrExt};
+use std::{
+  ffi::OsStr,
+  path::{Path, PathBuf},
+};
 use windows::Win32::{
   Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_CLOAKED},
   System::{ProcessStatus::GetProcessMemoryInfo, StationsAndDesktops::EnumDesktopWindows},
@@ -207,6 +210,24 @@ impl Api for WindowsAPI {
       height: 0,
       width: 0,
     }
+  }
+
+  fn get_browser_url(&self, window_info: &WindowInfo) -> String {
+    let mut url: String = "".to_owned();
+    if window_info.info.exec_name.ne(&"") && is_browser(window_info.info.exec_name.as_str()) {
+      let hwnd = unsafe {
+        let data: Vec<u16> = OsStr::new(&window_info.title.to_owned())
+          .encode_wide()
+          .chain(Some(0))
+          .collect();
+        let window_title = windows::core::PCWSTR(data.as_ptr());
+        FindWindowW(None, window_title)
+      };
+      if hwnd.is_ok() {
+        url = get_browser_url(hwnd.unwrap(), window_info.info.exec_name.clone()).clone();
+      }
+    }
+    url
   }
 }
 
@@ -509,10 +530,6 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
     close_process_handle(handle);
     let exec_name = parent_process.exec_name.to_lowercase();
     if exec_name.ne(&"searchhost") {
-      let mut url: String = "".to_owned();
-      if is_browser(exec_name.as_str()) {
-        get_browser_url(hwnd, exec_name).clone_into(&mut url);
-      }
       window_info = WindowInfo {
         id,
         os: os_name(),
@@ -522,7 +539,6 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
         usage: UsageInfo {
           memory: process_memory_counters.WorkingSetSize as u32,
         },
-        url,
       };
     }
   }

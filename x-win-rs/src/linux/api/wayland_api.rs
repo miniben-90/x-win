@@ -61,6 +61,10 @@ impl Api for WaylandApi {
       wayland_extension_api::get_icon(window_info)
     }
   }
+
+  fn get_browser_url(&self, _: &WindowInfo) -> String {
+    "URL recovery not supported on Linux distribution!".to_owned()
+  }
 }
 
 impl APIGnome for WaylandApi {

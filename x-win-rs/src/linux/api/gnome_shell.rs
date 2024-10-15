@@ -131,7 +131,6 @@ function _strcut_data(window_actor) {
         y: window_actor.get_y ? window_actor.get_y() : 0,
         isFullScreen: _window.is_fullscreen(),
       },
-      url: '',
       usage: { memory: _get_memory_usage(process_id) },
     };
   } else {
@@ -139,7 +138,6 @@ function _strcut_data(window_actor) {
       id: 0,
       os: 'linux',
       title: '',
-      url: '',
       info: {
         process_id: 0,
         path: '',
@@ -260,7 +258,6 @@ function _strcut_data(window_actor) {
         y: window_actor.get_y ? window_actor.get_y() : 0,
         isFullScreen: _window.is_fullscreen(),
       },
-      url: '',
       usage: { memory: _get_memory_usage(process_id) },
     };
   } else {
@@ -268,7 +265,6 @@ function _strcut_data(window_actor) {
       id: 0,
       os: 'linux',
       title: '',
-      url: '',
       info: {
         process_id: 0,
         path: '',
@@ -428,7 +424,6 @@ pub fn value_to_window_info(response: &serde_json::Value) -> WindowInfo {
     usage: UsageInfo {
       memory: number_to_u32(&usage["memory"]),
     },
-    url: "".to_owned(),
   }
 }
 

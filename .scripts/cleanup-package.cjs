@@ -16,12 +16,11 @@ if (process.env.TAG) {
   const packageJson = require(packageJsonPath);
   console.log('[CLEANUP-PACKAGE]', 'Updating package.json...');
 
-  // Clean up package.json for publish version to avoid installing none required deps for developers
-  delete packageJson.devDependencies.ava;
-  delete packageJson.devDependencies.husky;
   delete packageJson.ava;
   delete packageJson.packageManager;
-  packageJson.scripts = {};
+  delete packageJson.devDependencies;
+  delete packageJson.scripts;
+  delete packageJson.napi;
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, undefined, 2));
 
