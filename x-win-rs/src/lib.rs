@@ -165,7 +165,7 @@ mod tests {
   #[cfg(not(target_os = "linux"))]
   impl TestContext {
     fn setup() -> Self {
-      if cfg!(target_os = "windows") {
+      let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
           .args([
             "/C",
@@ -176,13 +176,17 @@ mod tests {
             "--restore-last-session",
           ])
           .output()
-          .expect("failed to execute process");
+          .expect("failed to execute process")
       } else {
         Command::new("open")
           .args(["-a", "Safari", "https://github.com"])
           .output()
-          .expect("failed to execute process");
-      }
+          .expect("failed to execute process")
+      };
+      println!(
+        "[START] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
+        output.status, output.stdout, output.stderr
+      );
       thread::sleep(time::Duration::from_secs(3));
       TestContext
     }
@@ -191,17 +195,21 @@ mod tests {
   #[cfg(not(target_os = "linux"))]
   impl Drop for TestContext {
     fn drop(&mut self) {
-      if cfg!(target_os = "windows") {
+      let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
           .args(["/C", "taskkill", "/f", "/im", "msedge.exe"])
           .output()
-          .expect("failed to execute process");
+          .expect("failed to execute process")
       } else {
         Command::new("killall")
           .args(["Safari"])
           .output()
-          .expect("failed to execute process");
-      }
+          .expect("failed to execute process")
+      };
+      println!(
+        "[DONE] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
+        output.status, output.stdout, output.stderr
+      );
       thread::sleep(time::Duration::from_secs(3));
     }
   }
@@ -305,12 +313,10 @@ mod tests {
     assert_ne!(open_windows.len(), 0);
     let window_info = open_windows.first().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
-    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
-    assert!(url.eq("URL Recovery not supported on linux dist!"));
+    assert!(url.eq("URL recovery not supported on Linux distribution!"));
     let window_info = &get_active_window().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
-    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
-    assert!(url.eq("URL Recovery not supported on linux dist!"));
+    assert!(url.eq("URL recovery not supported on Linux distribution!"));
     Ok(())
   }
 }
