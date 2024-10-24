@@ -14,7 +14,6 @@ pub struct WindowInfo {
   pub position: WindowPosition,
   pub info: ProcessInfo,
   pub usage: UsageInfo,
-  pub url: String,
 }
 
 #[napi]
@@ -26,7 +25,6 @@ impl WindowInfo {
     position: WindowPosition,
     info: ProcessInfo,
     usage: UsageInfo,
-    url: String,
   ) -> Self {
     Self {
       id,
@@ -35,7 +33,6 @@ impl WindowInfo {
       position,
       info,
       usage,
-      url,
     }
   }
 }
@@ -48,7 +45,6 @@ impl From<x_win::WindowInfo> for WindowInfo {
       os: value.os,
       title: value.title,
       position: value.position.into(),
-      url: value.url,
       usage: value.usage.into(),
     }
   }
@@ -62,7 +58,6 @@ impl From<WindowInfo> for x_win::WindowInfo {
       os: value.os,
       title: value.title,
       position: value.position.into(),
-      url: value.url,
       usage: value.usage.into(),
     }
   }

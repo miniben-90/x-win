@@ -63,6 +63,15 @@ pub fn get_window_icon(window_info: &WindowInfo) -> Result<IconInfo, XWinError> 
 }
 
 /**
+ * Recover browser url of window.
+ * Return `String`
+ */
+pub fn get_browser_url(window_info: &WindowInfo) -> Result<String, XWinError> {
+  let api = init_platform_api();
+  Ok(api.get_browser_url(window_info))
+}
+
+/**
  * Retrieve information the about currently active window.
  * Return `WindowInfo` containing details about a specific active window.
  */
@@ -145,6 +154,80 @@ pub fn disable_extension() -> Result<bool, XWinError> {
 #[cfg(test)]
 mod tests {
   use super::*;
+  #[cfg(not(target_os = "linux"))]
+  use std::process::Command;
+  #[cfg(not(target_os = "linux"))]
+  use std::{thread, time};
+
+  #[cfg(not(target_os = "linux"))]
+  struct TestContext;
+
+  #[cfg(not(target_os = "linux"))]
+  impl TestContext {
+    fn setup() -> Self {
+      let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+          .args([
+            "/C",
+            "start",
+            "microsoft-edge:https://github.com",
+            "--no-first-run",
+            "--restore-last-session",
+          ])
+          .output()
+          .expect("failed to execute process")
+      } else {
+        Command::new("open")
+          .args(["-a", "Safari", "https://github.com"])
+          .output()
+          .expect("failed to execute process")
+      };
+      println!(
+        "[START] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
+        output.status,
+        (match std::str::from_utf8(&output.stdout) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        }),
+        (match std::str::from_utf8(&output.stderr) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        })
+      );
+      thread::sleep(time::Duration::from_secs(3));
+      TestContext
+    }
+  }
+
+  #[cfg(not(target_os = "linux"))]
+  impl Drop for TestContext {
+    fn drop(&mut self) {
+      let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+          .args(["/C", "taskkill", "/f", "/im", "msedge.exe"])
+          .output()
+          .expect("failed to execute process")
+      } else {
+        Command::new("killall")
+          .args(["Safari"])
+          .output()
+          .expect("failed to execute process")
+      };
+      println!(
+        "[DONE] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
+        output.status,
+        (match std::str::from_utf8(&output.stdout) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        }),
+        (match std::str::from_utf8(&output.stderr) {
+          Ok(val) => val,
+          Err(_) => "Error when convert output",
+        })
+      );
+      thread::sleep(time::Duration::from_secs(3));
+    }
+  }
 
   fn test_osname() -> String {
     #[cfg(target_os = "linux")]
@@ -206,11 +289,50 @@ mod tests {
   #[test]
   fn test_get_window_icon() -> Result<(), String> {
     let window_info: &WindowInfo = &get_active_window().unwrap();
-    test_struct(window_info.clone()).unwrap();
     let icon_info = get_window_icon(&window_info).unwrap();
     assert_ne!(icon_info.data, "");
     assert_ne!(icon_info.height, 0);
     assert_ne!(icon_info.width, 0);
+    let open_windows = &get_open_windows().unwrap();
+    assert_ne!(open_windows.len(), 0);
+    let window_info = open_windows.first().unwrap().to_owned();
+    let icon_info = get_window_icon(&window_info).unwrap();
+    assert_ne!(icon_info.data, "");
+    assert_ne!(icon_info.height, 0);
+    assert_ne!(icon_info.width, 0);
+    Ok(())
+  }
+
+  #[cfg(not(target_os = "linux"))]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_get_brower_url() -> Result<(), String> {
+    #[allow(unused)]
+    let _context = TestContext::setup();
+    let open_windows = &get_open_windows().unwrap();
+    assert_ne!(open_windows.len(), 0);
+    let window_info = open_windows.first().unwrap().to_owned();
+    let url = get_browser_url(&window_info).unwrap();
+    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
+    assert!(url.starts_with("http"));
+    let window_info = &get_active_window().unwrap().to_owned();
+    let url = get_browser_url(&window_info).unwrap();
+    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
+    assert!(url.starts_with("http"));
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  fn test_get_brower_url() -> Result<(), String> {
+    let open_windows = &get_open_windows().unwrap();
+    assert_ne!(open_windows.len(), 0);
+    let window_info = open_windows.first().unwrap().to_owned();
+    let url = get_browser_url(&window_info).unwrap();
+    assert!(url.eq("URL recovery not supported on Linux distribution!"));
+    let window_info = &get_active_window().unwrap().to_owned();
+    let url = get_browser_url(&window_info).unwrap();
+    assert!(url.eq("URL recovery not supported on Linux distribution!"));
     Ok(())
   }
 }

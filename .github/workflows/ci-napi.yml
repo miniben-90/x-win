@@ -62,16 +62,27 @@ jobs:
           # Build for linux (using Ubuntu) (x64)
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-zig
             build: |-
               set -e &&
-              yarn build --target x86_64-unknown-linux-gnu &&
+              sh /usr/local/dokcer-install-deps.sh &&
+              cp -r /usr/lib/x86_64-linux-gnu/*xcb* /usr/x86_64-unknown-linux-gnu/x86_64-unknown-linux-gnu/sysroot/usr/lib/ &&
+              cp -r /usr/include/xcb /usr/x86_64-unknown-linux-gnu/x86_64-unknown-linux-gnu/sysroot/usr/include/ &&
+              cp -r /usr/lib/x86_64-linux-gnu/*xcb* /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/ &&
+              cp -r /usr/include/xcb /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/include/ &&
+              yarn &&
+              yarn build --target x86_64-unknown-linux-gnu --zig --zig-abi-suffix=2.18 &&
               strip *.node
 
           # Build for linux (using Ubuntu) (x64)
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
             build: |-
               set -e &&
+              sh /usr/local/dokcer-install-deps.sh &&
+              rustup target add x86_64-unknown-linux-musl &&
+              yarn &&
               yarn build --target x86_64-unknown-linux-musl &&
               strip *.node
 
@@ -94,21 +105,9 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
     steps:
-      # # Install lib dev required for compilation of the project
-      # - name: (Linux) update dist
-      #   if: ${{ matrix.settings.host == 'ubuntu-latest' && !matrix.settings.docker }}
-      #   run: sudo apt-get update
-
-      # # Install deps. to compile the project on aarch64 gnu
-      # - name: (Linux Aarch64) Install aarch64 for building cross-platform
-      #   if:  ${{ matrix.settings.host == 'ubuntu-latest' && matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
-      #   run: |
-      #     sudo dpkg --add-architecture arm64
-      #     sudo apt-get install -y gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
-
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
-        if: ${{ matrix.settings.host == 'ubuntu-latest' && !matrix.settings.docker }}
+        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
@@ -177,7 +176,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ matrix.settings.docker }}
-          options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
+          options: '--user 0:0 -v ${{ github.workspace }}/.github/dokcer-install-deps.sh:/usr/local/dokcer-install-deps.sh -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
           run: ${{ matrix.settings.build }}
 
       # Upload artifact for the next steps (macos and test)
