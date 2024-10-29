@@ -8,6 +8,9 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "rust-*.*.*"
+      - "rust-v*.*.*"
     tags-ignore:
       - "**"
     paths-ignore:
@@ -144,16 +147,16 @@ jobs:
           if-no-files-found: error
 
   publish:
+    if: ${{ github.event_name == 'release' && github.ref_type == 'tag' && startsWith(github.ref_name, 'rust-') }}
     defaults:
       run:
         working-directory: ${{ github.workspace }}/x-win-rs
-    if: ${{ github.event_name == 'release' && github.ref_type == 'tag' }}
     name: Publish ${{ github.ref_name }} (${{ github.ref }})
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-      TAG: ${{ github.ref_name }}
+      REF_NAME: ${{ github.ref_name }}
     needs:
       - build-n-test
     steps:
@@ -165,23 +168,27 @@ jobs:
         with:
           path: ${{ github.workspace }}/x-win-rs/target
 
-      # Setup node version from matrix.node and install deps
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          check-latest: true
-          cache: yarn
-
       # Install Rust version
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
 
-      # Update Cargo.toml version
-      - name: Set version to package.json
-        run: node ${{ github.workspace }}/.scripts/before-publish.cjs x-win-rs
+      - name: Install cargo-bump
+        uses: cargo install bump
+      
+      - name: Generate version from ${{ github.ref_name }}
+        run: |
+          if [[ "${REF_NAME}" =~ ^rust-?v?([0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9]+)?)$ ]]; then
+            TAG="${BASH_REMATCH[1]}"
+            echo "TAG=$TAG" >> $GITHUB_ENV
+          else
+            echo "Error: Could not parse version from tag ${REF_NAME}"
+            exit 1
+          fi
+
+      - name: Update Cargo.toml version
+        uses: cargo bump ${TAG}
 
       - name: Publish package
         run: cargo publish --allow-dirty

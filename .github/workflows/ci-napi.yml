@@ -9,6 +9,9 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "napi-*.*.*"
+      - "napi-v*.*.*"
     tags-ignore:
       - '**'
     paths-ignore:
@@ -322,7 +325,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    if: ${{ github.event_name == 'release' && github.ref_type == 'tag' }}
+    if: ${{ github.event_name == 'release' && github.ref_type == 'tag' && startsWith(github.ref_name, 'napi-') }}
     name: Publish ${{ github.ref_name }} (${{ github.ref }})
     runs-on: ubuntu-latest
     env:

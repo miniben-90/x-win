@@ -7,7 +7,8 @@ function raplceCargoVersion(cargoToml, version) {
 }
 
 if (process.env.TAG) {
-  const version = process.env.TAG.startsWith('v') ? process.env.TAG.substring(1) : process.env.TAG;
+  const TAG = process.env.tag.replace('napi-', '');
+  const version = TAG.startsWith('v') ? TAG.substring(1) : TAG;
 
   if (argv && argv.findIndex(v => v === 'x-win-rs') !== -1) {
     console.log('[BEFORE-PUBLISH]', 'Update cargo.toml version to', version);

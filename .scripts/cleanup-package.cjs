@@ -2,7 +2,8 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 if (process.env.TAG) {
-  const version = process.env.TAG.startsWith('v') ? process.env.TAG.substring(1) : process.env.TAG;
+  const TAG = process.env.tag.replace('napi-', '');
+  const version = TAG.startsWith('v') ? TAG.substring(1) : TAG;
 
   console.log('[CLEANUP-PACKAGE]', 'Update package.json for', version);
 
