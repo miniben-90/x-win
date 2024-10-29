@@ -272,6 +272,19 @@ It will use AppleScript to get informations for chromium browsers and safari
 
 * To prevent potential crashes and issues, it's recommended to execute recovery operations within a worker thread ([https://nodejs.org/api/worker_threads.html](https://nodejs.org/api/worker_threads.html))
 * For macOS, you can utilize functions to check and request screen permissions ([https://www.electronjs.org/fr/docs/latest/api/system-preferences](https://www.electronjs.org/fr/docs/latest/api/system-preferences))
+* When building your application, it’s important to specify all optional packages to be moved to `asar.unpack` to prevent issues during the signing process. [https://www.electronforge.io/config/plugins/auto-unpack-natives](https://www.electronforge.io/config/plugins/auto-unpack-natives) [https://www.electron.build/app-builder-lib.interface.configuration#asarunpack](https://www.electron.build/app-builder-lib.interface.configuration#asarunpack)
+
+### Questions
+
+* Why can't I find optional dependencies when I build my application?
+
+When setting up CI/CD to build your application, it's important to enforce the installation of sub-packages for each system to prevent any missing components.
+
+examples:
+
+* `npm install --save-dev @miniben90/x-win-win32-x64-msvc @miniben90/x-win-win32-ia32-msvc @miniben90/x-win-win32-arm64-msvc --ignore-platform --ignore-engines` for win32 system
+* `npm install --save-dev @miniben90/x-win-darwin-arm64 @miniben90/x-win-darwin-universal @miniben90/x-win-darwin-x64 --ignore-platform --ignore-engines` for Darwin system
+* `npm install --save-dev @miniben90/x-win-linux-x64-gnu @miniben90/x-win-linux-x64-musl4 --ignore-platform --ignore-engines` for Linux system
 
 <hr class="padding-top: 30px;padding-bottom:30px">
 
