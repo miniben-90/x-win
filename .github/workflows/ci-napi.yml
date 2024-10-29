@@ -355,8 +355,8 @@ jobs:
         run: node .scripts/before-publish.cjs
 
       # Cleanup package.json before publishing it
-      - name: Cleanup package.json before publishing
-        run: node .scripts/cleanup-package.cjs
+      # - name: Cleanup package.json before publishing
+      #   run: node .scripts/cleanup-package.cjs
 
       # Download artifacts from build part
       - name: Download all artifacts
@@ -366,11 +366,11 @@ jobs:
 
       # Move artifacts at there places
       - name: Run napi artifacts to struct deps
-        run: ./node_modules/.bin/napi artifacts
+        run: yarn artifacts
 
       # Run prepublish to update sub deps to patch version on it
       - name: Run napi prepublish to update deps. version & add optionnal deps
-        run: ./node_modules/.bin/napi prepublish -t npm
+        run: yarn prepublish -t npm
 
       # Publish packages on npmjs
       - name: Publish packages
