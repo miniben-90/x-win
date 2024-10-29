@@ -28,7 +28,8 @@
     "url": "https://benkhadra.com/"
   },
   "repository": {
-    "url": "https://github.com/miniben-90/x-win.git"
+    "type": "git",
+    "url": "git+https://github.com/miniben-90/x-win.git"
   },
   "license": "MIT",
   "keywords": [
