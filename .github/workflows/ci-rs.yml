@@ -188,7 +188,7 @@ jobs:
           fi
 
       - name: Update Cargo.toml version
-        uses: cargo bump ${TAG}
+        run: cargo bump ${TAG}
 
       - name: Publish package
         run: cargo publish --allow-dirty
