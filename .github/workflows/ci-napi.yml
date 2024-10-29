@@ -12,8 +12,8 @@ on:
     tags:
       - "napi-*.*.*"
       - "napi-v*.*.*"
-    tags-ignore:
-      - '**'
+    # tags-ignore:
+    #   - '**'
     paths-ignore:
       - '**/*.md'
       - LICENSE

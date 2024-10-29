@@ -11,8 +11,8 @@ on:
     tags:
       - "rust-*.*.*"
       - "rust-v*.*.*"
-    tags-ignore:
-      - "**"
+    # tags-ignore:
+    #   - "**"
     paths-ignore:
       - "**/*.md"
       - LICENSE
