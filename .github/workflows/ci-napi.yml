@@ -370,7 +370,7 @@ jobs:
 
       # Run prepublish to update sub deps to patch version on it
       - name: Run napi prepublish to update deps. version & add optionnal deps
-        run: yarn prepublish -t npm
+        run: yarn prepublishOnly
 
       # Publish packages on npmjs
       - name: Publish packages
