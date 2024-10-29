@@ -175,7 +175,7 @@ jobs:
           toolchain: stable
 
       - name: Install cargo-bump
-        uses: cargo install bump
+        run: cargo install bump
       
       - name: Generate version from ${{ github.ref_name }}
         run: |
