@@ -226,9 +226,9 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
   windows
 }
 
-fn is_browser_bundle_id(bundle_id: &String) -> bool {
+fn is_browser_bundle_id(bundle_id: &str) -> bool {
   matches!(
-    bundle_id.as_str(),
+    bundle_id,
     "com.apple.Safari"
       | "com.apple.SafariTechnologyPreview"
       | "com.google.Chrome"
@@ -260,9 +260,9 @@ fn is_browser_bundle_id(bundle_id: &String) -> bool {
   )
 }
 
-fn is_from_document(bundle_id: &String) -> bool {
+fn is_from_document(bundle_id: &str) -> bool {
   matches!(
-    bundle_id.as_str(),
+    bundle_id,
     "com.apple.Safari" | "com.apple.SafariTechnologyPreview" | "com.kagi.kagimacOS"
   )
 }
