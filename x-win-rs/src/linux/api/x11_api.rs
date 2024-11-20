@@ -7,13 +7,13 @@ use xcb::{x, Connection, Xid, XidNew};
 
 use crate::{
   common::{
-    api::Api,
+    api::{empty_icon, Api},
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo, window_position::WindowPosition},
   },
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
 };
 
-use super::common_api::{empty_icon, init_entity};
+use super::common_api::init_entity;
 
 /**
  * Struct to use similar as API to get active window and open windows for XOrg desktop

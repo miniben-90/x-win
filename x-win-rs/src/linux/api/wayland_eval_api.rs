@@ -1,7 +1,10 @@
 use zbus::Connection;
 
 use crate::{
-  common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  common::{
+    api::empty_icon,
+    x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  },
   linux::api::gnome_shell::GNOME_XWIN_EVAL_SCRIPT,
 };
 
@@ -98,9 +101,5 @@ get_icon({});
     }
   }
 
-  IconInfo {
-    data: String::from(""),
-    height: 0,
-    width: 0,
-  }
+  empty_icon()
 }

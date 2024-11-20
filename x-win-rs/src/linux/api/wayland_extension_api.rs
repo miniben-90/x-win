@@ -3,7 +3,10 @@ use zbus::Connection;
 use std::{env, fs, io, ops::Deref, path};
 
 use crate::{
-  common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  common::{
+    api::empty_icon,
+    x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  },
   linux::api::gnome_shell::{
     value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON,
     GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH,
@@ -12,7 +15,7 @@ use crate::{
 };
 
 use super::{
-  common_api::{empty_icon, init_entity},
+  common_api::init_entity,
   gnome_shell::{value_to_icon_info, GNOME_XWIN_GET_ICON_SCRIPT},
 };
 
