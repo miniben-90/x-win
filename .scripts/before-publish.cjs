@@ -1,6 +1,5 @@
 const path = require('node:path');
 const fs = require('node:fs');
-const { argv } = require('node:process');
 
 const { TAG } = process.env;
 
@@ -9,8 +8,8 @@ function raplceCargoVersion(cargoToml, version) {
 }
 
 if (TAG && TAG.startsWith('napi-')) {
-  const TAG = TAG.replace('napi-', '');
-  const version = TAG.startsWith('v') ? TAG.substring(1) : TAG;
+  const tag = TAG.replace('napi-', '');
+  const version = tag.startsWith('v') ? tag.substring(1) : tag;
   console.log('[BEFORE-PUBLISH]', 'Update package.json and cargo.toml version to', version);
 
   const packageJsonPath = path.join(process.cwd(), 'package.json');
