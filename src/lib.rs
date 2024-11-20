@@ -451,8 +451,15 @@ pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
  */
 #[napi]
 pub fn unsubscribe_all_active_window() -> Result<()> {
-  THREAD_MANAGER.lock().unwrap().stop_all_threads().unwrap();
-  Ok(())
+  match THREAD_MANAGER.lock() {
+    Ok(thread_manager) => {
+      match thread_manager.stop_all_threads() {
+        Ok(_) => Ok(()),
+        Err(_) => Ok(()),
+      }
+    },
+    Err(_) => Ok(()),
+  }
 }
 
 /**
