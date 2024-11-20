@@ -13,7 +13,7 @@ use crate::{
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
 };
 
-use super::common_api::init_entity;
+use super::common_api::{empty_icon, init_entity};
 
 /**
  * Struct to use similar as API to get active window and open windows for XOrg desktop
@@ -145,11 +145,7 @@ impl Api for X11Api {
         }
       }
     }
-    IconInfo {
-      data: "".to_owned(),
-      width: 0,
-      height: 0,
-    }
+    empty_icon()
   }
 
   fn get_browser_url(&self, _: &WindowInfo) -> String {
@@ -258,7 +254,7 @@ fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::
     let window_title: &[u8] = window_title.value();
     unsafe { std::str::from_utf8_unchecked(window_title).to_string() }
   } else {
-    "".to_owned()
+    String::from("")
   }
 }
 

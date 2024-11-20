@@ -26,7 +26,7 @@ use core_graphics::window::{
 
 use crate::common::x_win_struct::icon_info::IconInfo;
 use crate::common::{
-  api::{empty_entity, os_name, Api},
+  api::{empty_entity, empty_icon, os_name, Api},
   x_win_struct::{
     process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
@@ -86,11 +86,7 @@ impl Api for MacosAPI {
         }
       }
     }
-    IconInfo {
-      data: "".to_owned(),
-      height: 0,
-      width: 0,
-    }
+    empty_icon()
   }
 
   fn get_browser_url(&self, window_info: &WindowInfo) -> String {
@@ -162,20 +158,21 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       continue;
     }
 
-    let bundle_identifier: id = unsafe { msg_send![app, bundleIdentifier] };
-    let bundle_identifier = unsafe { NSString::UTF8String(bundle_identifier) };
-    let bundle_identifier =
-      std::str::from_utf8(unsafe { std::ffi::CStr::from_ptr(bundle_identifier).to_bytes() })
-        .unwrap();
+    let bundle_identifier = get_bundle_identifier(app);
 
     if bundle_identifier.eq("com.apple.dock") {
       continue;
     }
 
-    let app_name = cfd.get(unsafe { kCGWindowOwnerName });
-    let app_name = app_name.downcast::<CFString>().unwrap().to_string();
+    let app_name = {
+      let app_name = cfd.get(unsafe { kCGWindowOwnerName });
+      app_name
+        .downcast::<CFString>()
+        .unwrap_or("".into())
+        .to_string()
+    };
 
-    let mut title: String = "".to_owned();
+    let mut title: String = String::from("");
 
     if cfd.contains_key(&CFString::from_static_string("kCGWindowName")) {
       let title_ref = cfd.get(unsafe { kCGWindowName });
@@ -185,11 +182,13 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let bundle_url: id = unsafe { msg_send![app, bundleURL] };
     let path = unsafe { bundle_url.path().UTF8String() };
     let path = std::str::from_utf8(unsafe { std::ffi::CStr::from_ptr(path).to_bytes() }).unwrap();
-    let exec_name = std::path::Path::new(&app_name)
+
+    let exec_name: String = std::path::Path::new(&path)
       .file_name()
       .unwrap()
       .to_str()
-      .unwrap();
+      .unwrap_or("")
+      .to_owned();
 
     let memory = cfd.get(unsafe { kCGWindowMemoryUsage });
     let memory = memory.downcast::<CFNumber>().unwrap().to_i64().unwrap();
@@ -227,9 +226,9 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
   windows
 }
 
-fn is_browser_bundle_id(bundle_id: &str) -> bool {
+fn is_browser_bundle_id(bundle_id: &String) -> bool {
   matches!(
-    bundle_id,
+    bundle_id.to_str(),
     "com.apple.Safari"
       | "com.apple.SafariTechnologyPreview"
       | "com.google.Chrome"
@@ -261,9 +260,9 @@ fn is_browser_bundle_id(bundle_id: &str) -> bool {
   )
 }
 
-fn is_from_document(bundle_id: &str) -> bool {
+fn is_from_document(bundle_id: &String) -> bool {
   matches!(
-    bundle_id,
+    bundle_id.to_str(),
     "com.apple.Safari" | "com.apple.SafariTechnologyPreview" | "com.kagi.kagimacOS"
   )
 }
@@ -304,17 +303,18 @@ fn get_browser_url(process_id: u32) -> String {
       runningApplicationWithProcessIdentifier: process_id
     ]
   };
-  let bundle_identifier: id = unsafe { msg_send![app, bundleIdentifier] };
-  let bundle_identifier = unsafe { NSString::UTF8String(bundle_identifier) };
-  let bundle_identifier =
-    std::str::from_utf8(unsafe { std::ffi::CStr::from_ptr(bundle_identifier).to_bytes() }).unwrap();
 
-  if is_browser_bundle_id(bundle_identifier) {
+  let bundle_identifier = get_bundle_identifier(app);
+  if bundle_identifier.is_empty() {
+    return String::from("");
+  }
+
+  if is_browser_bundle_id(&bundle_identifier) {
     let mut command = format!(
       "tell app id \"{}\" to get URL of active tab of front window",
       bundle_identifier
     );
-    if is_from_document(bundle_identifier) {
+    if is_from_document(&bundle_identifier) {
       command = format!(
         "tell app id \"{}\" to get URL of front document",
         bundle_identifier
@@ -326,6 +326,23 @@ fn get_browser_url(process_id: u32) -> String {
     // }
     execute_applescript(&command)
   } else {
-    "".to_owned()
+    String::from("")
   }
+}
+
+fn get_bundle_identifier(app: id) -> String {
+  if !app.is_null() {
+    unsafe {
+      let bundle_identifier: id = msg_send![app, bundleIdentifier];
+      let bundle_identifier = NSString::UTF8String(bundle_identifier);
+      if !bundle_identifier.is_null() {
+        return std::str::from_utf8(std::ffi::CStr::from_ptr(bundle_identifier).to_bytes())
+          .unwrap_or("")
+          .to_string();
+      } else {
+        return String::from("");
+      }
+    }
+  }
+  String::from("")
 }

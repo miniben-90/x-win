@@ -74,7 +74,7 @@ fn call_script(script: &String) -> String {
   if let Ok((_actor, json)) = response.body::<(bool, String)>() {
     return json;
   }
-  "".to_owned()
+  String::from("")
 }
 
 pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
@@ -99,7 +99,7 @@ get_icon({});
   }
 
   IconInfo {
-    data: "".to_owned(),
+    data: String::from(""),
     height: 0,
     width: 0,
   }
