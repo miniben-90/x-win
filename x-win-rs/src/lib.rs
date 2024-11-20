@@ -246,7 +246,7 @@ mod tests {
 
   fn test_struct(window_info: WindowInfo) -> Result<(), String> {
     assert_ne!(window_info.id, 0);
-    assert_ne!(window_info.title, "".to_owned());
+    assert_ne!(window_info.title, String::from(""));
     #[cfg(target_os = "linux")]
     assert_eq!(window_info.os, r#"linux"#);
     #[cfg(target_os = "macos")]
@@ -281,7 +281,7 @@ mod tests {
   fn test_empty_entity() -> Result<(), String> {
     let window_info = empty_entity();
     assert_eq!(window_info.id, 0);
-    assert_eq!(window_info.title, "".to_owned());
+    assert_eq!(window_info.title, String::from(""));
     assert_eq!(window_info.os, test_osname());
     Ok(())
   }

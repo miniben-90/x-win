@@ -3,7 +3,10 @@ use zbus::Connection;
 use std::{env, fs, io, ops::Deref, path};
 
 use crate::{
-  common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  common::{
+    api::empty_icon,
+    x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  },
   linux::api::gnome_shell::{
     value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON,
     GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH,
@@ -57,11 +60,7 @@ pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
       }
     }
   }
-  IconInfo {
-    data: "".to_owned(),
-    width: 0,
-    height: 0,
-  }
+  empty_icon()
 }
 
 pub fn install_extension() -> bool {
@@ -209,7 +208,7 @@ fn call_script(method_name: &str) -> String {
   if let Ok(json) = response.body::<String>() {
     return json;
   }
-  "".to_owned()
+  String::from("")
 }
 
 fn call_script_arg(method_name: &str, body: u32) -> String {
@@ -228,5 +227,5 @@ fn call_script_arg(method_name: &str, body: u32) -> String {
   if let Ok(json) = response.body::<String>() {
     return json;
   }
-  "".to_owned()
+  String::from("")
 }

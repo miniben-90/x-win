@@ -68,3 +68,11 @@ pub fn empty_entity() -> WindowInfo {
     usage: UsageInfo { memory: 0 },
   }
 }
+
+pub fn empty_icon() -> IconInfo {
+  IconInfo {
+    data: String::from(""),
+    height: 0,
+    width: 0,
+  }
+}

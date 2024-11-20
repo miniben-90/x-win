@@ -18,7 +18,7 @@ use windows::{
 };
 
 use crate::common::{
-  api::{empty_entity, os_name, Api},
+  api::{empty_entity, empty_icon, os_name, Api},
   x_win_struct::{
     icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
@@ -205,15 +205,11 @@ impl Api for WindowsAPI {
       }
     }
 
-    IconInfo {
-      data: "".to_owned(),
-      height: 0,
-      width: 0,
-    }
+    empty_icon()
   }
 
   fn get_browser_url(&self, window_info: &WindowInfo) -> String {
-    let mut url: String = "".to_owned();
+    let mut url: String = String::from("");
     if window_info.info.exec_name.ne(&"") && is_browser(window_info.info.exec_name.as_str()) {
       let hwnd = unsafe {
         let data: Vec<u16> = OsStr::new(&window_info.title.to_owned())
@@ -663,7 +659,7 @@ fn get_url_for_chromium_from_ctrlk(
     }
   }
 
-  "".to_owned()
+  String::from("")
 }
 
 fn is_browser(browser_name: &str) -> bool {

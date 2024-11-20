@@ -7,7 +7,7 @@ use xcb::{x, Connection, Xid, XidNew};
 
 use crate::{
   common::{
-    api::Api,
+    api::{empty_icon, Api},
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo, window_position::WindowPosition},
   },
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
@@ -145,11 +145,7 @@ impl Api for X11Api {
         }
       }
     }
-    IconInfo {
-      data: "".to_owned(),
-      width: 0,
-      height: 0,
-    }
+    empty_icon()
   }
 
   fn get_browser_url(&self, _: &WindowInfo) -> String {
@@ -258,7 +254,7 @@ fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::
     let window_title: &[u8] = window_title.value();
     unsafe { std::str::from_utf8_unchecked(window_title).to_string() }
   } else {
-    "".to_owned()
+    String::from("")
   }
 }
 

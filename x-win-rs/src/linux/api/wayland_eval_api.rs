@@ -1,7 +1,10 @@
 use zbus::Connection;
 
 use crate::{
-  common::x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  common::{
+    api::empty_icon,
+    x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  },
   linux::api::gnome_shell::GNOME_XWIN_EVAL_SCRIPT,
 };
 
@@ -74,7 +77,7 @@ fn call_script(script: &String) -> String {
   if let Ok((_actor, json)) = response.body::<(bool, String)>() {
     return json;
   }
-  "".to_owned()
+  String::from("")
 }
 
 pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
@@ -98,9 +101,5 @@ get_icon({});
     }
   }
 
-  IconInfo {
-    data: "".to_owned(),
-    height: 0,
-    width: 0,
-  }
+  empty_icon()
 }
