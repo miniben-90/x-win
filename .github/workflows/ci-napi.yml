@@ -369,10 +369,6 @@ jobs:
       - name: Run napi artifacts to struct deps
         run: yarn artifacts
 
-      # Run prepublish to update sub deps to patch version on it
-      - name: Run napi prepublish to update deps. version & add optionnal deps
-        run: yarn prepublishOnly
-
       # Publish packages on npmjs
       - name: Publish packages
         run: npm publish --access public
