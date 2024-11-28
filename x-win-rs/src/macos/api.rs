@@ -87,7 +87,7 @@ impl Api for MacosAPI {
         let nsbitmapref = NSBitmapImageRep::alloc();
         let imagerep: Retained<NSBitmapImageRep> =
           unsafe { msg_send_id![nsbitmapref, initWithCGImage: cgref] };
-        let _ = unsafe { imagerep.setSize(imagesize) };
+        let _: () = unsafe { imagerep.setSize(imagesize) };
         let pngdata = unsafe {
           imagerep
             .representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
@@ -308,16 +308,17 @@ fn is_from_document(bundle_id: &str) -> bool {
 fn execute_applescript(script: &str) -> String {
   let output = Command::new("osascript").args(["-e", script]).output();
   if let Ok(output) = output {
-    return String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    String::from_utf8_lossy(&output.stdout).trim().to_owned()
+  } else {
+    "".into()
   }
-  "".into()
 }
 
 fn get_screen_rect() -> NSRect {
   if let Some(screen) = unsafe { NSScreen::mainScreen(MainThreadMarker::new_unchecked()) } {
-    return screen.frame();
+    screen.frame()
   } else {
-    return NSRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
+    NSRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0))
   }
 }
 
@@ -336,8 +337,6 @@ fn get_browser_url(process_id: u32) -> String {
       runningApplicationWithProcessIdentifier: pid_t::from(process_id as i32)
     ]
   };
-
-  println!("app: {:?}", app);
 
   let bundle_identifier = get_bundle_identifier(app);
   if bundle_identifier.is_empty() {
@@ -369,7 +368,7 @@ fn get_bundle_identifier(app: &NSRunningApplication) -> String {
   unsafe {
     match app.bundleIdentifier() {
       Some(bundle_identifier) => bundle_identifier.to_string(),
-      None => return String::from(""),
+      None => String::from(""),
     }
   }
 }
