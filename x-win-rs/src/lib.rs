@@ -1,10 +1,8 @@
 #![deny(unsafe_op_in_unsafe_fn)]
-//#![deny(clippy::all)]
-//#![allow(unused_imports)]
 
 #[cfg(target_os = "macos")]
 #[macro_use]
-extern crate objc;
+extern crate objc2;
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -29,6 +27,9 @@ use linux::init_platform_api;
 
 #[cfg(target_os = "macos")]
 use macos::init_platform_api;
+
+#[cfg(all(feature = "macos_permission", target_os = "macos"))]
+pub use macos::permission;
 
 pub use common::{
   api::{empty_entity, os_name},
@@ -333,6 +334,26 @@ mod tests {
     let window_info = &get_active_window().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
     assert!(url.eq("URL recovery not supported on Linux distribution!"));
+    Ok(())
+  }
+
+  #[cfg(all(feature = "macos_permission", target_os = "macos"))]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_check_screen_record_permission() -> Result<(), String> {
+    use macos::permission::check_screen_record_permission;
+    let value = check_screen_record_permission();
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(all(feature = "macos_permission", target_os = "macos"))]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_request_screen_record_permission() -> Result<(), String> {
+    use macos::permission::request_screen_record_permission;
+    let value = request_screen_record_permission();
+    assert_eq!(value, true);
     Ok(())
   }
 }

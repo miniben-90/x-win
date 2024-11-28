@@ -1,6 +1,7 @@
 #![deny(unused_imports)]
 
 mod api;
+pub mod permission;
 
 use crate::common::api::Api;
 use api::MacosAPI;
