@@ -85,7 +85,9 @@ impl Api for WindowsAPI {
 
     enum_desktop_windows(|hwnd| {
       let window_info = get_window_information(hwnd);
-      if !(window_info.title.is_empty() && window_info.info.exec_name.to_lowercase().eq(&"explorer")) {
+      if !(window_info.title.is_empty()
+        && window_info.info.exec_name.to_lowercase().eq(&"explorer"))
+      {
         results.push(window_info);
       }
       true
