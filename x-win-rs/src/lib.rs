@@ -1,10 +1,8 @@
 #![deny(unsafe_op_in_unsafe_fn)]
-//#![deny(clippy::all)]
-//#![allow(unused_imports)]
 
 #[cfg(target_os = "macos")]
 #[macro_use]
-extern crate objc;
+extern crate objc2;
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -29,6 +27,12 @@ use linux::init_platform_api;
 
 #[cfg(target_os = "macos")]
 use macos::init_platform_api;
+
+#[cfg(all(feature = "macos_permission", target_os = "macos"))]
+/// Handle screen record permission
+/// <div class="warning">important Work only with macOS 10.15+</div>
+/// To use this function you need to add `macos_permission` feature
+pub use macos::permission;
 
 pub use common::{
   api::{empty_entity, os_name},
@@ -185,14 +189,8 @@ mod tests {
       println!(
         "[START] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
         output.status,
-        (match std::str::from_utf8(&output.stdout) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        }),
-        (match std::str::from_utf8(&output.stderr) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        })
+        std::str::from_utf8(&output.stdout).unwrap_or("Error when convert output"),
+        std::str::from_utf8(&output.stderr).unwrap_or("Error when convert stderr")
       );
       thread::sleep(time::Duration::from_secs(3));
       TestContext
@@ -216,14 +214,8 @@ mod tests {
       println!(
         "[DONE] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
         output.status,
-        (match std::str::from_utf8(&output.stdout) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        }),
-        (match std::str::from_utf8(&output.stderr) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        })
+        std::str::from_utf8(&output.stdout).unwrap_or("Error when convert output"),
+        std::str::from_utf8(&output.stderr).unwrap_or("Error when convert stderr")
       );
       thread::sleep(time::Duration::from_secs(3));
     }
@@ -289,7 +281,7 @@ mod tests {
   #[test]
   fn test_get_window_icon() -> Result<(), String> {
     let window_info: &WindowInfo = &get_active_window().unwrap();
-    let icon_info = get_window_icon(&window_info).unwrap();
+    let icon_info = get_window_icon(window_info).unwrap();
     assert_ne!(icon_info.data, "");
     assert_ne!(icon_info.height, 0);
     assert_ne!(icon_info.width, 0);
@@ -316,7 +308,7 @@ mod tests {
     println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.starts_with("http"));
     let window_info = &get_active_window().unwrap().to_owned();
-    let url = get_browser_url(&window_info).unwrap();
+    let url = get_browser_url(window_info).unwrap();
     println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.starts_with("http"));
     Ok(())
@@ -333,6 +325,26 @@ mod tests {
     let window_info = &get_active_window().unwrap().to_owned();
     let url = get_browser_url(&window_info).unwrap();
     assert!(url.eq("URL recovery not supported on Linux distribution!"));
+    Ok(())
+  }
+
+  #[cfg(all(feature = "macos_permission", target_os = "macos"))]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_check_screen_record_permission() -> Result<(), String> {
+    use macos::permission::check_screen_record_permission;
+    let value = check_screen_record_permission();
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(all(feature = "macos_permission", target_os = "macos"))]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_request_screen_record_permission() -> Result<(), String> {
+    use macos::permission::request_screen_record_permission;
+    let value = request_screen_record_permission();
+    assert_eq!(value, true);
     Ok(())
   }
 }

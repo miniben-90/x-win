@@ -1,24 +1,31 @@
 #![deny(unused_imports)]
 
 use std::process::Command;
+use std::ptr::null_mut;
 
+use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use cocoa::appkit::NSScreen;
-use cocoa::base::{id, nil};
-use cocoa::foundation::{NSRect, NSString, NSURL};
+use libc::pid_t;
+use objc2::rc::Retained;
+use objc2::{ClassType, Encode, RefEncode};
+use objc2_app_kit::{
+  NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSRunningApplication, NSScreen, NSWorkspace,
+};
+use objc2_foundation::{
+  CGPoint, CGRect, CGSize, MainThreadMarker, NSDictionary, NSObject, NSRect, NSString,
+};
+
 use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::boolean::CFBoolean;
-
 use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
-
 use core_foundation::number::CFNumber;
 use core_foundation::string::CFString;
 use core_graphics::display::{
   kCGWindowListExcludeDesktopElements, kCGWindowListOptionIncludingWindow,
   kCGWindowListOptionOnScreenOnly, CGWindowListCopyWindowInfo,
 };
-use core_graphics::geometry::CGRect;
+use core_graphics::geometry::CGRect as GeCGRect;
 use core_graphics::window::{
   kCGWindowBounds, kCGWindowIsOnscreen, kCGWindowLayer, kCGWindowMemoryUsage, kCGWindowName,
   kCGWindowNumber, kCGWindowOwnerName, kCGWindowOwnerPID,
@@ -33,9 +40,19 @@ use crate::common::{
   },
 };
 
-use objc::runtime::{BOOL, NO};
-
 pub struct MacosAPI {}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct CGImage {}
+
+unsafe impl Encode for CGImage {
+  const ENCODING: objc2::Encoding = objc2::Encoding::Struct("CGImage", &[]);
+}
+
+unsafe impl RefEncode for CGImage {
+  const ENCODING_REF: objc2::Encoding = objc2::Encoding::Pointer(&Self::ENCODING);
+}
 
 /**
  * Impl. for Darwin system
@@ -56,33 +73,39 @@ impl Api for MacosAPI {
   }
 
   fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
-    if window_info.info.path.ne("") {
-      unsafe {
-        let path = NSString::alloc(nil).init_str(&window_info.info.path);
-        let nsworkspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
-        let nsimage: id = msg_send![nsworkspace, iconForFile: path];
+    if !window_info.info.path.is_empty() {
+      let path: &NSString = &NSString::from_str(&window_info.info.path);
 
-        if !nsimage.is_null() {
-          let cgref: id = msg_send![
-            nsimage,
-            CGImageForProposedRect: nil
-            context: nil
-            hints: nil
-          ];
-          let nsbitmapref: id = msg_send![class!(NSBitmapImageRep), alloc];
-          let imagerep: id = msg_send![nsbitmapref, initWithCGImage: cgref];
-          let imagesize: (f64, f64) = msg_send![nsimage, size];
-          let _: () = msg_send![imagerep, setSize: imagesize];
-          let pngdata: id = msg_send![imagerep, representationUsingType:4 properties:nil];
-          let length: usize = msg_send![pngdata, length];
-          let bytes: *const u8 = msg_send![pngdata, bytes];
-          let byte_slice: &[u8] = std::slice::from_raw_parts(bytes, length);
-          let data = base64::prelude::BASE64_STANDARD.encode(byte_slice);
-          return IconInfo {
-            data: format!("data:image/png;base64,{}", data),
-            width: imagesize.0 as u32,
-            height: imagesize.1 as u32,
-          };
+      let nsimage: &NSImage = unsafe { &NSWorkspace::sharedWorkspace().iconForFile(path) };
+      if unsafe { nsimage.isValid() } {
+        let imagesize = unsafe { nsimage.size() };
+        let rect: &CGRect = &CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
+        let cgref: &CGImage = unsafe {
+          msg_send![nsimage, CGImageForProposedRect: rect context: null_mut::<NSObject>() hints: null_mut::<NSObject>()]
+        };
+
+        let nsbitmapref = NSBitmapImageRep::alloc();
+        let imagerep: Retained<NSBitmapImageRep> =
+          unsafe { msg_send_id![nsbitmapref, initWithCGImage: cgref] };
+        let _: () = unsafe { imagerep.setSize(imagesize) };
+        let pngdata = unsafe {
+          imagerep
+            .representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
+        };
+        match pngdata {
+          Some(pngdata) => {
+            let bytes = pngdata.bytes();
+            let data = BASE64_STANDARD.encode(bytes);
+            let t = IconInfo {
+              data: format!("data:image/png;base64,{}", data),
+              width: imagesize.width as u32,
+              height: imagesize.height as u32,
+            };
+            return t;
+          }
+          None => {
+            return empty_icon();
+          }
         }
       }
     }
@@ -129,30 +152,25 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
 
     let bounds = cfd.get(unsafe { kCGWindowBounds });
     let bounds: CFDictionary = bounds.downcast::<CFDictionary>().unwrap();
-    let bounds = CGRect::from_dict_representation(&bounds.to_untyped());
+    let bounds = GeCGRect::from_dict_representation(&bounds.to_untyped());
     if bounds.is_none() {
       continue;
     }
 
-    let bounds: CGRect = bounds.unwrap();
+    let bounds: GeCGRect = bounds.unwrap();
     if bounds.size.height.lt(&50.0) || bounds.size.width.lt(&50.0) {
       continue;
     }
-
     let process_id = cfd.get(unsafe { kCGWindowOwnerPID });
     let process_id = process_id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
-
-    let app: id = unsafe {
+    let app: &NSRunningApplication = unsafe {
       msg_send![
         class!(NSRunningApplication),
-        runningApplicationWithProcessIdentifier: process_id
+        runningApplicationWithProcessIdentifier: pid_t::from(process_id as i32)
       ]
     };
 
-    let is_not_active: bool = unsafe {
-      let is_active: BOOL = msg_send![app, isActive];
-      is_active == NO
-    };
+    let is_not_active = !unsafe { app.isActive() };
 
     if only_active && is_not_active {
       continue;
@@ -179,16 +197,28 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       title = title_ref.downcast::<CFString>().unwrap().to_string();
     }
 
-    let bundle_url: id = unsafe { msg_send![app, bundleURL] };
-    let path = unsafe { bundle_url.path().UTF8String() };
-    let path = std::str::from_utf8(unsafe { std::ffi::CStr::from_ptr(path).to_bytes() }).unwrap();
+    let path: String = unsafe {
+      match app.bundleURL() {
+        Some(nsurl) => match nsurl.path() {
+          Some(path) => path.to_string(),
+          None => String::from(""),
+        },
+        None => String::from(""),
+      }
+    };
 
-    let exec_name: String = std::path::Path::new(&path)
-      .file_name()
-      .unwrap()
-      .to_str()
-      .unwrap_or("")
-      .to_owned();
+    let exec_name: String = {
+      match path.is_empty() {
+        true => match std::path::Path::new(&path).file_name() {
+          Some(os_str) => match os_str.to_str() {
+            Some(exec_name) => exec_name.to_owned(),
+            None => String::from(""),
+          },
+          None => String::from(""),
+        },
+        false => String::from(""),
+      }
+    };
 
     let memory = cfd.get(unsafe { kCGWindowMemoryUsage });
     let memory = memory.downcast::<CFNumber>().unwrap().to_i64().unwrap();
@@ -278,17 +308,21 @@ fn is_from_document(bundle_id: &str) -> bool {
 fn execute_applescript(script: &str) -> String {
   let output = Command::new("osascript").args(["-e", script]).output();
   if let Ok(output) = output {
-    return String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    String::from_utf8_lossy(&output.stdout).trim().to_owned()
+  } else {
+    "".into()
   }
-  "".into()
 }
 
 fn get_screen_rect() -> NSRect {
-  let screen = unsafe { NSScreen::mainScreen(nil) };
-  unsafe { NSScreen::frame(screen) }
+  if let Some(screen) = unsafe { NSScreen::mainScreen(MainThreadMarker::new_unchecked()) } {
+    screen.frame()
+  } else {
+    NSRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0))
+  }
 }
 
-fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
+fn is_full_screen(window_rect: GeCGRect, screen_rect: NSRect) -> bool {
   window_rect.size.height.eq(&screen_rect.size.height)
     && window_rect.size.width.eq(&screen_rect.size.width)
     && window_rect.origin.y.eq(&screen_rect.origin.y)
@@ -297,10 +331,10 @@ fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
 
 fn get_browser_url(process_id: u32) -> String {
   let process_id = process_id as i64;
-  let app: id = unsafe {
+  let app: &NSRunningApplication = unsafe {
     msg_send![
       class!(NSRunningApplication),
-      runningApplicationWithProcessIdentifier: process_id
+      runningApplicationWithProcessIdentifier: pid_t::from(process_id as i32)
     ]
   };
 
@@ -330,19 +364,11 @@ fn get_browser_url(process_id: u32) -> String {
   }
 }
 
-fn get_bundle_identifier(app: id) -> String {
-  if !app.is_null() {
-    unsafe {
-      let bundle_identifier: id = msg_send![app, bundleIdentifier];
-      let bundle_identifier = NSString::UTF8String(bundle_identifier);
-      if !bundle_identifier.is_null() {
-        return std::str::from_utf8(std::ffi::CStr::from_ptr(bundle_identifier).to_bytes())
-          .unwrap_or("")
-          .to_string();
-      } else {
-        return String::from("");
-      }
+fn get_bundle_identifier(app: &NSRunningApplication) -> String {
+  unsafe {
+    match app.bundleIdentifier() {
+      Some(bundle_identifier) => bundle_identifier.to_string(),
+      None => String::from(""),
     }
   }
-  String::from("")
 }

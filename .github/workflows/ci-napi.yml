@@ -163,7 +163,7 @@ jobs:
 
       # Check clippy code
       - name: Check clippy code
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-features -- -D warnings
 
       # Build the project
       - name: Build

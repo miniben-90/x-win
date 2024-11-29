@@ -22,7 +22,7 @@ use super::{
 pub fn get_active_window() -> WindowInfo {
   let response = call_script("get_active_window");
 
-  if response.ne(&"") {
+  if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
     if response.is_object() {
       return value_to_window_info(&response);
@@ -34,7 +34,7 @@ pub fn get_active_window() -> WindowInfo {
 
 pub fn get_open_windows() -> Vec<WindowInfo> {
   let response = call_script("get_open_windows");
-  if response.ne(&"") {
+  if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
 
     if response.is_array() {
@@ -53,7 +53,7 @@ pub fn get_open_windows() -> Vec<WindowInfo> {
 pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
   if window_info.id.ne(&0) {
     let response = call_script_arg("get_icon", window_info.id);
-    if response.ne(&"") {
+    if !response.is_empty() {
       let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
       if response.is_object() {
         return value_to_icon_info(&response);
