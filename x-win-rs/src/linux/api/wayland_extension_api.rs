@@ -53,7 +53,7 @@ pub fn get_open_windows() -> Vec<WindowInfo> {
 pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
   if window_info.id.ne(&0) {
     let response = call_script_arg("get_icon", window_info.id);
-    if !response.empty() {
+    if !response.is_empty() {
       let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
       if response.is_object() {
         return value_to_icon_info(&response);
