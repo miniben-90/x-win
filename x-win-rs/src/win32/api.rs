@@ -85,7 +85,7 @@ impl Api for WindowsAPI {
 
     enum_desktop_windows(|hwnd| {
       let window_info = get_window_information(hwnd);
-      if !(window_info.title.eq(&"") && window_info.info.exec_name.to_lowercase().eq(&"explorer")) {
+      if !(window_info.title.is_empty() && window_info.info.exec_name.to_lowercase().eq(&"explorer")) {
         results.push(window_info);
       }
       true
@@ -95,7 +95,7 @@ impl Api for WindowsAPI {
   }
 
   fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
-    if window_info.info.path.ne("") {
+    if !window_info.info.path.is_empty() {
       let lpszfile: Vec<u16> = std::path::Path::new(&window_info.info.path)
         .as_os_str()
         .encode_wide()
@@ -210,7 +210,7 @@ impl Api for WindowsAPI {
 
   fn get_browser_url(&self, window_info: &WindowInfo) -> String {
     let mut url: String = String::from("");
-    if window_info.info.exec_name.ne(&"") && is_browser(window_info.info.exec_name.as_str()) {
+    if !window_info.info.exec_name.is_empty() && is_browser(window_info.info.exec_name.as_str()) {
       let hwnd = unsafe {
         let data: Vec<u16> = OsStr::new(&window_info.title.to_owned())
           .encode_wide()
@@ -559,7 +559,7 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
             x if x.contains("msedge") => {
               let mut value =
                 get_url_from_automation_id(&automation, &element, "view_1022".to_owned());
-              if value.eq(&"") {
+              if value.is_empty() {
                 value = get_url_from_automation_id(&automation, &element, "view_1020".to_owned());
               }
               value.to_owned()

@@ -189,14 +189,8 @@ mod tests {
       println!(
         "[START] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
         output.status,
-        (match std::str::from_utf8(&output.stdout) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        }),
-        (match std::str::from_utf8(&output.stderr) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        })
+        std::str::from_utf8(&output.stdout).unwrap_or("Error when convert output"),
+        std::str::from_utf8(&output.stderr).unwrap_or("Error when convert stderr")
       );
       thread::sleep(time::Duration::from_secs(3));
       TestContext
@@ -220,14 +214,8 @@ mod tests {
       println!(
         "[DONE] Command Status: {:?}; Command stdout: {:?}; Command stderr: {:?}",
         output.status,
-        (match std::str::from_utf8(&output.stdout) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        }),
-        (match std::str::from_utf8(&output.stderr) {
-          Ok(val) => val,
-          Err(_) => "Error when convert output",
-        })
+        std::str::from_utf8(&output.stdout).unwrap_or("Error when convert output"),
+        std::str::from_utf8(&output.stderr).unwrap_or("Error when convert stderr")
       );
       thread::sleep(time::Duration::from_secs(3));
     }
@@ -293,7 +281,7 @@ mod tests {
   #[test]
   fn test_get_window_icon() -> Result<(), String> {
     let window_info: &WindowInfo = &get_active_window().unwrap();
-    let icon_info = get_window_icon(&window_info).unwrap();
+    let icon_info = get_window_icon(window_info).unwrap();
     assert_ne!(icon_info.data, "");
     assert_ne!(icon_info.height, 0);
     assert_ne!(icon_info.width, 0);
@@ -320,7 +308,7 @@ mod tests {
     println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.starts_with("http"));
     let window_info = &get_active_window().unwrap().to_owned();
-    let url = get_browser_url(&window_info).unwrap();
+    let url = get_browser_url(window_info).unwrap();
     println!("URL: {:?}; process: {:?}", url, window_info.info.name);
     assert!(url.starts_with("http"));
     Ok(())

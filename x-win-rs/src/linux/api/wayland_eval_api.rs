@@ -24,7 +24,7 @@ get_active_window();
 
   let response = call_script(&script);
 
-  if response.ne(&"") {
+  if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
     if response.is_object() {
       return value_to_window_info(&response);

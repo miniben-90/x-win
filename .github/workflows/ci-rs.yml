@@ -100,7 +100,7 @@ jobs:
 
       # Check clippy code
       - name: Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-features -- -D warnings
 
       - name: Open finder to have an active window (MacOS)
         if: ${{ matrix.settings.host == 'macos-latest' }}

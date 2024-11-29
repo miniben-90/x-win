@@ -73,7 +73,7 @@ impl Api for MacosAPI {
   }
 
   fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
-    if window_info.info.path.ne("") {
+    if !window_info.info.path.is_empty() {
       let path: &NSString = &NSString::from_str(&window_info.info.path);
 
       let nsimage: &NSImage = unsafe { &NSWorkspace::sharedWorkspace().iconForFile(path) };
