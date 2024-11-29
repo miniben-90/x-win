@@ -29,6 +29,9 @@ use linux::init_platform_api;
 use macos::init_platform_api;
 
 #[cfg(all(feature = "macos_permission", target_os = "macos"))]
+/// Handle screen record permission
+/// <div class="warning">important Work only with macOS 10.15+</div>
+/// To use this function you need to add `macos_permission` feature
 pub use macos::permission;
 
 pub use common::{
