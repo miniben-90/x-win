@@ -5,8 +5,9 @@ version = "0.0.0"
 authors = ["BENKHADRA Hocine <miniben90@hotmail.com>"]
 keywords = ["window", "active", "current", "position", "open"]
 description = "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows."
-repository = "https://github.com/miniben-90/x-win"
+repository = "https://github.com/miniben-90/x-win/tree/main/x-win-rs"
 license = "MIT"
+rust-version = "1.60.0"
 
 [lib]
 name = "x_win"
