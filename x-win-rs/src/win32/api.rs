@@ -480,8 +480,8 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
     };
 
     process_info.path = match process_path.as_path().to_str().to_owned() {
-        Some(path) => path.to_string(),
-        None => String::from(""),
+      Some(path) => path.to_string(),
+      None => String::from(""),
     };
 
     if process_info
