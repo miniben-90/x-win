@@ -474,19 +474,15 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
   };
 
   if let Ok(process_path) = get_process_path(phlde) {
-    process_path
-      .file_stem()
-      .unwrap_or(std::ffi::OsStr::new(""))
-      .to_str()
-      .unwrap_or("")
-      .clone_into(&mut process_info.exec_name);
-    process_path
-      .clone()
-      .into_os_string()
-      .into_string()
-      .unwrap()
-      .clone_into(&mut process_info.path);
-    process_info.exec_name.clone_into(&mut process_info.name);
+    process_info.exec_name = match process_path.file_stem() {
+      Some(process_path) => process_path.to_str().unwrap_or("").to_string(),
+      None => String::from(""),
+    };
+
+    process_info.path = match process_path.as_path().to_str().to_owned() {
+      Some(path) => path.to_string(),
+      None => String::from(""),
+    };
 
     if process_info
       .exec_name
