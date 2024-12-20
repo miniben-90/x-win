@@ -203,12 +203,15 @@ export declare function openWindowsAsync(): Promise<Array<WindowInfo>>
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
+ * const d = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * },500);// sleep interval: 500ms
  *
  * unsubscribeAllActiveWindow();
  * ```
  *
 */
-export declare function subscribeActiveWindow(callback: (info: WindowInfo) => void): number
+export declare function subscribeActiveWindow(callback: (info: WindowInfo) => void, interval?: number): number
 /**
  * Terminate and unsubscribe a specific observer using their ID.
  *
