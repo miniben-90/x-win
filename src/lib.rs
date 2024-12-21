@@ -269,6 +269,8 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
 
 /**
  * Subscribe an observer thread to monitor changes in the active window.
+ * @param {function} callback - Callback function that returns the active window when it changes
+ * @param {number} [interval=100] - Interval between checks for changes in the active window (default: 100ms)
  *
  * # Example
  *
@@ -286,6 +288,9 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
+ * const d = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * },500);// sleep interval: 500ms
  *
  * unsubscribeAllActiveWindow();
  * ```
