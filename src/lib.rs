@@ -8,7 +8,7 @@ use common::{
   thread::ThreadManager,
   x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
 };
-use napi::{bindgen_prelude::AsyncTask, JsFunction, Result, Task};
+use napi::{bindgen_prelude::AsyncTask, JsFunction, JsNumber, Result, Task};
 use napi_derive::napi;
 use x_win::{empty_entity, get_active_window, get_browser_url, get_open_windows, get_window_icon};
 
@@ -304,13 +304,27 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * const c = subscribeActiveWindow((info) => {
  *   t.log(c, info);
  * });
+ * const d = subscribeActiveWindow((info) => {
+ *   t.log(c, info);
+ * },500);// sleep interval: 500ms
  *
  * unsubscribeAllActiveWindow();
  * ```
  *
  */
-#[napi(ts_args_type = "callback: (info: WindowInfo) => void")]
-pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
+#[napi(ts_args_type = "callback: (info: WindowInfo) => void, interval?: number")]
+pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>) -> Result<u32> {
+  let interval: u64 = {
+    let interval = interval
+      .map(|jsnumber| jsnumber.get_int64())
+      .transpose()?
+      .unwrap_or(100);
+    if interval.gt(&0) {
+      interval as u64
+    } else {
+      100
+    }
+  };
   let tsfn: ThreadsafeFunction<WindowInfo, ErrorStrategy::Fatal> = callback
     .create_threadsafe_function(
       0,
@@ -344,7 +358,7 @@ pub fn subscribe_active_window(callback: JsFunction) -> Result<u32> {
               ThreadsafeFunctionCallMode::Blocking,
             );
           }
-          thread::sleep(Duration::from_millis(100));
+          thread::sleep(Duration::from_millis(interval));
         }
       }
     }
