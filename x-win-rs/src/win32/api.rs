@@ -431,11 +431,11 @@ fn get_process_name_from_path(process_path: &Path) -> Result<String, ()> {
     lang.w_language, lang.w_code_page
   );
   let lang_code_string: String = lang_code.to_string();
-  let lang_code_ptr: *const u16 = lang_code_string
+  let lang_code_ptr = lang_code_string
     .encode_utf16()
     .chain(Some(0))
-    .collect::<Vec<_>>()
-    .as_ptr();
+    .collect::<Vec<_>>();
+  let lang_code_ptr = lang_code_ptr.as_ptr();
 
   let lang_code: PCWSTR = PCWSTR::from_raw(lang_code_ptr);
 

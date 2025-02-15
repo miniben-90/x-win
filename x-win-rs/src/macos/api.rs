@@ -1,35 +1,8 @@
 #![deny(unused_imports)]
 
+use std::ffi::c_void;
 use std::process::Command;
 use std::ptr::null_mut;
-
-use base64::prelude::BASE64_STANDARD;
-use base64::Engine;
-use libc::pid_t;
-use objc2::rc::Retained;
-use objc2::{ClassType, Encode, RefEncode};
-use objc2_app_kit::{
-  NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSRunningApplication, NSScreen, NSWorkspace,
-};
-use objc2_foundation::{
-  CGPoint, CGRect, CGSize, MainThreadMarker, NSDictionary, NSObject, NSRect, NSString,
-};
-
-use core_foundation::array::{CFArrayGetCount, CFArrayGetValueAtIndex};
-use core_foundation::base::{CFType, TCFType};
-use core_foundation::boolean::CFBoolean;
-use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
-use core_foundation::number::CFNumber;
-use core_foundation::string::CFString;
-use core_graphics::display::{
-  kCGWindowListExcludeDesktopElements, kCGWindowListOptionIncludingWindow,
-  kCGWindowListOptionOnScreenOnly, CGWindowListCopyWindowInfo,
-};
-use core_graphics::geometry::CGRect as GeCGRect;
-use core_graphics::window::{
-  kCGWindowBounds, kCGWindowIsOnscreen, kCGWindowLayer, kCGWindowMemoryUsage, kCGWindowName,
-  kCGWindowNumber, kCGWindowOwnerName, kCGWindowOwnerPID,
-};
 
 use crate::common::x_win_struct::icon_info::IconInfo;
 use crate::common::{
@@ -39,6 +12,22 @@ use crate::common::{
     window_position::WindowPosition,
   },
 };
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
+use objc2::rc::Retained;
+use objc2::{AllocAnyThread, Encode, RefEncode};
+use objc2_app_kit::{
+  NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSRunningApplication, NSScreen, NSWorkspace,
+};
+use objc2_core_foundation::{
+  CFArray, CFArrayGetCount, CFArrayGetValueAtIndex, CFBoolean, CFBooleanGetValue, CFDictionary,
+  CFDictionaryContainsKey, CFDictionaryGetValue, CFNumber, CFNumberGetValue, CFNumberType,
+  CFRetained, CFString, CGPoint, CGRect, CGSize,
+};
+use objc2_core_graphics::{
+  CGRectMakeWithDictionaryRepresentation, CGWindowListCopyWindowInfo, CGWindowListOption,
+};
+use objc2_foundation::{MainThreadMarker, NSDictionary, NSObject, NSRect, NSString};
 
 pub struct MacosAPI {}
 
@@ -81,12 +70,11 @@ impl Api for MacosAPI {
         let imagesize = unsafe { nsimage.size() };
         let rect: &CGRect = &CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
         let cgref: &CGImage = unsafe {
-          msg_send![nsimage, CGImageForProposedRect: rect context: null_mut::<NSObject>() hints: null_mut::<NSObject>()]
+          msg_send![nsimage, CGImageForProposedRect: rect, context: null_mut::<NSObject>(), hints: null_mut::<NSObject>()]
         };
-
         let nsbitmapref = NSBitmapImageRep::alloc();
         let imagerep: Retained<NSBitmapImageRep> =
-          unsafe { msg_send_id![nsbitmapref, initWithCGImage: cgref] };
+          unsafe { msg_send![nsbitmapref, initWithCGImage: cgref] };
         let _: () = unsafe { imagerep.setSize(imagesize) };
         let pngdata = unsafe {
           imagerep
@@ -94,14 +82,14 @@ impl Api for MacosAPI {
         };
         match pngdata {
           Some(pngdata) => {
-            let bytes = pngdata.bytes();
+            let bytes = unsafe { pngdata.as_bytes_unchecked() };
             let data = BASE64_STANDARD.encode(bytes);
-            let t = IconInfo {
+            let icon = IconInfo {
               data: format!("data:image/png;base64,{}", data),
               width: imagesize.width as u32,
               height: imagesize.height as u32,
             };
-            return t;
+            return icon;
           }
           None => {
             return empty_icon();
@@ -120,53 +108,55 @@ impl Api for MacosAPI {
 fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
   let mut windows: Vec<WindowInfo> = Vec::new();
 
-  let options = kCGWindowListOptionOnScreenOnly
-    | kCGWindowListExcludeDesktopElements
-    | kCGWindowListOptionIncludingWindow;
-  let window_list_info = unsafe { CGWindowListCopyWindowInfo(options, 0) };
-  let windows_count: isize = unsafe { CFArrayGetCount(window_list_info) };
+  let options = CGWindowListOption::OptionOnScreenOnly
+    | CGWindowListOption::ExcludeDesktopElements
+    | CGWindowListOption::OptionIncludingWindow;
+  let window_list_info: &CFArray = unsafe { &CGWindowListCopyWindowInfo(options, 0).unwrap() };
+  let windows_count = unsafe { CFArrayGetCount(window_list_info) };
 
   let screen_rect = get_screen_rect();
 
   for idx in 0..windows_count {
-    let dref: CFDictionaryRef =
-      unsafe { CFArrayGetValueAtIndex(window_list_info, idx) as CFDictionaryRef };
+    let window_cf_dictionary_ref =
+      unsafe { CFArrayGetValueAtIndex(window_list_info, idx) as *const CFDictionary };
 
-    if dref.is_null() {
+    if window_cf_dictionary_ref.is_null() {
+      continue;
+    }
+    let window_cf_dictionary =
+      unsafe { CFRetained::retain(std::ptr::NonNull::from(&*window_cf_dictionary_ref)) };
+    let is_screen: bool = get_cf_boolean_value(&window_cf_dictionary, "kCGWindowIsOnscreen");
+    if is_screen == false {
       continue;
     }
 
-    let cfd: CFDictionary<CFString, CFType> = unsafe { CFDictionary::wrap_under_create_rule(dref) };
+    let window_layer = get_cf_number_value(&window_cf_dictionary, "kCGWindowLayer");
 
-    let is_screen = cfd.get(unsafe { kCGWindowIsOnscreen });
-    let is_screen: CFBoolean = is_screen.downcast::<CFBoolean>().unwrap();
-    if is_screen != CFBoolean::true_value() {
+    if window_layer.lt(&0) || window_layer.gt(&100) {
       continue;
     }
 
-    let window_layer = cfd.get(unsafe { kCGWindowLayer });
-    let window_layer: CFNumber = window_layer.downcast::<CFNumber>().unwrap();
-    if window_layer.lt(&CFNumber::from(0)) || window_layer.gt(&CFNumber::from(100)) {
-      continue;
-    }
+    let bounds = get_cf_window_bounds_value(&window_cf_dictionary);
 
-    let bounds = cfd.get(unsafe { kCGWindowBounds });
-    let bounds: CFDictionary = bounds.downcast::<CFDictionary>().unwrap();
-    let bounds = GeCGRect::from_dict_representation(&bounds.to_untyped());
     if bounds.is_none() {
       continue;
     }
 
-    let bounds: GeCGRect = bounds.unwrap();
+    let bounds = bounds.unwrap();
+
     if bounds.size.height.lt(&50.0) || bounds.size.width.lt(&50.0) {
       continue;
     }
-    let process_id = cfd.get(unsafe { kCGWindowOwnerPID });
-    let process_id = process_id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
+
+    let process_id = get_cf_number_value(&window_cf_dictionary, "kCGWindowOwnerPID");
+    if process_id == 0 {
+      continue;
+    }
+
     let app: &NSRunningApplication = unsafe {
       msg_send![
         class!(NSRunningApplication),
-        runningApplicationWithProcessIdentifier: pid_t::from(process_id as i32)
+        runningApplicationWithProcessIdentifier: process_id
       ]
     };
 
@@ -182,20 +172,8 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       continue;
     }
 
-    let app_name = {
-      let app_name = cfd.get(unsafe { kCGWindowOwnerName });
-      app_name
-        .downcast::<CFString>()
-        .unwrap_or("".into())
-        .to_string()
-    };
-
-    let mut title: String = String::from("");
-
-    if cfd.contains_key(&CFString::from_static_string("kCGWindowName")) {
-      let title_ref = cfd.get(unsafe { kCGWindowName });
-      title = title_ref.downcast::<CFString>().unwrap().to_string();
-    }
+    let app_name = get_cf_string_value(&window_cf_dictionary, "kCGWindowOwnerName");
+    let title = get_cf_string_value(&window_cf_dictionary, "kCGWindowName");
 
     let path: String = unsafe {
       match app.bundleURL() {
@@ -220,12 +198,8 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       }
     };
 
-    let memory = cfd.get(unsafe { kCGWindowMemoryUsage });
-    let memory = memory.downcast::<CFNumber>().unwrap().to_i64().unwrap();
-
-    let id = cfd.get(unsafe { kCGWindowNumber });
-    let id = id.downcast::<CFNumber>().unwrap().to_i64().unwrap();
-
+    let memory = get_cf_number_value(&window_cf_dictionary, "kCGWindowMemoryUsage");
+    let id = get_cf_number_value(&window_cf_dictionary, "kCGWindowNumber");
     windows.push(WindowInfo {
       id: id as u32,
       os: os_name(),
@@ -322,7 +296,7 @@ fn get_screen_rect() -> NSRect {
   }
 }
 
-fn is_full_screen(window_rect: GeCGRect, screen_rect: NSRect) -> bool {
+fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
   window_rect.size.height.eq(&screen_rect.size.height)
     && window_rect.size.width.eq(&screen_rect.size.width)
     && window_rect.origin.y.eq(&screen_rect.origin.y)
@@ -334,7 +308,7 @@ fn get_browser_url(process_id: u32) -> String {
   let app: &NSRunningApplication = unsafe {
     msg_send![
       class!(NSRunningApplication),
-      runningApplicationWithProcessIdentifier: pid_t::from(process_id as i32)
+      runningApplicationWithProcessIdentifier: process_id as i32
     ]
   };
 
@@ -368,6 +342,74 @@ fn get_bundle_identifier(app: &NSRunningApplication) -> String {
   unsafe {
     match app.bundleIdentifier() {
       Some(bundle_identifier) => bundle_identifier.to_string(),
+      None => String::from(""),
+    }
+  }
+}
+
+fn get_cf_dictionary_get_value<T>(dict: &CFDictionary, key: &str) -> Option<*const T> {
+  let key = CFString::from_str(key);
+  let key_ref = key.as_ref() as *const CFString;
+  if unsafe { CFDictionaryContainsKey(dict, key_ref.cast()) } == true {
+    let value = unsafe { CFDictionaryGetValue(dict, key_ref.cast()) };
+    Some(value as *const T)
+  } else {
+    None
+  }
+}
+
+// fn str_to_cfstring(key: &str) -> *const CFString {
+//   let cf_dictionary_key = CFString::from_str(key);
+// }
+
+fn get_cf_number_value(dict: &CFDictionary, key: &str) -> i32 {
+  unsafe {
+    let mut value: i32 = 0;
+    match get_cf_dictionary_get_value::<CFNumber>(dict, key) {
+      Some(number) => {
+        CFNumberGetValue(
+          &*number,
+          CFNumberType::IntType,
+          &mut value as *mut _ as *mut c_void,
+        );
+        value
+      }
+      None => value,
+    }
+  }
+}
+
+fn get_cf_boolean_value(dict: &CFDictionary, key: &str) -> bool {
+  unsafe {
+    match get_cf_dictionary_get_value::<CFBoolean>(dict, key) {
+      Some(value) => {
+        return CFBooleanGetValue(&*value);
+      }
+      None => return false,
+    }
+  }
+}
+
+fn get_cf_window_bounds_value(dict: &CFDictionary) -> Option<CGRect> {
+  match get_cf_dictionary_get_value::<CFDictionary>(dict, "kCGWindowBounds") {
+    Some(dict_react) => unsafe {
+      let mut cg_rect = CGRect::default();
+      if dict_react.is_null() == false
+        && CGRectMakeWithDictionaryRepresentation(Some(&*dict_react), &mut cg_rect) == true
+      {
+        Some(cg_rect as CGRect)
+      } else {
+        None
+      }
+    },
+    None => None,
+  }
+}
+
+fn get_cf_string_value(dict: &CFDictionary, key: &str) -> String {
+  unsafe {
+    match get_cf_dictionary_get_value::<CFString>(dict, key) {
+      Some(value) => (*value).to_string(),
       None => String::from(""),
     }
   }
