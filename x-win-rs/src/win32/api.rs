@@ -3,13 +3,14 @@
 use base64::Engine;
 
 use windows::{
-  core::{w, VARIANT},
+  core::w,
   Win32::{
     Foundation::{FALSE, TRUE},
     Graphics::Gdi::{
       DeleteDC, DeleteObject, GetObjectW, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
       DIB_RGB_COLORS,
     },
+    System::Variant::{VariantToStringAlloc, VARIANT},
     UI::{
       Shell::ExtractIconExW,
       WindowsAndMessaging::{DestroyIcon, FindWindowW, GetIconInfo, HICON, ICONINFO},
@@ -134,7 +135,7 @@ impl Api for WindowsAPI {
 
           let objectw = unsafe {
             GetObjectW(
-              hbm,
+              hbm.into(),
               std::mem::size_of::<BITMAP>() as i32,
               Some(&mut cbitmap as *mut _ as _),
             )
@@ -187,7 +188,7 @@ impl Api for WindowsAPI {
 
             unsafe {
               let _ = DeleteDC(hdc);
-              let _ = DeleteObject(hbm);
+              let _ = DeleteObject(hbm.into());
             };
             return IconInfo {
               data: format!("data:image/png;base64,{}", data).to_owned(),
@@ -236,7 +237,7 @@ unsafe extern "system" fn enum_desktop_windows_proc<Callback: FnMut(HWND) -> boo
 ) -> BOOL {
   let callback = lparam.0 as *mut Callback;
   unsafe {
-    if IsWindow(hwnd).as_bool() && IsWindow(hwnd).as_bool() && IsWindowVisible(hwnd).as_bool() {
+    if IsWindow(Some(hwnd)).as_bool() && IsWindowVisible(hwnd).as_bool() {
       let mut pwi: WINDOWINFO = WINDOWINFO::default();
       let _ = GetWindowInfo(hwnd, &mut pwi);
       if ((pwi.dwExStyle & WS_EX_TOOLWINDOW
@@ -395,8 +396,9 @@ fn get_process_name_from_path(process_path: &Path) -> Result<String, ()> {
     return Err(());
   }
   let mut lpdata: Vec<u8> = vec![0u8; dwlen.try_into().unwrap()];
-  let version_info_success =
-    unsafe { GetFileVersionInfoW(&lptstrfilename, 0, dwlen, lpdata.as_mut_ptr().cast()).is_ok() };
+  let version_info_success = unsafe {
+    GetFileVersionInfoW(&lptstrfilename, Some(0), dwlen, lpdata.as_mut_ptr().cast()).is_ok()
+  };
   if !version_info_success {
     return Err(());
   }
@@ -468,9 +470,9 @@ fn get_process_name_from_path(process_path: &Path) -> Result<String, ()> {
 fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> ProcessInfo {
   let mut process_info = ProcessInfo {
     process_id,
-    name: "".to_string(),
-    path: "".to_string(),
-    exec_name: "".to_string(),
+    name: String::from(""),
+    path: String::from(""),
+    exec_name: String::from(""),
   };
 
   if let Ok(process_path) = get_process_path(phlde) {
@@ -490,7 +492,7 @@ fn get_process_path_and_name(phlde: HANDLE, hwnd: HWND, process_id: u32) -> Proc
       .eq(r#"applicationframehost"#)
     {
       let lparam = LPARAM(&mut process_info as *const ProcessInfo as isize);
-      let _ = unsafe { EnumChildWindows(hwnd, Some(enum_child_windows_func), lparam) };
+      let _ = unsafe { EnumChildWindows(Some(hwnd), Some(enum_child_windows_func), lparam) };
     } else if let Ok(process_name) = get_process_name_from_path(&process_path) {
       process_info.name = process_name;
     }
@@ -569,7 +571,7 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
     }
   }
 
-  "".to_string()
+  String::from("")
 }
 
 /**
@@ -592,13 +594,12 @@ fn get_url_from_automation_id(
       if variant.is_ok() {
         let variant = variant.unwrap();
         if !variant.is_empty() {
-          return variant.to_string();
+          return decode_variant_string(&variant);
         }
       }
     }
   }
-
-  "".to_string()
+  String::from("")
 }
 
 /**
@@ -617,7 +618,7 @@ fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationEleme
       if variant.is_ok() {
         let variant = variant.unwrap();
         if !variant.is_empty() {
-          return variant.to_string();
+          return decode_variant_string(&variant);
         }
       }
     }
@@ -651,7 +652,7 @@ fn get_url_for_chromium_from_ctrlk(
       if variant.is_ok() {
         let variant = variant.unwrap();
         if !variant.is_empty() {
-          return variant.to_string();
+          return decode_variant_string(&variant);
         }
       }
     }
@@ -679,4 +680,13 @@ fn is_browser(browser_name: &str) -> bool {
       | "beaker browser"
       | "firefox"
   )
+}
+
+fn decode_variant_string(variant: &VARIANT) -> String {
+  unsafe {
+    match VariantToStringAlloc(variant) {
+      Ok(value) => value.to_string().unwrap_or("".to_owned()) as String,
+      Err(_) => String::from(""),
+    }
+  }
 }
