@@ -119,7 +119,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ matrix.settings.image }}
-          options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-rust-install.sh:/usr/local/docker-ubuntu-rust-install.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
+          options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-rust-install.sh:/usr/local/docker-ubuntu-rust-install.sh -v ${{ github.workspace }}/.github/download-firefox.sh:/usr/local/download-firefox.sh -v ${{ github.workspace }}/x-win-rs:/work -w /work
           run: |
             Xvfb :0 &
             sleep 1
