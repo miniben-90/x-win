@@ -126,7 +126,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     let window_cf_dictionary =
       unsafe { CFRetained::retain(std::ptr::NonNull::from(&*window_cf_dictionary_ref)) };
     let is_screen: bool = get_cf_boolean_value(&window_cf_dictionary, "kCGWindowIsOnscreen");
-    if is_screen == false {
+    if !is_screen {
       continue;
     }
 
@@ -350,7 +350,7 @@ fn get_bundle_identifier(app: &NSRunningApplication) -> String {
 fn get_cf_dictionary_get_value<T>(dict: &CFDictionary, key: &str) -> Option<*const T> {
   let key = CFString::from_str(key);
   let key_ref = key.as_ref() as *const CFString;
-  if unsafe { CFDictionaryContainsKey(dict, key_ref.cast()) } == true {
+  if unsafe { CFDictionaryContainsKey(dict, key_ref.cast()) } {
     let value = unsafe { CFDictionaryGetValue(dict, key_ref.cast()) };
     Some(value as *const T)
   } else {
@@ -382,10 +382,8 @@ fn get_cf_number_value(dict: &CFDictionary, key: &str) -> i32 {
 fn get_cf_boolean_value(dict: &CFDictionary, key: &str) -> bool {
   unsafe {
     match get_cf_dictionary_get_value::<CFBoolean>(dict, key) {
-      Some(value) => {
-        return CFBooleanGetValue(&*value);
-      }
-      None => return false,
+      Some(value) => CFBooleanGetValue(&*value),
+      None => false,
     }
   }
 }
@@ -394,8 +392,8 @@ fn get_cf_window_bounds_value(dict: &CFDictionary) -> Option<CGRect> {
   match get_cf_dictionary_get_value::<CFDictionary>(dict, "kCGWindowBounds") {
     Some(dict_react) => unsafe {
       let mut cg_rect = CGRect::default();
-      if dict_react.is_null() == false
-        && CGRectMakeWithDictionaryRepresentation(Some(&*dict_react), &mut cg_rect) == true
+      if !dict_react.is_null()
+        && CGRectMakeWithDictionaryRepresentation(Some(&*dict_react), &mut cg_rect)
       {
         Some(cg_rect as CGRect)
       } else {
