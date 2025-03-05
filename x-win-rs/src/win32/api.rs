@@ -3,7 +3,7 @@
 use base64::Engine;
 
 use windows::{
-  core::w,
+  core::{w, BOOL},
   Win32::{
     Foundation::{FALSE, TRUE},
     Graphics::Gdi::{
@@ -45,7 +45,7 @@ use windows::{
   core::{PCWSTR, PWSTR},
   Win32::{
     Foundation::HWND,
-    Foundation::{CloseHandle, BOOL, LPARAM, RECT},
+    Foundation::{CloseHandle, LPARAM, RECT},
     Foundation::{HANDLE, MAX_PATH},
     Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW},
     System::{
