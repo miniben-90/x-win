@@ -14,17 +14,17 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
-napi = { version = "2.16.16", default-features = false, features = [
+napi = { version = "2.16.17", default-features = false, features = [
   "napi4",
   "async",
 ] }
 napi-derive = "2.16.13"
-once_cell = "1.20.3"
+once_cell = "1.21.3"
 base64 = "0.22.1"
 x-win = { path = "./x-win-rs" }
 
 [build-dependencies]
-napi-build = "2.1.5"
+napi-build = "2.1.6"
 
 [profile.release]
 lto = true

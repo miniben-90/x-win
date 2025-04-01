@@ -190,6 +190,9 @@ impl Api for WindowsAPI {
               let _ = DeleteDC(hdc);
               let _ = DeleteObject(hbm.into());
             };
+
+            cleanup_hicons(phiconlarge, phiconsmall);
+
             return IconInfo {
               data: format!("data:image/png;base64,{}", data).to_owned(),
               height: cbitmap.bmHeight as u32,
@@ -197,14 +200,7 @@ impl Api for WindowsAPI {
             };
           }
         }
-        unsafe {
-          if !phiconlarge.0.is_null() {
-            DestroyIcon(phiconlarge).unwrap();
-          }
-          if !phiconsmall.0.is_null() {
-            DestroyIcon(phiconsmall).unwrap();
-          }
-        };
+        cleanup_hicons(phiconlarge, phiconsmall);
       }
     }
 
@@ -689,4 +685,15 @@ fn decode_variant_string(variant: &VARIANT) -> String {
       Err(_) => String::from(""),
     }
   }
+}
+
+fn cleanup_hicons(phiconlarge: HICON, phiconsmall: HICON) {
+  unsafe {
+    if !phiconlarge.0.is_null() {
+      DestroyIcon(phiconlarge).unwrap_or(());
+    }
+    if !phiconsmall.0.is_null() {
+      DestroyIcon(phiconsmall).unwrap_or(());
+    }
+  };
 }
