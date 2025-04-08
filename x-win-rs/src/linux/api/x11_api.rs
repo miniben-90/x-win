@@ -281,7 +281,8 @@ fn get_window_class_name(conn: &xcb::Connection, window: x::Window) -> String {
       .collect::<Vec<&str>>();
     return process_name.pop().unwrap_or("").to_owned();
   }
-  "".into()
+
+  String::from("")
 }
 
 fn get_window_pid_atom(conn: &xcb::Connection) -> x::Atom {

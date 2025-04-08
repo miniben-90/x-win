@@ -1,4 +1,4 @@
-use x_win::{get_active_window, get_window_icon, XWinError};
+use x_win::{get_active_window, get_window_icon};
 
 fn main() {
   match get_active_window() {
@@ -6,11 +6,11 @@ fn main() {
       Ok(icon_info) => {
         println!("icon info: {:#?}", icon_info);
       }
-      Err(XWinError) => {
+      Err(_) => {
         println!("error occurred while getting the icon info of active window");
       }
     },
-    Err(XWinError) => {
+    Err(_) => {
       println!("error occurred while getting the active window");
     }
   }

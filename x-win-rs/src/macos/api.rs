@@ -284,7 +284,7 @@ fn execute_applescript(script: &str) -> String {
   if let Ok(output) = output {
     String::from_utf8_lossy(&output.stdout).trim().to_owned()
   } else {
-    "".into()
+    String::from("")
   }
 }
 
