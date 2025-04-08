@@ -8,6 +8,7 @@ use std::{
 use crate::{
   common::{
     api::Api,
+    result::Result,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   },
   linux::api::{
@@ -38,7 +39,7 @@ pub struct WaylandApi {}
  * Impl. for Linux system
  */
 impl Api for WaylandApi {
-  fn get_active_window(&self) -> WindowInfo {
+  fn get_active_window(&self) -> Result<WindowInfo> {
     if gnome_use_eval() {
       wayland_eval_api::get_active_window()
     } else {
@@ -46,7 +47,7 @@ impl Api for WaylandApi {
     }
   }
 
-  fn get_open_windows(&self) -> Vec<WindowInfo> {
+  fn get_open_windows(&self) -> Result<Vec<WindowInfo>> {
     if gnome_use_eval() {
       wayland_eval_api::get_open_windows()
     } else {
@@ -54,7 +55,7 @@ impl Api for WaylandApi {
     }
   }
 
-  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
+  fn get_app_icon(&self, window_info: &WindowInfo) -> Result<IconInfo> {
     if gnome_use_eval() {
       wayland_eval_api::get_icon(window_info)
     } else {
@@ -62,41 +63,41 @@ impl Api for WaylandApi {
     }
   }
 
-  fn get_browser_url(&self, _: &WindowInfo) -> String {
-    "URL recovery not supported on Linux distribution!".to_owned()
+  fn get_browser_url(&self, _: &WindowInfo) -> Result<String> {
+    Ok(super::common_api::get_browser_url())
   }
 }
 
 impl APIGnome for WaylandApi {
-  fn install_extension() -> bool {
+  fn install_extension() -> Result<bool> {
     if !gnome_use_eval() {
       wayland_extension_api::install_extension()
     } else {
-      false
+      Ok(false)
     }
   }
 
-  fn uninstall_extension() -> bool {
+  fn uninstall_extension() -> Result<bool> {
     if !gnome_use_eval() {
       wayland_extension_api::uninstall_extension()
     } else {
-      false
+      Ok(false)
     }
   }
 
-  fn enable_extension() -> bool {
+  fn enable_extension() -> Result<bool> {
     if !gnome_use_eval() {
       wayland_extension_api::enable_extension()
     } else {
-      false
+      Ok(false)
     }
   }
 
-  fn disable_extension() -> bool {
+  fn disable_extension() -> Result<bool> {
     if !gnome_use_eval() {
       wayland_extension_api::disable_extension()
     } else {
-      false
+      Ok(false)
     }
   }
 }

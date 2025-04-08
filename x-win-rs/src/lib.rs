@@ -95,7 +95,7 @@ pub fn install_extension() -> Result<bool> {
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_install_extension())
+    linux::gnome_install_extension()
   }
 }
 
@@ -111,7 +111,7 @@ pub fn uninstall_extension() -> Result<bool> {
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_uninstall_extension())
+    linux::gnome_uninstall_extension()
   }
 }
 
@@ -126,7 +126,7 @@ pub fn enable_extension() -> Result<bool> {
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_enable_extension())
+    linux::gnome_enable_extension()
   }
 }
 
@@ -141,7 +141,7 @@ pub fn disable_extension() -> Result<bool> {
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_disable_extension())
+    linux::gnome_disable_extension()
   }
 }
 

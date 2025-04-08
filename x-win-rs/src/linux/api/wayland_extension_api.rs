@@ -1,10 +1,11 @@
 use zbus::Connection;
 
-use std::{env, fs, io, ops::Deref, path};
+use std::{env, fs, ops::Deref, path};
 
 use crate::{
   common::{
     api::empty_icon,
+    result::Result,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   },
   linux::api::gnome_shell::{
@@ -16,60 +17,61 @@ use crate::{
 
 use super::{
   common_api::init_entity,
-  gnome_shell::{value_to_icon_info, GNOME_XWIN_GET_ICON_SCRIPT},
+  gnome_shell::{
+    value_to_icon_info, DESTINATION, GNOME_XWIN_GET_ICON_SCRIPT, SHELL_IFACE, SHELL_PATH,
+    XWIN_IFACE, XWIN_PATH,
+  },
 };
 
-pub fn get_active_window() -> WindowInfo {
-  let response = call_script("get_active_window");
+pub fn get_active_window() -> Result<WindowInfo> {
+  let response = call_script("get_active_window")?;
 
   if !response.is_empty() {
-    let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
-    if response.is_object() {
-      return value_to_window_info(&response);
+    let response: serde_json::Value = serde_json::from_str(response.as_str())?;
+    match response.is_object() {
+      true => Ok(value_to_window_info(&response)),
+      false => Err(String::from("No data founded for active window").into()),
     }
+  } else {
+    Ok(init_entity())
   }
-
-  init_entity()
 }
 
-pub fn get_open_windows() -> Vec<WindowInfo> {
-  let response = call_script("get_open_windows");
+pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
+  let response = call_script("get_open_windows")?;
   if !response.is_empty() {
-    let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
+    let response: serde_json::Value = serde_json::from_str(response.as_str())?;
 
-    if response.is_array() {
-      return response
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(value_to_window_info)
-        .collect();
-    }
+    let response = match response.as_array() {
+      Some(result) => result.iter().map(value_to_window_info).collect(),
+      None => vec![],
+    };
+    Ok(response)
+  } else {
+    Ok(vec![])
   }
-
-  vec![]
 }
 
-pub fn get_icon(window_info: &WindowInfo) -> IconInfo {
+pub fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
   if window_info.id.ne(&0) {
-    let response = call_script_arg("get_icon", window_info.id);
+    let response = call_script_arg("get_icon", window_info.id)?;
     if !response.is_empty() {
-      let response: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
+      let response: serde_json::Value = serde_json::from_str(response.as_str())?;
       if response.is_object() {
-        return value_to_icon_info(&response);
+        return Ok(value_to_icon_info(&response));
       }
     }
   }
-  empty_icon()
+  Ok(empty_icon())
 }
 
-pub fn install_extension() -> bool {
+pub fn install_extension() -> Result<bool> {
   if std::fs::metadata(get_extension_path()).is_ok() {
     if std::fs::metadata(get_extension_file_path()).is_ok() {
-      remove_extension_file().unwrap();
+      remove_extension_file()?;
     }
     if std::fs::metadata(get_medata_file_path()).is_ok() {
-      remove_metadata_file().unwrap();
+      remove_metadata_file()?;
     }
   } else if let Err(create_folder_err) = std::fs::create_dir_all(get_extension_path()) {
     panic!(
@@ -80,7 +82,7 @@ pub fn install_extension() -> bool {
   }
 
   let script: String = {
-    let gnome_singleton = GNOME_SINGLETON.lock().unwrap();
+    let gnome_singleton = GNOME_SINGLETON.lock()?;
     let version: u32 = gnome_singleton.version;
     let _ = gnome_singleton.deref();
     let script: String = match version {
@@ -103,9 +105,9 @@ pub fn install_extension() -> bool {
 
   if fs::write(get_extension_file_path(), script).is_ok() {
     if fs::write(get_medata_file_path(), GNOME_XWIN_EXTENSION_META).is_ok() {
-      true
+      Ok(true)
     } else {
-      remove_extension_file().unwrap();
+      remove_extension_file()?;
       panic!(
         "Not possible to write \"{}\" file!",
         get_medata_file_path().to_string_lossy()
@@ -119,47 +121,45 @@ pub fn install_extension() -> bool {
   }
 }
 
-pub fn enable_extension() -> bool {
-  let connection = Connection::new_session().unwrap();
-  let response = connection
-    .call_method(
-      Some("org.gnome.Shell"),
-      "/org/gnome/Shell",
-      Some("org.gnome.Shell.Extensions"),
-      "EnableExtension",
-      &GNOME_XWIN_UUID.to_string(),
-    )
-    .unwrap();
+fn toggle_extension(enable: bool) -> Result<bool> {
+  let connection = Connection::new_session()?;
+  let method_name = {
+    if enable {
+      "EnableExtension"
+    } else {
+      "DisableExtension"
+    }
+  };
+  let response = connection.call_method(
+    DESTINATION,
+    SHELL_PATH,
+    SHELL_IFACE,
+    method_name,
+    &GNOME_XWIN_UUID.to_string(),
+  )?;
+
   if let Ok(actor) = response.body::<bool>() {
-    return actor;
+    return Ok(actor);
   }
-  false
+
+  Err(String::from("Can't enable or disable xwin extension using gnome shell").into())
 }
 
-pub fn uninstall_extension() -> bool {
+pub fn enable_extension() -> Result<bool> {
+  toggle_extension(true)
+}
+
+pub fn disable_extension() -> Result<bool> {
+  toggle_extension(false)
+}
+
+pub fn uninstall_extension() -> Result<bool> {
   if let Ok(_folder_dir) = cleanup_extension_folder() {
-    let _t = cleanup_extension_folder();
-    true
+    cleanup_extension_folder()?;
+    Ok(true)
   } else {
-    false
+    Ok(false)
   }
-}
-
-pub fn disable_extension() -> bool {
-  let connection = Connection::new_session().unwrap();
-  let response = connection
-    .call_method(
-      Some("org.gnome.Shell"),
-      "/org/gnome/Shell",
-      Some("org.gnome.Shell.Extensions"),
-      "DisableExtension",
-      &GNOME_XWIN_UUID.to_string(),
-    )
-    .unwrap();
-  if let Ok(actor) = response.body::<bool>() {
-    return actor;
-  }
-  false
 }
 
 fn get_extension_path() -> path::PathBuf {
@@ -172,8 +172,8 @@ fn get_extension_path() -> path::PathBuf {
   [home_dir, extension_dir].iter().collect()
 }
 
-fn cleanup_extension_folder() -> Result<(), io::Error> {
-  fs::remove_dir_all(get_extension_path())
+fn cleanup_extension_folder() -> Result<()> {
+  Ok(fs::remove_dir_all(get_extension_path())?)
 }
 
 fn get_extension_file_path() -> path::PathBuf {
@@ -184,48 +184,50 @@ fn get_medata_file_path() -> path::PathBuf {
   get_extension_path().join("metadata.json")
 }
 
-fn remove_metadata_file() -> Result<(), io::Error> {
-  fs::remove_file(get_medata_file_path())
+fn remove_metadata_file() -> Result<()> {
+  Ok(fs::remove_file(get_medata_file_path())?)
 }
 
-fn remove_extension_file() -> Result<(), std::io::Error> {
-  fs::remove_file(get_extension_file_path())
+fn remove_extension_file() -> Result<()> {
+  Ok(fs::remove_file(get_extension_file_path())?)
 }
 
-fn call_script(method_name: &str) -> String {
-  let connection = Connection::new_session().unwrap();
+fn call_script(method_name: &str) -> Result<String> {
+  let connection = Connection::new_session()?;
 
-  let response = connection
-    .call_method(
-      Some("org.gnome.Shell"),
-      "/org/gnome/Shell/Extensions/XWinWaylandExtension",
-      Some("org.gnome.Shell.Extensions.XWinWaylandExtension"),
-      method_name,
-      &(),
-    )
-    .unwrap();
+  let response = connection.call_method(DESTINATION, XWIN_PATH, XWIN_IFACE, method_name, &())?;
 
   if let Ok(json) = response.body::<String>() {
-    return json;
+    return Ok(json);
   }
-  String::from("")
+
+  Err(
+    String::from(
+      "No result when calling org.gnome.Shell.Extensions.XWinWaylandExtension gnome script!",
+    )
+    .into(),
+  )
 }
 
-fn call_script_arg(method_name: &str, body: u32) -> String {
-  let connection = Connection::new_session().unwrap();
+fn call_script_arg(method_name: &str, body: u32) -> Result<String> {
+  let connection = Connection::new_session()?;
 
-  let response = connection
-    .call_method(
-      Some("org.gnome.Shell"),
-      "/org/gnome/Shell/Extensions/XWinWaylandExtension",
-      Some("org.gnome.Shell.Extensions.XWinWaylandExtension"),
-      method_name,
-      &(body as f64),
-    )
-    .unwrap();
+  let response = connection.call_method(
+    DESTINATION,
+    XWIN_PATH,
+    XWIN_IFACE,
+    method_name,
+    &(body as f64),
+  )?;
 
   if let Ok(json) = response.body::<String>() {
-    return json;
+    return Ok(json);
   }
-  String::from("")
+
+  Err(
+    String::from(
+      "No result when calling org.gnome.Shell.Extensions.XWinWaylandExtension gnome script!",
+    )
+    .into(),
+  )
 }

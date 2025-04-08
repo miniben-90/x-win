@@ -11,6 +11,13 @@ use super::common_api::get_gnome_version;
 
 pub const GNOME_XWIN_UUID: &str = r#"x-win@miniben90.org"#;
 
+pub static DESTINATION: std::option::Option<&str> = Some("org.gnome.Shell");
+pub static XWIN_IFACE: std::option::Option<&str> =
+  Some("org.gnome.Shell.Extensions.XWinWaylandExtension");
+pub static XWIN_PATH: &str = "/org/gnome/Shell/Extensions/XWinWaylandExtension";
+pub static SHELL_PATH: &str = "/org/gnome/Shell";
+pub static SHELL_IFACE: std::option::Option<&str> = Some("org.gnome.Shell.Extensions");
+
 // Metadata for gnome version > then 41
 pub const GNOME_XWIN_EXTENSION_META: &str = r#"
 {

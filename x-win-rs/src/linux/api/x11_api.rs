@@ -8,6 +8,7 @@ use xcb::{x, Connection, Xid, XidNew};
 use crate::{
   common::{
     api::{empty_icon, Api},
+    result::Result,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo, window_position::WindowPosition},
   },
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
@@ -24,77 +25,81 @@ pub struct X11Api {}
  * Impl. for windows system
  */
 impl Api for X11Api {
-  fn get_active_window(&self) -> WindowInfo {
-    let conn = connection();
+  fn get_active_window(&self) -> Result<WindowInfo> {
+    let conn = connection()?;
     let setup = conn.get_setup();
 
-    let mut result: WindowInfo = init_entity();
-
-    let root_window = setup.roots().next();
-    if root_window.is_some() {
-      let root_window = root_window.unwrap().root();
-      let active_window_atom = get_active_window_atom(&conn);
-      if active_window_atom != x::ATOM_NONE {
-        let active_window = conn.send_request(&x::GetProperty {
-          delete: false,
-          window: root_window,
-          property: active_window_atom,
-          r#type: x::ATOM_WINDOW,
-          long_offset: 0,
-          long_length: 1,
-        });
-        if let Ok(active_window) = conn.wait_for_reply(active_window) {
-          let active_window: Option<&x::Window> = active_window.value::<x::Window>().first();
-          if active_window.is_some() {
-            let active_window: &x::Window = active_window.unwrap();
-            result = get_window_information(&conn, active_window);
+    match setup.roots().next() {
+      Some(screen) => {
+        let active_window_atom = get_active_window_atom(&conn);
+        if active_window_atom != x::ATOM_NONE {
+          let active_windows = conn.send_request(&x::GetProperty {
+            delete: false,
+            window: screen.root(),
+            property: active_window_atom,
+            r#type: x::ATOM_WINDOW,
+            long_offset: 0,
+            long_length: 1,
+          });
+          if let Ok(active_windows) = conn.wait_for_reply(active_windows) {
+            return match active_windows.value::<x::Window>().first() {
+              Some(active_window) => {
+                let active_window = get_window_information(&conn, active_window)?;
+                Ok(active_window)
+              }
+              None => Err(String::from("").into()),
+            };
           }
         }
+        Err(String::from("").into())
       }
+      None => Err(String::from("").into()),
     }
-
-    result
   }
 
-  fn get_open_windows(&self) -> Vec<WindowInfo> {
-    let mut results: Vec<WindowInfo> = Vec::new();
-
-    let conn = connection();
+  fn get_open_windows(&self) -> Result<Vec<WindowInfo>> {
+    let conn = connection()?;
     let setup = conn.get_setup();
 
-    let root_window = setup.roots().next();
-    if root_window.is_some() {
-      let root_window = root_window.unwrap().root();
+    match setup.roots().next() {
+      Some(screen) => {
+        let open_windows_atom = get_client_list_stacking_atom(&conn);
 
-      let open_windows_atom = get_client_list_stacking_atom(&conn);
-      if open_windows_atom != x::ATOM_NONE {
-        let window_list = conn.send_request(&x::GetProperty {
-          delete: false,
-          window: root_window,
-          property: open_windows_atom,
-          r#type: x::ATOM_WINDOW,
-          long_offset: 0,
-          long_length: u32::MAX,
-        });
-        if let Ok(windows_reply) = conn.wait_for_reply(window_list) {
-          let window_list: Vec<x::Window> = windows_reply.value::<x::Window>().to_vec();
-          if window_list.len().ne(&0) {
-            for window in window_list {
-              let window: &x::Window = &window;
-              let result = get_window_information(&conn, window);
-              if result.id.ne(&0) && is_normal_window(&conn, *window) {
-                results.push(result);
+        if open_windows_atom != x::ATOM_NONE {
+          let window_list = conn.send_request(&x::GetProperty {
+            delete: false,
+            window: screen.root(),
+            property: open_windows_atom,
+            r#type: x::ATOM_WINDOW,
+            long_offset: 0,
+            long_length: u32::MAX,
+          });
+
+          if let Ok(windows_reply) = conn.wait_for_reply(window_list) {
+            let window_list: Vec<x::Window> = windows_reply.value::<x::Window>().to_vec();
+            let mut results: Vec<WindowInfo> = Vec::new();
+
+            if window_list.len().ne(&0) {
+              for window in window_list {
+                let window: &x::Window = &window;
+                let result = get_window_information(&conn, window)?;
+                if result.id.ne(&0) && is_normal_window(&conn, *window) {
+                  results.push(result);
+                }
               }
             }
+
+            return Ok(results);
           }
         }
+        Err(String::from("").into())
       }
+      None => Err(String::from("").into()),
     }
-    results
   }
 
-  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
-    let conn = connection();
+  fn get_app_icon(&self, window_info: &WindowInfo) -> Result<IconInfo> {
+    let conn = connection()?;
     let setup = conn.get_setup();
 
     let root_window = setup.roots().next();
@@ -132,58 +137,62 @@ impl Api for X11Api {
             }
             let mut png_data: Vec<u8> = Vec::new();
             {
-              let buffer = image::RgbaImage::from_raw(width as u32, height as u32, buffer).unwrap();
-              let _ = buffer.write_to(&mut std::io::Cursor::new(&mut png_data), ImageFormat::Png);
-              let data = base64::prelude::BASE64_STANDARD.encode(png_data);
-              return IconInfo {
-                data: format!("data:image/png;base64,{}", data).to_owned(),
-                height: height as u32,
-                width: width as u32,
-              };
+              if let Some(buffer) = image::RgbaImage::from_raw(width as u32, height as u32, buffer)
+              {
+                let _ = buffer.write_to(&mut std::io::Cursor::new(&mut png_data), ImageFormat::Png);
+                let data = base64::prelude::BASE64_STANDARD.encode(png_data);
+                return Ok(IconInfo {
+                  data: format!("data:image/png;base64,{}", data).to_owned(),
+                  height: height as u32,
+                  width: width as u32,
+                });
+              }
             }
           }
         }
       }
     }
-    empty_icon()
+    Ok(empty_icon())
   }
 
-  fn get_browser_url(&self, _: &WindowInfo) -> String {
-    "URL recovery not supported on Linux distribution!".to_owned()
+  fn get_browser_url(&self, _: &WindowInfo) -> Result<String> {
+    Ok(super::common_api::get_browser_url())
   }
 }
 
-fn connection() -> Connection {
-  let (conn, _) = xcb::Connection::connect(None).unwrap();
-  conn
+fn connection() -> Result<Connection> {
+  let (conn, _) = xcb::Connection::connect(None)?;
+  Ok(conn)
 }
 
 /**
  * Get window information
  */
-fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> WindowInfo {
-  let window_pid: u32 = get_window_pid(conn, *window);
+fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> Result<WindowInfo> {
+  let window_pid: u32 = get_window_pid(conn, *window)?;
   let mut window_info: WindowInfo = init_entity();
 
   if window_pid != 0 {
-    let (path, exec_name) = get_window_path_name(window_pid);
+    let (path, exec_name) = get_window_path_name(window_pid)?;
     window_info.id = window.resource_id();
     window_info.title = get_window_title(conn, *window);
     window_info.info.process_id = window_pid;
     window_info.info.path = path;
     window_info.info.exec_name = exec_name;
     window_info.info.name = get_window_class_name(conn, *window);
-    window_info.usage.memory = get_window_memory_usage(window_pid);
+    window_info.usage.memory = get_window_memory_usage(window_pid)?;
     window_info.position = get_window_position(conn, *window);
   }
-  window_info
+
+  Ok(window_info)
 }
 
 /**
  * Get pid
  */
-fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> u32 {
+fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> Result<u32> {
   let window_pid_atom = get_window_pid_atom(conn);
+
   if window_pid_atom != x::ATOM_NONE {
     let window_pid = conn.send_request(&x::GetProperty {
       delete: false,
@@ -193,11 +202,14 @@ fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> u32 {
       long_offset: 0,
       long_length: 1,
     });
+
     if let Ok(window_pid) = conn.wait_for_reply(window_pid) {
-      return window_pid.value::<u32>().first().unwrap().to_owned();
+      if let Some(pid) = window_pid.value::<u32>().first() {
+        return Ok(*pid);
+      }
     }
   }
-  0
+  Err(String::from("").into())
 }
 
 /**
