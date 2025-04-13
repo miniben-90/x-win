@@ -1,4 +1,4 @@
-use zbus::Connection;
+use zbus::blocking::Connection;
 
 use std::{env, fs, ops::Deref, path};
 
@@ -122,7 +122,7 @@ pub fn install_extension() -> Result<bool> {
 }
 
 fn toggle_extension(enable: bool) -> Result<bool> {
-  let connection = Connection::new_session()?;
+  let connection = Connection::session()?;
   let method_name = {
     if enable {
       "EnableExtension"
@@ -138,8 +138,9 @@ fn toggle_extension(enable: bool) -> Result<bool> {
     &GNOME_XWIN_UUID.to_string(),
   )?;
 
-  if let Ok(actor) = response.body::<bool>() {
-    return Ok(actor);
+  if !response.body().is_empty() {
+    let response: bool = response.body().deserialize()?;
+    return Ok(response);
   }
 
   Err(String::from("Can't enable or disable xwin extension using gnome shell").into())
@@ -193,12 +194,13 @@ fn remove_extension_file() -> Result<()> {
 }
 
 fn call_script(method_name: &str) -> Result<String> {
-  let connection = Connection::new_session()?;
+  let connection = Connection::session()?;
 
   let response = connection.call_method(DESTINATION, XWIN_PATH, XWIN_IFACE, method_name, &())?;
 
-  if let Ok(json) = response.body::<String>() {
-    return Ok(json);
+  if !response.body().is_empty() {
+    let response: String = response.body().deserialize()?;
+    return Ok(response);
   }
 
   Err(
@@ -210,7 +212,7 @@ fn call_script(method_name: &str) -> Result<String> {
 }
 
 fn call_script_arg(method_name: &str, body: u32) -> Result<String> {
-  let connection = Connection::new_session()?;
+  let connection = Connection::session()?;
 
   let response = connection.call_method(
     DESTINATION,
@@ -220,8 +222,9 @@ fn call_script_arg(method_name: &str, body: u32) -> Result<String> {
     &(body as f64),
   )?;
 
-  if let Ok(json) = response.body::<String>() {
-    return Ok(json);
+  if !response.body().is_empty() {
+    let response: String = response.body().deserialize()?;
+    return Ok(response);
   }
 
   Err(

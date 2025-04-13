@@ -1,4 +1,4 @@
-use zbus::Connection;
+use zbus::blocking::Connection;
 
 use crate::{
   common::{
@@ -63,13 +63,15 @@ get_open_windows();
 }
 
 fn call_script(script: &String) -> Result<String> {
-  let connection = Connection::new_session()?;
+  let connection = Connection::session()?;
 
   let response = connection.call_method(DESTINATION, SHELL_PATH, SHELL_IFACE, "Eval", script)?;
 
-  if let Ok((_actor, json)) = response.body::<(bool, String)>() {
-    return Ok(json);
+  if !response.body().is_empty() {
+    let response: String = response.body().deserialize()?;
+    return Ok(response);
   }
+
   Err(String::from("Not possible to execute eval gnome shell").into())
 }
 

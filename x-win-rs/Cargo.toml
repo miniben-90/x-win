@@ -46,7 +46,7 @@ png = "0.17.16"
 [target.'cfg(target_os = "linux")'.dependencies]
 xcb = { version = "1.5.0" }
 x11 = { version = "2.21.0", features = ["xlib"], optional = true }
-zbus = { version = "1.9.2" }
+zbus = { version = "5.5.0" }
 serde_json = { version = "1.0.140" }
 image = "0.25.6"
 
