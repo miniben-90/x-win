@@ -7,6 +7,7 @@ use std::ptr::null_mut;
 use crate::common::x_win_struct::icon_info::IconInfo;
 use crate::common::{
   api::{empty_entity, empty_icon, os_name, Api},
+  result::Result,
   x_win_struct::{
     process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
@@ -47,21 +48,26 @@ unsafe impl RefEncode for CGImage {
  * Impl. for Darwin system
  */
 impl Api for MacosAPI {
-  fn get_active_window(&self) -> WindowInfo {
-    let windows: Vec<WindowInfo> = get_windows_informations(true);
-    if !windows.is_empty() {
-      let t: &WindowInfo = windows.first().unwrap();
-      t.clone() as WindowInfo
-    } else {
-      empty_entity()
-    }
+  fn get_active_window(&self) -> Result<WindowInfo> {
+    let windows: Vec<WindowInfo> = get_windows_informations(true)?;
+    let active_window = {
+      if !windows.is_empty() {
+        match windows.first() {
+          Some(active_window) => active_window.clone(),
+          None => empty_entity(),
+        }
+      } else {
+        empty_entity()
+      }
+    };
+    Ok(active_window)
   }
 
-  fn get_open_windows(&self) -> Vec<WindowInfo> {
+  fn get_open_windows(&self) -> Result<Vec<WindowInfo>> {
     get_windows_informations(false)
   }
 
-  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
+  fn get_app_icon(&self, window_info: &WindowInfo) -> Result<IconInfo> {
     if !window_info.info.path.is_empty() {
       let path: &NSString = &NSString::from_str(&window_info.info.path);
 
@@ -89,23 +95,23 @@ impl Api for MacosAPI {
               width: imagesize.width as u32,
               height: imagesize.height as u32,
             };
-            return icon;
+            return Ok(icon);
           }
           None => {
-            return empty_icon();
+            return Ok(empty_icon());
           }
         }
       }
     }
-    empty_icon()
+    Ok(empty_icon())
   }
 
-  fn get_browser_url(&self, window_info: &WindowInfo) -> String {
-    get_browser_url(window_info.info.process_id)
+  fn get_browser_url(&self, window_info: &WindowInfo) -> Result<String> {
+    Ok(get_browser_url(window_info.info.process_id))
   }
 }
 
-fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
+fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
   let mut windows: Vec<WindowInfo> = Vec::new();
 
   let options = CGWindowListOption::OptionOnScreenOnly
@@ -142,7 +148,16 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
       continue;
     }
 
-    let bounds = bounds.unwrap();
+    let bounds = match bounds {
+      Some(bounds) => bounds,
+      None => CGRect {
+        origin: CGPoint { x: 0.0, y: 0.0 },
+        size: CGSize {
+          width: 0.0,
+          height: 0.0,
+        },
+      },
+    };
 
     if bounds.size.height.lt(&50.0) || bounds.size.width.lt(&50.0) {
       continue;
@@ -227,7 +242,7 @@ fn get_windows_informations(only_active: bool) -> Vec<WindowInfo> {
     }
   }
 
-  windows
+  Ok(windows)
 }
 
 fn is_browser_bundle_id(bundle_id: &str) -> bool {
@@ -284,7 +299,7 @@ fn execute_applescript(script: &str) -> String {
   if let Ok(output) = output {
     String::from_utf8_lossy(&output.stdout).trim().to_owned()
   } else {
-    "".into()
+    String::from("")
   }
 }
 

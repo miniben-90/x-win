@@ -3,7 +3,7 @@
 use base64::Engine;
 
 use windows::{
-  core::w,
+  core::{w, BOOL},
   Win32::{
     Foundation::{FALSE, TRUE},
     Graphics::Gdi::{
@@ -45,7 +45,7 @@ use windows::{
   core::{PCWSTR, PWSTR},
   Win32::{
     Foundation::HWND,
-    Foundation::{CloseHandle, BOOL, LPARAM, RECT},
+    Foundation::{CloseHandle, LPARAM, RECT},
     Foundation::{HANDLE, MAX_PATH},
     Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW},
     System::{
@@ -76,12 +76,14 @@ pub struct WindowsAPI {}
  * Impl. for windows system
  */
 impl Api for WindowsAPI {
-  fn get_active_window(&self) -> WindowInfo {
+  fn get_active_window(&self) -> crate::common::result::Result<WindowInfo> {
     let hwnd = unsafe { GetForegroundWindow() };
-    get_window_information(hwnd)
+    let active_window = get_window_information(hwnd);
+
+    Ok(active_window)
   }
 
-  fn get_open_windows(&self) -> Vec<WindowInfo> {
+  fn get_open_windows(&self) -> crate::common::result::Result<Vec<WindowInfo>> {
     let mut results: Vec<WindowInfo> = Vec::new();
 
     enum_desktop_windows(|hwnd| {
@@ -94,10 +96,10 @@ impl Api for WindowsAPI {
       true
     });
 
-    results
+    Ok(results)
   }
 
-  fn get_app_icon(&self, window_info: &WindowInfo) -> IconInfo {
+  fn get_app_icon(&self, window_info: &WindowInfo) -> crate::common::result::Result<IconInfo> {
     if !window_info.info.path.is_empty() {
       let lpszfile: Vec<u16> = std::path::Path::new(&window_info.info.path)
         .as_os_str()
@@ -180,8 +182,8 @@ impl Api for WindowsAPI {
                 encoder.set_color(png::ColorType::Rgba);
                 encoder.set_depth(png::BitDepth::Eight);
 
-                let mut writer = encoder.write_header().unwrap();
-                writer.write_image_data(&buffer).unwrap();
+                let mut writer = encoder.write_header()?;
+                writer.write_image_data(&buffer)?;
               }
               data = base64::prelude::BASE64_STANDARD.encode(png_data);
             }
@@ -190,29 +192,26 @@ impl Api for WindowsAPI {
               let _ = DeleteDC(hdc);
               let _ = DeleteObject(hbm.into());
             };
-            return IconInfo {
+
+            cleanup_hicons(phiconlarge, phiconsmall);
+
+            return Ok(IconInfo {
               data: format!("data:image/png;base64,{}", data).to_owned(),
               height: cbitmap.bmHeight as u32,
               width: cbitmap.bmWidth as u32,
-            };
+            });
           }
         }
-        unsafe {
-          if !phiconlarge.0.is_null() {
-            DestroyIcon(phiconlarge).unwrap();
-          }
-          if !phiconsmall.0.is_null() {
-            DestroyIcon(phiconsmall).unwrap();
-          }
-        };
+        cleanup_hicons(phiconlarge, phiconsmall);
       }
     }
 
-    empty_icon()
+    Ok(empty_icon())
   }
 
-  fn get_browser_url(&self, window_info: &WindowInfo) -> String {
+  fn get_browser_url(&self, window_info: &WindowInfo) -> crate::common::result::Result<String> {
     let mut url: String = String::from("");
+
     if !window_info.info.exec_name.is_empty() && is_browser(window_info.info.exec_name.as_str()) {
       let hwnd = unsafe {
         let data: Vec<u16> = OsStr::new(&window_info.title.to_owned())
@@ -223,10 +222,13 @@ impl Api for WindowsAPI {
         FindWindowW(None, window_title)
       };
       if hwnd.is_ok() {
-        url = get_browser_url(hwnd.unwrap(), window_info.info.exec_name.clone()).clone();
+        let hwnd = hwnd?;
+        let browser_url = get_browser_url(hwnd, window_info.info.exec_name.clone())?;
+        url = browser_url.clone();
       }
     }
-    url
+
+    Ok(url)
   }
 }
 
@@ -389,19 +391,25 @@ fn get_process_path(phlde: HANDLE) -> Result<PathBuf, ()> {
 /**
  * Get process name with help of the process path
  */
-fn get_process_name_from_path(process_path: &Path) -> Result<String, ()> {
+fn get_process_name_from_path(process_path: &Path) -> crate::common::result::Result<String> {
   let lptstrfilename: windows::core::HSTRING = process_path.as_os_str().into();
   let dwlen: u32 = unsafe { GetFileVersionInfoSizeW(&lptstrfilename, Some(std::ptr::null_mut())) };
+
   if dwlen == 0 {
-    return Err(());
+    return Err(String::from("No version info size founded for").into());
   }
-  let mut lpdata: Vec<u8> = vec![0u8; dwlen.try_into().unwrap()];
+
+  let length: usize = dwlen.try_into()?;
+  let mut lpdata: Vec<u8> = vec![0u8; length];
+
   let version_info_success = unsafe {
     GetFileVersionInfoW(&lptstrfilename, Some(0), dwlen, lpdata.as_mut_ptr().cast()).is_ok()
   };
+
   if !version_info_success {
-    return Err(());
+    return Err(String::from("Recovery data from file version failed").into());
   }
+
   let mut lplpbuffer: *mut c_void = std::ptr::null_mut();
   let mut pulen: u32 = 0;
 
@@ -415,53 +423,57 @@ fn get_process_name_from_path(process_path: &Path) -> Result<String, ()> {
   };
 
   if !ver_query_success.as_bool() {
-    return Err(());
+    return Err(String::from("Recovery data from file version failed").into());
   }
 
   let lang: &[LangCodePage] =
     unsafe { std::slice::from_raw_parts(lplpbuffer as *const LangCodePage, 1) };
 
   if lang.is_empty() {
-    return Err(());
+    return Err(String::from("Lang code not found").into());
   }
 
   let mut query_len: u32 = 0;
 
-  let lang = lang.first().unwrap();
-  let lang_code = format!(
-    "\\StringFileInfo\\{:04x}{:04x}\\FileDescription",
-    lang.w_language, lang.w_code_page
-  );
-  let lang_code_string: String = lang_code.to_string();
-  let lang_code_ptr = lang_code_string
-    .encode_utf16()
-    .chain(Some(0))
-    .collect::<Vec<_>>();
-  let lang_code_ptr = lang_code_ptr.as_ptr();
+  match lang.first() {
+    Some(lang) => {
+      let lang_code = format!(
+        "\\StringFileInfo\\{:04x}{:04x}\\FileDescription",
+        lang.w_language, lang.w_code_page
+      );
+      let lang_code_string: String = lang_code.to_string();
+      let lang_code_ptr = lang_code_string
+        .encode_utf16()
+        .chain(Some(0))
+        .collect::<Vec<_>>();
+      let lang_code_ptr = lang_code_ptr.as_ptr();
 
-  let lang_code: PCWSTR = PCWSTR::from_raw(lang_code_ptr);
+      let lang_code: PCWSTR = PCWSTR::from_raw(lang_code_ptr);
 
-  let mut file_description_ptr = std::ptr::null_mut();
+      let mut file_description_ptr = std::ptr::null_mut();
 
-  let file_description_query_success: BOOL = unsafe {
-    VerQueryValueW(
-      lpdata.as_ptr().cast(),
-      lang_code,
-      &mut file_description_ptr,
-      &mut query_len,
-    )
-  };
+      let file_description_query_success: BOOL = unsafe {
+        VerQueryValueW(
+          lpdata.as_ptr().cast(),
+          lang_code,
+          &mut file_description_ptr,
+          &mut query_len,
+        )
+      };
 
-  if !file_description_query_success.as_bool() {
-    return Err(());
+      if !file_description_query_success.as_bool() {
+        return Err(String::from("Recovery file description failed").into());
+      }
+
+      let file_description =
+        unsafe { std::slice::from_raw_parts(file_description_ptr.cast(), query_len as usize) };
+      let file_description = String::from_utf16_lossy(file_description);
+      let file_description = file_description.trim_matches(char::from(0)).to_owned();
+
+      Ok(file_description)
+    }
+    None => Err(String::from("Lang code not found").into()),
   }
-
-  let file_description =
-    unsafe { std::slice::from_raw_parts(file_description_ptr.cast(), query_len as usize) };
-  let file_description = String::from_utf16_lossy(file_description);
-  let file_description = file_description.trim_matches(char::from(0)).to_owned();
-
-  Ok(file_description)
 }
 
 /**
@@ -542,36 +554,37 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
   window_info
 }
 
-fn get_browser_url(hwnd: HWND, exec_name: String) -> String {
+fn get_browser_url(hwnd: HWND, exec_name: String) -> crate::common::result::Result<String> {
   unsafe {
+    let mut url: String = String::from("");
+
     if CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok() {
       let automation: Result<IUIAutomation, _> = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL);
       if automation.is_ok() {
-        let automation: IUIAutomation = automation.unwrap();
+        let automation: IUIAutomation = automation?;
         let element: Result<IUIAutomationElement, _> = automation.ElementFromHandle(hwnd);
         if element.is_ok() {
-          let element: IUIAutomationElement = element.unwrap();
+          let element: IUIAutomationElement = element?;
           /* Chromium part to get url from search bar */
-          return match &exec_name.to_lowercase() {
+          match &exec_name.to_lowercase() {
             x if x.contains("firefox") => {
-              get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())
+              url = get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())?;
             }
             x if x.contains("msedge") => {
-              let mut value =
-                get_url_from_automation_id(&automation, &element, "view_1022".to_owned());
-              if value.is_empty() {
-                value = get_url_from_automation_id(&automation, &element, "view_1020".to_owned());
+              url = get_url_from_automation_id(&automation, &element, "view_1022".to_owned())?;
+              if url.is_empty() {
+                url = get_url_from_automation_id(&automation, &element, "view_1020".to_owned())?;
               }
-              value.to_owned()
             }
-            _ => get_url_for_chromium(&automation, &element),
+            _ => {
+              url = get_url_for_chromium(&automation, &element)?;
+            }
           };
         }
       }
     }
+    Ok(url)
   }
-
-  String::from("")
 }
 
 /**
@@ -581,84 +594,82 @@ fn get_url_from_automation_id(
   automation: &IUIAutomation,
   element: &IUIAutomationElement,
   automation_id: String,
-) -> String {
+) -> crate::common::result::Result<String> {
   unsafe {
     let variant = VARIANT::from(::windows::core::BSTR::from(automation_id));
-    let condition = automation
-      .CreatePropertyCondition(UIA_AutomationIdPropertyId, &variant)
-      .unwrap();
+    let condition = automation.CreatePropertyCondition(UIA_AutomationIdPropertyId, &variant)?;
     let test = element.FindFirst(TreeScope_Subtree, &condition);
     if test.is_ok() {
-      let test = test.unwrap();
+      let test = test?;
       let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
       if variant.is_ok() {
-        let variant = variant.unwrap();
+        let variant = variant?;
         if !variant.is_empty() {
-          return decode_variant_string(&variant);
+          let url = decode_variant_string(&variant);
+          return Ok(url);
         }
       }
     }
   }
-  String::from("")
+
+  Ok(String::from(""))
 }
 
 /**
  * Get url from element id 0xC36E
  */
-fn get_url_for_chromium(automation: &IUIAutomation, element: &IUIAutomationElement) -> String {
+fn get_url_for_chromium(
+  automation: &IUIAutomation,
+  element: &IUIAutomationElement,
+) -> crate::common::result::Result<String> {
   unsafe {
     let variant = VARIANT::from(0xC36E);
-    let condition = automation
-      .CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)
-      .unwrap();
+    let condition = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)?;
     let test = element.FindFirst(TreeScope_Children, &condition);
     if test.is_ok() {
-      let test = test.unwrap();
+      let test = test?;
       let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
       if variant.is_ok() {
-        let variant = variant.unwrap();
+        let variant = variant?;
         if !variant.is_empty() {
-          return decode_variant_string(&variant);
+          let url = decode_variant_string(&variant);
+          return Ok(url);
         }
       }
     }
   }
 
   // If not found fallback to use ctrl+l to get it
-  get_url_for_chromium_from_ctrlk(automation, element)
+  let url = get_url_for_chromium_from_ctrlk(automation, element)?;
+  Ok(url)
 }
 
 /** Fallback to recover url from ctrl+l keyboard access */
 fn get_url_for_chromium_from_ctrlk(
   automation: &IUIAutomation,
   element: &IUIAutomationElement,
-) -> String {
+) -> crate::common::result::Result<String> {
   unsafe {
     let variant = VARIANT::from(0xC354);
-    let condition1 = automation
-      .CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)
-      .unwrap();
+    let condition1 = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)?;
     let variant = VARIANT::from(::windows::core::BSTR::from("Ctrl+L"));
-    let condition2 = automation
-      .CreatePropertyCondition(UIA_AccessKeyPropertyId, &variant)
-      .unwrap();
-    let condition = automation
-      .CreateAndCondition(&condition1, &condition2)
-      .unwrap();
+    let condition2 = automation.CreatePropertyCondition(UIA_AccessKeyPropertyId, &variant)?;
+    let condition = automation.CreateAndCondition(&condition1, &condition2)?;
     let test = element.FindFirst(TreeScope_Subtree, &condition);
     if test.is_ok() {
-      let test = test.unwrap();
+      let test = test?;
       let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
       if variant.is_ok() {
-        let variant = variant.unwrap();
+        let variant = variant?;
         if !variant.is_empty() {
-          return decode_variant_string(&variant);
+          let url = decode_variant_string(&variant);
+          return Ok(url);
         }
       }
     }
   }
 
-  String::from("")
+  Ok(String::from(""))
 }
 
 fn is_browser(browser_name: &str) -> bool {
@@ -685,8 +696,19 @@ fn is_browser(browser_name: &str) -> bool {
 fn decode_variant_string(variant: &VARIANT) -> String {
   unsafe {
     match VariantToStringAlloc(variant) {
-      Ok(value) => value.to_string().unwrap_or("".to_owned()) as String,
+      Ok(value) => value.to_string().unwrap_or(String::from("")) as String,
       Err(_) => String::from(""),
     }
   }
+}
+
+fn cleanup_hicons(phiconlarge: HICON, phiconsmall: HICON) {
+  unsafe {
+    if !phiconlarge.0.is_null() {
+      DestroyIcon(phiconlarge).unwrap_or(());
+    }
+    if !phiconsmall.0.is_null() {
+      DestroyIcon(phiconsmall).unwrap_or(());
+    }
+  };
 }

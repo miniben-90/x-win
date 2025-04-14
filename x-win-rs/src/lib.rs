@@ -35,62 +35,52 @@ use macos::init_platform_api;
 pub use macos::permission;
 
 pub use common::{
-  api::{empty_entity, os_name},
+  api::{empty_entity, os_name, Api},
+  result::Result,
   x_win_struct::{
     icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
     window_position::WindowPosition,
   },
 };
 
-use crate::common::api::Api;
-
-use std::fmt;
-
-#[derive(Debug)]
-pub struct XWinError;
-
-impl fmt::Display for XWinError {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "Oops something got wrong with x-win")
-  }
-}
-
-impl std::error::Error for XWinError {}
-
 /**
  * Recover icon of window.
  * Return `IconInfo`
  */
-pub fn get_window_icon(window_info: &WindowInfo) -> Result<IconInfo, XWinError> {
+pub fn get_window_icon(window_info: &WindowInfo) -> Result<IconInfo> {
   let api = init_platform_api();
-  Ok(api.get_app_icon(window_info))
+  let icon_info = api.get_app_icon(window_info)?;
+  Ok(icon_info)
 }
 
 /**
  * Recover browser url of window.
  * Return `String`
  */
-pub fn get_browser_url(window_info: &WindowInfo) -> Result<String, XWinError> {
+pub fn get_browser_url(window_info: &WindowInfo) -> Result<String> {
   let api = init_platform_api();
-  Ok(api.get_browser_url(window_info))
+  let browser_url = api.get_browser_url(window_info)?;
+  Ok(browser_url)
 }
 
 /**
  * Retrieve information the about currently active window.
  * Return `WindowInfo` containing details about a specific active window.
  */
-pub fn get_active_window() -> Result<WindowInfo, XWinError> {
+pub fn get_active_window() -> Result<WindowInfo> {
   let api = init_platform_api();
-  Ok(api.get_active_window())
+  let active_window = api.get_active_window()?;
+  Ok(active_window)
 }
 
 /**
  * Retrieve information about the currently open windows.
  * Return `Vec<WindowInfo>` each containing details about a specific open window.
  */
-pub fn get_open_windows() -> Result<Vec<WindowInfo>, XWinError> {
+pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
   let api = init_platform_api();
-  Ok(api.get_open_windows())
+  let open_windows = api.get_open_windows()?;
+  Ok(open_windows)
 }
 
 /**
@@ -98,14 +88,14 @@ pub fn get_open_windows() -> Result<Vec<WindowInfo>, XWinError> {
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
  * **Restart session will be require to install the gnome extension.**
  */
-pub fn install_extension() -> Result<bool, XWinError> {
+pub fn install_extension() -> Result<bool> {
   #[cfg(not(target_os = "linux"))]
   {
     Ok(false)
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_install_extension())
+    linux::gnome_install_extension()
   }
 }
 
@@ -114,14 +104,14 @@ pub fn install_extension() -> Result<bool, XWinError> {
  * This function will disable and remove extension files.
  * **Restart session will be require to remove the gnome extension.**
  */
-pub fn uninstall_extension() -> Result<bool, XWinError> {
+pub fn uninstall_extension() -> Result<bool> {
   #[cfg(not(target_os = "linux"))]
   {
     Ok(false)
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_uninstall_extension())
+    linux::gnome_uninstall_extension()
   }
 }
 
@@ -129,14 +119,14 @@ pub fn uninstall_extension() -> Result<bool, XWinError> {
  * Enable Gnome extensions required for Linux using Gnome > 41.
  * This function will enable extension needed to correctly detect working windows with Wayland desktop environment.
  */
-pub fn enable_extension() -> Result<bool, XWinError> {
+pub fn enable_extension() -> Result<bool> {
   #[cfg(not(target_os = "linux"))]
   {
     Ok(false)
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_enable_extension())
+    linux::gnome_enable_extension()
   }
 }
 
@@ -144,14 +134,14 @@ pub fn enable_extension() -> Result<bool, XWinError> {
  * Disable Gnome extensions required for Linux using Gnome > 41.
  * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
  */
-pub fn disable_extension() -> Result<bool, XWinError> {
+pub fn disable_extension() -> Result<bool> {
   #[cfg(not(target_os = "linux"))]
   {
     Ok(false)
   }
   #[cfg(target_os = "linux")]
   {
-    Ok(linux::gnome_disable_extension())
+    linux::gnome_disable_extension()
   }
 }
 
@@ -236,7 +226,7 @@ mod tests {
     }
   }
 
-  fn test_struct(window_info: WindowInfo) -> Result<(), String> {
+  fn test_struct(window_info: WindowInfo) -> Result<()> {
     assert_ne!(window_info.id, 0);
     assert_ne!(window_info.title, String::from(""));
     #[cfg(target_os = "linux")]
@@ -249,13 +239,13 @@ mod tests {
   }
 
   #[test]
-  fn test_get_active_window() -> Result<(), String> {
+  fn test_get_active_window() -> Result<()> {
     let window_info = get_active_window().unwrap();
     test_struct(window_info)
   }
 
   #[test]
-  fn test_get_open_windows() -> Result<(), String> {
+  fn test_get_open_windows() -> Result<()> {
     let open_windows = get_open_windows().unwrap();
     assert_ne!(open_windows.len(), 0);
     let window_info = open_windows.first().unwrap().to_owned();
@@ -263,14 +253,14 @@ mod tests {
   }
 
   #[test]
-  fn test_os_name() -> Result<(), String> {
+  fn test_os_name() -> Result<()> {
     let os_name = os_name();
     assert_eq!(os_name, test_osname());
     Ok(())
   }
 
   #[test]
-  fn test_empty_entity() -> Result<(), String> {
+  fn test_empty_entity() -> Result<()> {
     let window_info = empty_entity();
     assert_eq!(window_info.id, 0);
     assert_eq!(window_info.title, String::from(""));
@@ -279,7 +269,7 @@ mod tests {
   }
 
   #[test]
-  fn test_get_window_icon() -> Result<(), String> {
+  fn test_get_window_icon() -> Result<()> {
     let window_info: &WindowInfo = &get_active_window().unwrap();
     let icon_info = get_window_icon(window_info).unwrap();
     assert_ne!(icon_info.data, "");
@@ -298,7 +288,7 @@ mod tests {
   #[cfg(not(target_os = "linux"))]
   #[test]
   #[ignore = "Not working on ci/cd"]
-  fn test_get_brower_url() -> Result<(), String> {
+  fn test_get_brower_url() -> Result<()> {
     #[allow(unused)]
     let _context = TestContext::setup();
     let open_windows = &get_open_windows().unwrap();
@@ -316,7 +306,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  fn test_get_brower_url() -> Result<(), String> {
+  fn test_get_brower_url() -> Result<()> {
     let open_windows = &get_open_windows().unwrap();
     assert_ne!(open_windows.len(), 0);
     let window_info = open_windows.first().unwrap().to_owned();
@@ -331,7 +321,7 @@ mod tests {
   #[cfg(all(feature = "macos_permission", target_os = "macos"))]
   #[test]
   #[ignore = "Not working on ci/cd"]
-  fn test_check_screen_record_permission() -> Result<(), String> {
+  fn test_check_screen_record_permission() -> Result<()> {
     use macos::permission::check_screen_record_permission;
     let value = check_screen_record_permission();
     assert_eq!(value, true);
@@ -341,7 +331,7 @@ mod tests {
   #[cfg(all(feature = "macos_permission", target_os = "macos"))]
   #[test]
   #[ignore = "Not working on ci/cd"]
-  fn test_request_screen_record_permission() -> Result<(), String> {
+  fn test_request_screen_record_permission() -> Result<()> {
     use macos::permission::request_screen_record_permission;
     let value = request_screen_record_permission();
     assert_eq!(value, true);
