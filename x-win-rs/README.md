@@ -13,14 +13,14 @@ This package make it easy to obtain the active window or an array of open window
 `examples/get_active_window.rs`:
 
 ```rust
-use x_win::{get_active_window, XWinError};
+use x_win::get_active_window;
 
 fn main() {
   match get_active_window() {
     Ok(active_window) => {
       println!("active window: {:#?}", active_window);
     }
-    Err(XWinError) => {
+    Err(_) => {
       println!("error occurred while getting the active window");
     }
   }
@@ -59,14 +59,14 @@ active window: WindowInfo {
 `examples/get_active_window.rs`:
 
 ```rust
-use x_win::{get_open_windows, XWinError};
+use x_win::get_open_windows;
 
 fn main() {
   match get_open_windows() {
     Ok(open_windows) => {
       println!("open windows: {:#?}", open_windows);
     }
-    Err(XWinError) => {
+    Err(_) => {
       println!("error occurred while getting open windows");
     }
   }
@@ -107,7 +107,7 @@ open windows: [
 `examples/get_window_icon.rs`:
 
 ```rust
-use x_win::{get_active_window, get_window_icon, XWinError};
+use x_win::get_active_window, get_window_icon;
 
 fn main() {
   match get_active_window() {
@@ -115,11 +115,11 @@ fn main() {
       Ok(icon_info) => {
         println!("icon info: {:#?}", icon_info);
       }
-      Err(XWinError) => {
+      Err(_) => {
         println!("error occurred while getting the icon info of active window");
       }
     },
-    Err(XWinError) => {
+    Err(_) => {
       println!("error occurred while getting the active window");
     }
   }
