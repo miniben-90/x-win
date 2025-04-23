@@ -21,9 +21,8 @@ use objc2_app_kit::{
   NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSRunningApplication, NSScreen, NSWorkspace,
 };
 use objc2_core_foundation::{
-  CFArray, CFArrayGetCount, CFArrayGetValueAtIndex, CFBoolean, CFBooleanGetValue, CFDictionary,
-  CFDictionaryContainsKey, CFDictionaryGetValue, CFNumber, CFNumberGetValue, CFNumberType,
-  CFRetained, CFString, CGPoint, CGRect, CGSize,
+  CFArray, CFBoolean, CFDictionary, CFNumber, CFNumberType, CFRetained, CFString, CGPoint, CGRect,
+  CGSize,
 };
 use objc2_core_graphics::{
   CGRectMakeWithDictionaryRepresentation, CGWindowListCopyWindowInfo, CGWindowListOption,
@@ -118,13 +117,13 @@ fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
     | CGWindowListOption::ExcludeDesktopElements
     | CGWindowListOption::OptionIncludingWindow;
   let window_list_info: &CFArray = unsafe { &CGWindowListCopyWindowInfo(options, 0).unwrap() };
-  let windows_count = unsafe { CFArrayGetCount(window_list_info) };
+  let windows_count = CFArray::count(window_list_info);
 
   let screen_rect = get_screen_rect();
 
   for idx in 0..windows_count {
     let window_cf_dictionary_ref =
-      unsafe { CFArrayGetValueAtIndex(window_list_info, idx) as *const CFDictionary };
+      unsafe { CFArray::value_at_index(window_list_info, idx) as *const CFDictionary };
 
     if window_cf_dictionary_ref.is_null() {
       continue;
@@ -365,8 +364,8 @@ fn get_bundle_identifier(app: &NSRunningApplication) -> String {
 fn get_cf_dictionary_get_value<T>(dict: &CFDictionary, key: &str) -> Option<*const T> {
   let key = CFString::from_str(key);
   let key_ref = key.as_ref() as *const CFString;
-  if unsafe { CFDictionaryContainsKey(dict, key_ref.cast()) } {
-    let value = unsafe { CFDictionaryGetValue(dict, key_ref.cast()) };
+  if unsafe { CFDictionary::contains_ptr_key(dict, key_ref.cast()) } {
+    let value = unsafe { CFDictionary::value(dict, key_ref.cast()) };
     Some(value as *const T)
   } else {
     None
@@ -382,7 +381,7 @@ fn get_cf_number_value(dict: &CFDictionary, key: &str) -> i32 {
     let mut value: i32 = 0;
     match get_cf_dictionary_get_value::<CFNumber>(dict, key) {
       Some(number) => {
-        CFNumberGetValue(
+        CFNumber::value(
           &*number,
           CFNumberType::IntType,
           &mut value as *mut _ as *mut c_void,
@@ -397,7 +396,7 @@ fn get_cf_number_value(dict: &CFDictionary, key: &str) -> i32 {
 fn get_cf_boolean_value(dict: &CFDictionary, key: &str) -> bool {
   unsafe {
     match get_cf_dictionary_get_value::<CFBoolean>(dict, key) {
-      Some(value) => CFBooleanGetValue(&*value),
+      Some(value) => CFBoolean::value(&*value),
       None => false,
     }
   }
