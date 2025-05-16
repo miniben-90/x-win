@@ -29,7 +29,7 @@ pub fn get_active_window() -> Result<WindowInfo> {
   if response.is_err() {
     return Err(
       format!(
-        r#"Unable to get informations of active window from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
+        r#"Unable to get informations of active window from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed or enabled."#,
         GNOME_XWIN_UUID
       ).into()
     );
@@ -54,7 +54,7 @@ pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
   if response.is_err() {
     return Err(
       format!(
-        r#"Unable to get informations of open windows from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
+        r#"Unable to get informations of open windows from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed or enabled."#,
         GNOME_XWIN_UUID
       ).into()
     );

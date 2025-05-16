@@ -287,16 +287,16 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * ```javascript
  * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
  *
- * const a = subscribeActiveWindow((info) => {
+ * const a = subscribeActiveWindow((err, info) => {
  *   t.log(a, info);
  * });
- * const b = subscribeActiveWindow((info) => {
+ * const b = subscribeActiveWindow((err, info) => {
  *   t.log(b, info);
  * });
- * const c = subscribeActiveWindow((info) => {
+ * const c = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * });
- * const d = subscribeActiveWindow((info) => {
+ * const d = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * },500);// sleep interval: 500ms
  *
@@ -308,16 +308,16 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * ```typescript
  * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
  *
- * const a = subscribeActiveWindow((info) => {
+ * const a = subscribeActiveWindow((err, info) => {
  *   t.log(a, info);
  * });
- * const b = subscribeActiveWindow((info) => {
+ * const b = subscribeActiveWindow((err, info) => {
  *   t.log(b, info);
  * });
- * const c = subscribeActiveWindow((info) => {
+ * const c = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * });
- * const d = subscribeActiveWindow((info) => {
+ * const d = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * },500);// sleep interval: 500ms
  *
