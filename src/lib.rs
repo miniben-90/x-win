@@ -3,11 +3,13 @@
 //#![allow(unused_imports)]
 
 mod common;
+mod error;
 
 use common::{
   thread::ThreadManager,
   x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
 };
+use error::xwin_error;
 use napi::{bindgen_prelude::AsyncTask, JsFunction, JsNumber, Result, Task};
 use napi_derive::napi;
 use x_win::{empty_entity, get_active_window, get_browser_url, get_open_windows, get_window_icon};
@@ -79,12 +81,18 @@ impl Task for GetIconTask {
 
 fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
   let t: x_win::WindowInfo = window_info.clone().into();
-  Ok(get_window_icon(&t).unwrap().into())
+  match get_window_icon(&t) {
+    Ok(window_icon) => Ok(window_icon.into()),
+    Err(err) => Err(xwin_error(err)),
+  }
 }
 
 fn get_url(window_info: &WindowInfo) -> Result<String> {
   let t: x_win::WindowInfo = window_info.clone().into();
-  Ok(get_browser_url(&t).unwrap())
+  match get_browser_url(&t) {
+    Ok(browser_url) => Ok(browser_url),
+    Err(err) => Err(xwin_error(err)),
+  }
 }
 
 #[napi]
@@ -145,7 +153,10 @@ impl WindowInfo {
  */
 #[napi]
 pub fn active_window() -> Result<WindowInfo> {
-  Ok(get_active_window().unwrap().into())
+  match get_active_window() {
+    Ok(active_window) => Ok(active_window.into()),
+    Err(err) => Err(xwin_error(err)),
+  }
 }
 
 /**
@@ -217,13 +228,10 @@ pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
  */
 #[napi]
 pub fn open_windows() -> Result<Vec<WindowInfo>> {
-  Ok(
-    get_open_windows()
-      .unwrap()
-      .into_iter()
-      .map(WindowInfo::from)
-      .collect(),
-  )
+  match get_open_windows() {
+    Ok(open_windows) => Ok(open_windows.into_iter().map(WindowInfo::from).collect()),
+    Err(err) => Err(xwin_error(err)),
+  }
 }
 
 /**
@@ -317,7 +325,9 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
  * ```
  *
  */
-#[napi(ts_args_type = "callback: (info: WindowInfo) => void, interval?: number")]
+#[napi(
+  ts_args_type = "callback: (error: Error | null, info: WindowInfo | undefined) => void, interval?: number"
+)]
 pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>) -> Result<u32> {
   let interval: u64 = {
     let interval = interval
@@ -330,13 +340,13 @@ pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>)
       100
     }
   };
-  let tsfn: ThreadsafeFunction<WindowInfo, ErrorStrategy::Fatal> = callback
+  let tsfn: ThreadsafeFunction<WindowInfo, ErrorStrategy::CalleeHandled> = callback
     .create_threadsafe_function(
       0,
       |ctx: napi::threadsafe_function::ThreadSafeCallContext<WindowInfo>| Ok(vec![ctx.value]),
     )?;
 
-  let tsfn_clone: ThreadsafeFunction<WindowInfo, ErrorStrategy::Fatal> = tsfn.clone();
+  let tsfn_clone: ThreadsafeFunction<WindowInfo, ErrorStrategy::CalleeHandled> = tsfn.clone();
 
   let thread_manager = THREAD_MANAGER.lock().unwrap();
 
@@ -348,20 +358,27 @@ pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>)
           break;
         }
         _ => {
-          let new_current_window = get_active_window().unwrap();
-          if new_current_window.id.ne(&current_window.id)
-            || new_current_window.title.ne(&current_window.title)
-            || new_current_window
-              .info
-              .process_id
-              .ne(&current_window.info.process_id)
-            || new_current_window.id.eq(&0)
-          {
-            current_window = new_current_window.clone().into();
-            tsfn_clone.call(
-              new_current_window.into(),
-              ThreadsafeFunctionCallMode::Blocking,
-            );
+          match get_active_window() {
+            Ok(new_current_window) => {
+              if new_current_window.id.ne(&current_window.id)
+                || new_current_window.title.ne(&current_window.title)
+                || new_current_window
+                  .info
+                  .process_id
+                  .ne(&current_window.info.process_id)
+                || new_current_window.id.eq(&0)
+              {
+                current_window = new_current_window.clone().into();
+                tsfn_clone.call(
+                  Ok(new_current_window.into()),
+                  ThreadsafeFunctionCallMode::Blocking,
+                );
+              }
+            }
+            Err(err) => {
+              tsfn_clone.call(Err(xwin_error(err)), ThreadsafeFunctionCallMode::Blocking);
+              break;
+            }
           }
           thread::sleep(Duration::from_millis(interval));
         }
@@ -486,7 +503,7 @@ pub fn unsubscribe_all_active_window() -> Result<()> {
  */
 #[napi]
 pub fn install_extension() -> Result<bool> {
-  Ok(x_win::install_extension().unwrap())
+  x_win::install_extension().map_err(xwin_error)
 }
 
 /**
@@ -496,7 +513,7 @@ pub fn install_extension() -> Result<bool> {
  */
 #[napi]
 pub fn uninstall_extension() -> Result<bool> {
-  Ok(x_win::uninstall_extension().unwrap())
+  x_win::uninstall_extension().map_err(xwin_error)
 }
 
 /**
@@ -505,7 +522,7 @@ pub fn uninstall_extension() -> Result<bool> {
  */
 #[napi]
 pub fn enable_extension() -> Result<bool> {
-  Ok(x_win::enable_extension().unwrap())
+  x_win::enable_extension().map_err(xwin_error)
 }
 
 /**
@@ -514,5 +531,23 @@ pub fn enable_extension() -> Result<bool> {
  */
 #[napi]
 pub fn disable_extension() -> Result<bool> {
-  Ok(x_win::disable_extension().unwrap())
+  x_win::disable_extension().map_err(xwin_error)
+}
+
+/**
+ * Return true of false if gnome extension is enabled for Linux using Gnome > 41.
+ * This function will return true or false if the extension is set to enabled on extension info. Working only with Wayland windows manager.
+ */
+#[napi]
+pub fn is_enabled_extension() -> Result<bool> {
+  x_win::is_enabled_extension().map_err(xwin_error)
+}
+
+/**
+ * Return true of false the extensions is installed for Linux using Gnome > 41.
+ * This function will return true or false if the extension is correctly installed. Working only with Wayland windows manager.
+ */
+#[napi]
+pub fn is_installed_extension() -> Result<bool> {
+  x_win::is_installed_extension().map_err(xwin_error)
 }

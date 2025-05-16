@@ -370,7 +370,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  // #[ignore = "Not working on ci/cd"]
+  #[ignore = "Not working on ci/cd"]
   fn test_install_extension() -> Result<()> {
     let value = install_extension()?;
     assert_eq!(value, true);
@@ -379,7 +379,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  // #[ignore = "Not working on ci/cd"]
+  #[ignore = "Not working on ci/cd"]
   fn test_uninstall_extension() -> Result<()> {
     let value = uninstall_extension()?;
     assert_eq!(value, true);
@@ -388,7 +388,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  // #[ignore = "Not working on ci/cd"]
+  #[ignore = "Not working on ci/cd"]
   fn test_enable_extension() -> Result<()> {
     let value = enable_extension()?;
     assert_eq!(value, true);
@@ -397,7 +397,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  // #[ignore = "Not working on ci/cd"]
+  #[ignore = "Not working on ci/cd"]
   fn test_disable_extension() -> Result<()> {
     let value = disable_extension()?;
     assert_eq!(value, true);
@@ -406,7 +406,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  // #[ignore = "Not working on ci/cd"]
+  #[ignore = "Not working on ci/cd"]
   fn test_is_enabled_extension() -> Result<()> {
     let value = is_enabled_extension()?;
     assert_eq!(value, true);
@@ -415,7 +415,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  // #[ignore = "Not working on ci/cd"]
+  #[ignore = "Not working on ci/cd"]
   fn test_is_installed_extension() -> Result<()> {
     let value = is_installed_extension()?;
     assert_eq!(value, true);

@@ -24,7 +24,18 @@ use super::{
 };
 
 pub fn get_active_window() -> Result<WindowInfo> {
-  let response = call_script("get_active_window")?;
+  let response = call_script("get_active_window");
+
+  if response.is_err() {
+    return Err(
+      format!(
+        r#"Unable to get informations of active window from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
+        GNOME_XWIN_UUID
+      ).into()
+    );
+  }
+
+  let response = response.unwrap();
 
   if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str())?;
@@ -38,7 +49,19 @@ pub fn get_active_window() -> Result<WindowInfo> {
 }
 
 pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
-  let response = call_script("get_open_windows")?;
+  let response = call_script("get_open_windows");
+
+  if response.is_err() {
+    return Err(
+      format!(
+        r#"Unable to get informations of open windows from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
+        GNOME_XWIN_UUID
+      ).into()
+    );
+  }
+
+  let response = response.unwrap();
+
   if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str())?;
 
@@ -181,8 +204,10 @@ pub fn is_enabled_extension() -> Result<bool> {
   }
 
   Err(
-    format!(r#"Unable to get information for "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
-    GNOME_XWIN_UUID).into()
+    format!(
+      r#"Unable to get information for "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
+      GNOME_XWIN_UUID
+    ).into()
   )
 }
 
