@@ -1,4 +1,4 @@
-use zbus::blocking::Connection;
+use zbus::{blocking::Connection, Message};
 
 use std::{env, fs, ops::Deref, path};
 
@@ -143,7 +143,10 @@ fn toggle_extension(enable: bool) -> Result<bool> {
     return Ok(response);
   }
 
-  Err(String::from("Can't enable or disable xwin extension using gnome shell").into())
+  Err(format!(
+        "Unable to enable or disable the {} extension via GNOME Shell. Please verify that the extension is correctly installed.",
+        GNOME_XWIN_UUID
+    ).into())
 }
 
 pub fn enable_extension() -> Result<bool> {
@@ -161,6 +164,49 @@ pub fn uninstall_extension() -> Result<bool> {
   } else {
     Ok(false)
   }
+}
+
+pub fn is_enabled_extension() -> Result<bool> {
+  let response = request_extension_info()?;
+  let response: String = response.body().deserialize().unwrap_or_default();
+  if !response.is_empty() {
+    let response: serde_json::Value = serde_json::from_str(response.as_str())?;
+    if response.is_object() {
+      let response = response.as_object().unwrap();
+      if response.contains_key("enabled") {
+        let response = response["enabled"].as_bool().unwrap_or(false);
+        return Ok(response);
+      }
+    }
+  }
+
+  Err(
+    format!(r#"Unable to get information for "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
+    GNOME_XWIN_UUID).into()
+  )
+}
+
+pub fn is_installed_extension() -> Result<bool> {
+  let response = request_extension_info();
+  if response.is_ok() {
+    let response = response.unwrap();
+    let response: String = response.body().deserialize().unwrap_or_default();
+    if !response.is_empty() {
+      return Ok(true);
+    }
+  }
+  Ok(false)
+}
+
+fn request_extension_info() -> Result<Message> {
+  let connection = Connection::session()?;
+  Ok(connection.call_method(
+    DESTINATION,
+    SHELL_PATH,
+    SHELL_IFACE,
+    "GetExtensionInfo",
+    &GNOME_XWIN_UUID.to_string(),
+  )?)
 }
 
 fn get_extension_path() -> path::PathBuf {

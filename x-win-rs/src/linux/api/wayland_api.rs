@@ -100,4 +100,20 @@ impl APIGnome for WaylandApi {
       Ok(false)
     }
   }
+
+  fn is_enabled_extension() -> Result<bool> {
+    if !gnome_use_eval() {
+      wayland_extension_api::is_enabled_extension()
+    } else {
+      Ok(false)
+    }
+  }
+
+  fn is_installed_extension() -> Result<bool> {
+    if !gnome_use_eval() {
+      wayland_extension_api::is_installed_extension()
+    } else {
+      Ok(false)
+    }
+  }
 }

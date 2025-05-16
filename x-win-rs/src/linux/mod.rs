@@ -26,3 +26,11 @@ pub fn gnome_enable_extension() -> Result<bool> {
 pub fn gnome_disable_extension() -> Result<bool> {
   LinuxAPI::disable_extension()
 }
+
+pub fn gnome_is_enabled_extension() -> Result<bool> {
+  LinuxAPI::is_enabled_extension()
+}
+
+pub fn gnome_is_installed_extension() -> Result<bool> {
+  LinuxAPI::is_installed_extension()
+}

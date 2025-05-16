@@ -22,6 +22,8 @@ pub trait APIGnome {
   fn uninstall_extension() -> Result<bool>;
   fn enable_extension() -> Result<bool>;
   fn disable_extension() -> Result<bool>;
+  fn is_installed_extension() -> Result<bool>;
+  fn is_enabled_extension() -> Result<bool>;
 }
 
 pub struct LinuxAPI {}
@@ -87,6 +89,22 @@ impl APIGnome for LinuxAPI {
   fn disable_extension() -> Result<bool> {
     if is_wayland_desktop() {
       WaylandApi::disable_extension()
+    } else {
+      Ok(false)
+    }
+  }
+
+  fn is_installed_extension() -> Result<bool> {
+    if is_wayland_desktop() {
+      WaylandApi::disable_extension()
+    } else {
+      Ok(false)
+    }
+  }
+
+  fn is_enabled_extension() -> Result<bool> {
+    if is_wayland_desktop() {
+      WaylandApi::is_enabled_extension()
     } else {
       Ok(false)
     }
