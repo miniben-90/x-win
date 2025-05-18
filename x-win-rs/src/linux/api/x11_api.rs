@@ -11,6 +11,7 @@ use crate::{
     result::Result,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo, window_position::WindowPosition},
   },
+  empty_entity,
   linux::api::common_api::{get_window_memory_usage, get_window_path_name},
 };
 
@@ -47,13 +48,20 @@ impl Api for X11Api {
                 let active_window = get_window_information(&conn, active_window)?;
                 Ok(active_window)
               }
-              None => Err(String::from("").into()),
+              None => Ok(empty_entity()),
             };
           }
         }
-        Err(String::from("").into())
+        Err(
+          String::from(
+            "Something got wrong, not possible to get active window calling _NET_ACTIVE_WINDOW",
+          )
+          .into(),
+        )
       }
-      None => Err(String::from("").into()),
+      None => {
+        Err(String::from("Something got wrong, not possible to get access of X Server!").into())
+      }
     }
   }
 
@@ -82,9 +90,10 @@ impl Api for X11Api {
             if window_list.len().ne(&0) {
               for window in window_list {
                 let window: &x::Window = &window;
-                let result = get_window_information(&conn, window)?;
-                if result.id.ne(&0) && is_normal_window(&conn, *window) {
-                  results.push(result);
+                if let Ok(result) = get_window_information(&conn, window) {
+                  if result.id.ne(&0) && is_normal_window(&conn, *window) {
+                    results.push(result);
+                  }
                 }
               }
             }
@@ -92,9 +101,11 @@ impl Api for X11Api {
             return Ok(results);
           }
         }
-        Err(String::from("").into())
+        Err(String::from("Something got wrong, not possible to get active window calling _NET_CLIENT_LIST_STACKING").into())
       }
-      None => Err(String::from("").into()),
+      None => {
+        Err(String::from("Something got wrong, not possible to get access of X Server!").into())
+      }
     }
   }
 
@@ -169,9 +180,11 @@ fn connection() -> Result<Connection> {
  * Get window information
  */
 fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> Result<WindowInfo> {
-  let window_pid: u32 = get_window_pid(conn, *window)?;
   let mut window_info: WindowInfo = init_entity();
-
+  if window.is_none() {
+    return Ok(window_info);
+  }
+  let window_pid: u32 = get_window_pid(conn, *window)?;
   if window_pid != 0 {
     let (path, exec_name) = get_window_path_name(window_pid)?;
     window_info.id = window.resource_id();
@@ -209,7 +222,7 @@ fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> Result<u32> {
       }
     }
   }
-  Err(String::from("").into())
+  Err(String::from("Not possible to recver pid for the window when calling _NET_WM_PID!").into())
 }
 
 /**
