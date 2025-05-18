@@ -342,6 +342,7 @@ pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>)
 
   let id = thread_manager.start_thread(move |receiver| {
     let mut current_window: WindowInfo = empty_entity().into();
+    let mut first_loop: bool = true;
     loop {
       match receiver.try_recv() {
         Ok(_) | Err(std::sync::mpsc::TryRecvError::Disconnected) => {
@@ -355,7 +356,7 @@ pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>)
               .info
               .process_id
               .ne(&current_window.info.process_id)
-            || new_current_window.id.eq(&0)
+            || (new_current_window.id.eq(&0) && first_loop)
           {
             current_window = new_current_window.clone().into();
             tsfn_clone.call(
@@ -365,6 +366,9 @@ pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>)
           }
           thread::sleep(Duration::from_millis(interval));
         }
+      }
+      if first_loop {
+        first_loop = false;
       }
     }
   });
