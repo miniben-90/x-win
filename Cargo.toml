@@ -24,7 +24,7 @@ base64 = "0.22.1"
 x-win = { path = "./x-win-rs" }
 
 [build-dependencies]
-napi-build = "2.1.6"
+napi-build = "2.2.0"
 
 [profile.release]
 lto = true

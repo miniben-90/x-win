@@ -135,15 +135,15 @@ Thread will be start to check every `100ms` for a new active window (checking wi
 ```typescript
 import { subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
 
-const a = subscribeActiveWindow(activeWindow => {
+const a = subscribeActiveWindow((error, activeWindow) => {
   console.log('test a', activeWindow);
 });
 
-const b = subscribeActiveWindow(activeWindow => {
+const b = subscribeActiveWindow((error, activeWindow) => {
   console.log('test b', activeWindow);
 });
 
-const c = subscribeActiveWindow(activeWindow => {
+const c = subscribeActiveWindow((error, activeWindow) => {
   console.log('test c', activeWindow);
 });
 
@@ -194,9 +194,11 @@ sudo apt install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0
 
 In order to recover data, you'll need to install and activate an extension designed for systems running GNOME version 41 or newer (as evaluation is disabled from this version onward).
 
-The extension can be installed using the `installExtension` function, which will deposit it in `~/.local/share/gnome-shell/extensions/x-win@miniben90.org`.
+The extension can be installed using the `installExtension()` function, which will deposit it in `~/.local/share/gnome-shell/extensions/x-win@miniben90.org`.
 
-After executing this function, it's vital to **restart the user session** to load the new extension and then proceed to enable it using `enableExtension` to be able to use x-win.
+After executing this function, it's vital to **restart the user session** to load the new extension and then proceed to enable it using `enableExtension()` to be able to use x-win.
+
+It is possible to know if the extension is installed or / and enabled using `isInstalledExtension()` and `isEnabledExtension()`.
 
 | Gnome Distrib. | Tested |
 |---|---|

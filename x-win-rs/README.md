@@ -160,6 +160,8 @@ The extension can be installed using the `x_win::install_extension()` function, 
 
 After executing this function, it's vital to **restart the user session** to load the new extension and then proceed to enable it using `x_win::enable_extension()` to be able to use x-win.
 
+It is possible to know if the extension is installed or / and enabled using `x_win::is_installed_extension()` and `x_win::is_enabled_extension()`.
+
 | Gnome Distrib. | Tested |
 |---|---|
 | Fedora Workstation 39 | ✅ |
