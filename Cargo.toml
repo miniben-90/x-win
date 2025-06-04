@@ -7,7 +7,7 @@ keywords = ["window", "active", "current", "position", "open"]
 description = "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows."
 repository = "https://github.com/miniben-90/x-win"
 license = "MIT"
-rust-version = "1.60.0"
+rust-version = "1.77.0"
 
 [lib]
 crate-type = ["cdylib"]
@@ -24,7 +24,7 @@ base64 = "0.22.1"
 x-win = { path = "./x-win-rs" }
 
 [build-dependencies]
-napi-build = "2.2.0"
+napi-build = "2.2.1"
 
 [profile.release]
 lto = true
