@@ -84,7 +84,7 @@ pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
 }
 
 /**
- * Install "@mininben90/x-win" Gnome extensions required for Linux using Gnome > 41.
+ * Install "@mininben90/x-win" Gnome extension required for Linux using Gnome > 41.
  * This function will write extension files needed to correctly detect working windows with Wayland desktop environment.
  * **Restart session will be require to install the gnome extension.**
  */
@@ -100,7 +100,7 @@ pub fn install_extension() -> Result<bool> {
 }
 
 /**
- * Uninstall "@mininben90/x-win" Gnome extensions.
+ * Uninstall "@mininben90/x-win" Gnome extension.
  * This function will disable and remove extension files.
  * **Restart session will be require to remove the gnome extension.**
  */
@@ -116,7 +116,7 @@ pub fn uninstall_extension() -> Result<bool> {
 }
 
 /**
- * Enable Gnome extensions required for Linux using Gnome > 41.
+ * Enable Gnome extension required for Linux using Gnome > 41.
  * This function will enable extension needed to correctly detect working windows with Wayland desktop environment.
  */
 pub fn enable_extension() -> Result<bool> {
@@ -131,7 +131,7 @@ pub fn enable_extension() -> Result<bool> {
 }
 
 /**
- * Disable Gnome extensions required for Linux using Gnome > 41.
+ * Disable Gnome extension required for Linux using Gnome > 41.
  * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
  */
 pub fn disable_extension() -> Result<bool> {
@@ -142,6 +142,36 @@ pub fn disable_extension() -> Result<bool> {
   #[cfg(target_os = "linux")]
   {
     linux::gnome_disable_extension()
+  }
+}
+
+/**
+ * Return true of false if gnome extension is enabled for Linux using Gnome > 41.
+ * This function will return true or false if the extension is set to enabled on extension info. Working only with Wayland windows manager.
+ */
+pub fn is_enabled_extension() -> Result<bool> {
+  #[cfg(not(target_os = "linux"))]
+  {
+    Ok(false)
+  }
+  #[cfg(target_os = "linux")]
+  {
+    linux::gnome_is_enabled_extension()
+  }
+}
+
+/**
+ * Return true of false the extensions is installed for Linux using Gnome > 41.
+ * This function will return true or false if the extension is correctly installed. Working only with Wayland windows manager.
+ */
+pub fn is_installed_extension() -> Result<bool> {
+  #[cfg(not(target_os = "linux"))]
+  {
+    Ok(false)
+  }
+  #[cfg(target_os = "linux")]
+  {
+    linux::gnome_is_installed_extension()
   }
 }
 
@@ -334,6 +364,60 @@ mod tests {
   fn test_request_screen_record_permission() -> Result<()> {
     use macos::permission::request_screen_record_permission;
     let value = request_screen_record_permission();
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_install_extension() -> Result<()> {
+    let value = install_extension()?;
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_uninstall_extension() -> Result<()> {
+    let value = uninstall_extension()?;
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_enable_extension() -> Result<()> {
+    let value = enable_extension()?;
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_disable_extension() -> Result<()> {
+    let value = disable_extension()?;
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_is_enabled_extension() -> Result<()> {
+    let value = is_enabled_extension()?;
+    assert_eq!(value, true);
+    Ok(())
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_is_installed_extension() -> Result<()> {
+    let value = is_installed_extension()?;
     assert_eq!(value, true);
     Ok(())
   }

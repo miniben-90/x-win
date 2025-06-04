@@ -100,7 +100,7 @@ test('subscribeActiveWindow', async (t) => {
   try {
     const data1 = await new Promise((resolve, reject) => {
       console.time('subscribeActiveWindow1');
-      const r = subscribeActiveWindow((info) => {
+      const r = subscribeActiveWindow((error, info) => {
         console.timeEnd('subscribeActiveWindow1');
         if (info?.id) {
           unsubscribeActiveWindow(r);
@@ -113,7 +113,7 @@ test('subscribeActiveWindow', async (t) => {
 
     const data2 = await new Promise((resolve, reject) => {
       console.time('subscribeActiveWindow2');
-      const r = subscribeActiveWindow((info) => {
+      const r = subscribeActiveWindow((error, info) => {
         console.timeEnd('subscribeActiveWindow2');
         if (info?.id) {
           unsubscribeActiveWindow(r);
@@ -126,7 +126,7 @@ test('subscribeActiveWindow', async (t) => {
 
     const data3 = await new Promise((resolve, reject) => {
       console.time('subscribeActiveWindow3');
-      const r = subscribeActiveWindow((info) => {
+      const r = subscribeActiveWindow((error, info) => {
         console.timeEnd('subscribeActiveWindow3');
         if (info?.id) {
           unsubscribeActiveWindow(r);
@@ -150,7 +150,7 @@ test('subscribeActiveWindow', async (t) => {
 test('unsubscribeAllActiveWindow', async (t) => {
   try {
     const data1 = await new Promise((resolve, reject) => {
-      const r = subscribeActiveWindow((info) => {
+      const r = subscribeActiveWindow((error, info) => {
         if (info?.id) {
           resolve(info);
         } else {
@@ -160,7 +160,7 @@ test('unsubscribeAllActiveWindow', async (t) => {
     });
 
     const data2 = await new Promise((resolve, reject) => {
-      const r = subscribeActiveWindow((info) => {
+      const r = subscribeActiveWindow((error, info) => {
         if (info?.id) {
           resolve(info);
         } else {
@@ -170,7 +170,7 @@ test('unsubscribeAllActiveWindow', async (t) => {
     });
 
     const data3 = await new Promise((resolve, reject) => {
-      const r = subscribeActiveWindow((info) => {
+      const r = subscribeActiveWindow((error, info) => {
         if (info?.id) {
           resolve(info);
         } else {

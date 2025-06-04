@@ -178,16 +178,16 @@ export declare function openWindowsAsync(): Promise<Array<WindowInfo>>
  * ```javascript
  * const { subscribeActiveWindow, unsubscribeAllActiveWindow } = require('@miniben90/x-win');
  *
- * const a = subscribeActiveWindow((info) => {
+ * const a = subscribeActiveWindow((err, info) => {
  *   t.log(a, info);
  * });
- * const b = subscribeActiveWindow((info) => {
+ * const b = subscribeActiveWindow((err, info) => {
  *   t.log(b, info);
  * });
- * const c = subscribeActiveWindow((info) => {
+ * const c = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * });
- * const d = subscribeActiveWindow((info) => {
+ * const d = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * },500);// sleep interval: 500ms
  *
@@ -199,16 +199,16 @@ export declare function openWindowsAsync(): Promise<Array<WindowInfo>>
  * ```typescript
  * import { subscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
  *
- * const a = subscribeActiveWindow((info) => {
+ * const a = subscribeActiveWindow((err, info) => {
  *   t.log(a, info);
  * });
- * const b = subscribeActiveWindow((info) => {
+ * const b = subscribeActiveWindow((err, info) => {
  *   t.log(b, info);
  * });
- * const c = subscribeActiveWindow((info) => {
+ * const c = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * });
- * const d = subscribeActiveWindow((info) => {
+ * const d = subscribeActiveWindow((err, info) => {
  *   t.log(c, info);
  * },500);// sleep interval: 500ms
  *
@@ -216,7 +216,7 @@ export declare function openWindowsAsync(): Promise<Array<WindowInfo>>
  * ```
  *
 */
-export declare function subscribeActiveWindow(callback: (info: WindowInfo) => void, interval?: number): number
+export declare function subscribeActiveWindow(callback: (error: Error | null, info: WindowInfo | undefined) => void, interval?: number): number
 /**
  * Terminate and unsubscribe a specific observer using their ID.
  *
@@ -327,6 +327,16 @@ export declare function enableExtension(): boolean
  * This function will disable extension needed to correctly detect working windows with Wayland desktop environment.
 */
 export declare function disableExtension(): boolean
+/**
+ * Return true of false if gnome extension is enabled for Linux using Gnome > 41.
+ * This function will return true or false if the extension is set to enabled on extension info. Working only with Wayland windows manager.
+*/
+export declare function isEnabledExtension(): boolean
+/**
+ * Return true of false the extensions is installed for Linux using Gnome > 41.
+ * This function will return true or false if the extension is correctly installed. Working only with Wayland windows manager.
+*/
+export declare function isInstalledExtension(): boolean
 /**
  * Struct to store all informations of the window
 */
