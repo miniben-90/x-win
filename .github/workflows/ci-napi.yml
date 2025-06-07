@@ -365,6 +365,12 @@ jobs:
         with:
           path: artifacts
 
+      # Upload artifacts to the release tag asset
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**
+
       # Move artifacts at there places
       - name: Run napi artifacts to struct deps
         run: yarn artifacts
