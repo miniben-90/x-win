@@ -20,10 +20,9 @@ use super::{
 pub fn get_active_window() -> Result<WindowInfo> {
   let script = format!(
     r#"
-{}
+{GNOME_XWIN_EVAL_SCRIPT}
 get_active_window();
-"#,
-    GNOME_XWIN_EVAL_SCRIPT
+"#
   );
 
   let response = call_script(&script)?;
@@ -41,11 +40,10 @@ get_active_window();
 pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
   let script = format!(
     r#"
-{}
+{GNOME_XWIN_EVAL_SCRIPT}
 
 get_open_windows();
-"#,
-    GNOME_XWIN_EVAL_SCRIPT
+"#
   );
 
   let response = call_script(&script)?;
@@ -79,11 +77,10 @@ pub fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
   if window_info.id.ne(&0) {
     let script = format!(
       r#"
-{}
-{}
-get_icon({});
-"#,
-      GNOME_XWIN_EVAL_SCRIPT, GNOME_XWIN_GET_ICON_SCRIPT, window_info.id
+{GNOME_XWIN_EVAL_SCRIPT}
+{GNOME_XWIN_GET_ICON_SCRIPT}
+get_icon({window_info.id});
+"#
     );
 
     let response = call_script(&script)?;

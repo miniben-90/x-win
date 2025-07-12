@@ -196,7 +196,7 @@ impl Api for WindowsAPI {
             cleanup_hicons(phiconlarge, phiconsmall);
 
             return Ok(IconInfo {
-              data: format!("data:image/png;base64,{}", data).to_owned(),
+              data: format!("data:image/png;base64,{data}").to_owned(),
               height: cbitmap.bmHeight as u32,
               width: cbitmap.bmWidth as u32,
             });
