@@ -269,6 +269,7 @@ It will use AppleScript to get informations for chromium browsers and safari
 | opera software - OperaDeveloper |  |
 | opera software - OperaGX | ✅ |
 | Vivaldi |  |
+| LibreWolf | ✅ |
 
 ## Electron
 
