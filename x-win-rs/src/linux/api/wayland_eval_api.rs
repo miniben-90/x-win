@@ -79,8 +79,9 @@ pub fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
       r#"
 {GNOME_XWIN_EVAL_SCRIPT}
 {GNOME_XWIN_GET_ICON_SCRIPT}
-get_icon({window_info.id});
-"#
+get_icon({0});
+"#,
+      window_info.id
     );
 
     let response = call_script(&script)?;
