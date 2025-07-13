@@ -238,6 +238,7 @@ It is possible to get URL of browsers window for macOS and Windows.
 | maxthon |  |
 | beaker |  |
 | beaker browser |  |
+| LibreWolf | ✅ |
 
 ### macOS
 
@@ -269,7 +270,6 @@ It will use AppleScript to get informations for chromium browsers and safari
 | opera software - OperaDeveloper |  |
 | opera software - OperaGX | ✅ |
 | Vivaldi |  |
-| LibreWolf | ✅ |
 
 ## Electron
 
