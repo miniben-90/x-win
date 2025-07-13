@@ -29,8 +29,7 @@ pub fn get_active_window() -> Result<WindowInfo> {
   if response.is_err() {
     return Err(
       format!(
-        r#"Unable to get informations of active window from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed or enabled."#,
-        GNOME_XWIN_UUID
+        r#"Unable to get informations of active window from "{GNOME_XWIN_UUID}" extension via GNOME Shell. Please verify that the extension is correctly installed or enabled."#
       ).into()
     );
   }
@@ -54,8 +53,7 @@ pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
   if response.is_err() {
     return Err(
       format!(
-        r#"Unable to get informations of open windows from "{}" extension via GNOME Shell. Please verify that the extension is correctly installed or enabled."#,
-        GNOME_XWIN_UUID
+        r#"Unable to get informations of open windows from "{GNOME_XWIN_UUID}" extension via GNOME Shell. Please verify that the extension is correctly installed or enabled."#
       ).into()
     );
   }
@@ -114,13 +112,12 @@ pub fn install_extension() -> Result<bool> {
     };
 
     let script: String = format!(
-      r#"{}
+      r#"{script}
 
-{}
+{GNOME_XWIN_EXTENSION_COMMON_SCRIPT}
 
-{}
-"#,
-      script, GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_GET_ICON_SCRIPT
+{GNOME_XWIN_GET_ICON_SCRIPT}
+"#
     );
 
     script
@@ -167,8 +164,7 @@ fn toggle_extension(enable: bool) -> Result<bool> {
   }
 
   Err(format!(
-        "Unable to enable or disable the {} extension via GNOME Shell. Please verify that the extension is correctly installed.",
-        GNOME_XWIN_UUID
+        "Unable to enable or disable the {GNOME_XWIN_UUID} extension via GNOME Shell. Please verify that the extension is correctly installed."
     ).into())
 }
 
@@ -205,8 +201,7 @@ pub fn is_enabled_extension() -> Result<bool> {
 
   Err(
     format!(
-      r#"Unable to get information for "{}" extension via GNOME Shell. Please verify that the extension is correctly installed."#,
-      GNOME_XWIN_UUID
+      r#"Unable to get information for "{GNOME_XWIN_UUID}" extension via GNOME Shell. Please verify that the extension is correctly installed."#
     ).into()
   )
 }

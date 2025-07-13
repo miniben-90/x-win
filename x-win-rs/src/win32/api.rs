@@ -196,7 +196,7 @@ impl Api for WindowsAPI {
             cleanup_hicons(phiconlarge, phiconsmall);
 
             return Ok(IconInfo {
-              data: format!("data:image/png;base64,{}", data).to_owned(),
+              data: format!("data:image/png;base64,{data}").to_owned(),
               height: cbitmap.bmHeight as u32,
               width: cbitmap.bmWidth as u32,
             });
@@ -567,7 +567,7 @@ fn get_browser_url(hwnd: HWND, exec_name: String) -> crate::common::result::Resu
           let element: IUIAutomationElement = element?;
           /* Chromium part to get url from search bar */
           match &exec_name.to_lowercase() {
-            x if x.contains("firefox") => {
+            x if x.contains("firefox") || x.contains("librewolf") => {
               url = get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())?;
             }
             x if x.contains("msedge") => {
@@ -690,6 +690,7 @@ fn is_browser(browser_name: &str) -> bool {
       | "beaker"
       | "beaker browser"
       | "firefox"
+      | "librewolf"
   )
 }
 

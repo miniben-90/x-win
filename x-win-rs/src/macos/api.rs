@@ -90,7 +90,7 @@ impl Api for MacosAPI {
             let bytes = unsafe { pngdata.as_bytes_unchecked() };
             let data = BASE64_STANDARD.encode(bytes);
             let icon = IconInfo {
-              data: format!("data:image/png;base64,{}", data),
+              data: format!("data:image/png;base64,{data}"),
               width: imagesize.width as u32,
               height: imagesize.height as u32,
             };
@@ -332,15 +332,10 @@ fn get_browser_url(process_id: u32) -> String {
   }
 
   if is_browser_bundle_id(&bundle_identifier) {
-    let mut command = format!(
-      "tell app id \"{}\" to get URL of active tab of front window",
-      bundle_identifier
-    );
+    let mut command =
+      format!("tell app id \"{bundle_identifier}\" to get URL of active tab of front window");
     if is_from_document(&bundle_identifier) {
-      command = format!(
-        "tell app id \"{}\" to get URL of front document",
-        bundle_identifier
-      );
+      command = format!("tell app id \"{bundle_identifier}\" to get URL of front document");
     }
     // else if is_firefox_browser(&bundle_identifier)
     // {

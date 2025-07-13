@@ -1,5 +1,3 @@
-#![deny(unused_imports)]
-
 mod common_api;
 mod gnome_shell;
 mod wayland_api;

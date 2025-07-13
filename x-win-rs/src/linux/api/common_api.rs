@@ -29,7 +29,7 @@ pub fn is_wayland_desktop() -> bool {
  * Get usage memory of window from proc
  */
 pub fn get_window_memory_usage(pid: u32) -> Result<u32> {
-  let mut statm_file = File::open(format!("/proc/{}/statm", pid))?;
+  let mut statm_file = File::open(format!("/proc/{pid}/statm"))?;
   let mut statm_content = String::new();
   statm_file.read_to_string(&mut statm_content)?;
   let statm_parts: Vec<&str> = statm_content.split(" ").collect();
@@ -41,7 +41,7 @@ pub fn get_window_memory_usage(pid: u32) -> Result<u32> {
  * Recover path and name of application from proc
  */
 pub fn get_window_path_name(pid: u32) -> Result<(String, String)> {
-  let executable_path = read_link(format!("/proc/{}/exe", pid))?;
+  let executable_path = read_link(format!("/proc/{pid}/exe"))?;
   let path = executable_path.display().to_string();
   let name = match executable_path.file_name() {
     Some(file_name) => file_name.to_string_lossy().to_string(),

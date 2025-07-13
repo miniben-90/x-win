@@ -153,7 +153,7 @@ impl Api for X11Api {
                 let _ = buffer.write_to(&mut std::io::Cursor::new(&mut png_data), ImageFormat::Png);
                 let data = base64::prelude::BASE64_STANDARD.encode(png_data);
                 return Ok(IconInfo {
-                  data: format!("data:image/png;base64,{}", data).to_owned(),
+                  data: format!("data:image/png;base64,{data}").to_owned(),
                   height: height as u32,
                   width: width as u32,
                 });
