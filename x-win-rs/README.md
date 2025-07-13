@@ -200,6 +200,7 @@ It is possible to get URL of browsers window for macOS and Windows.
 | maxthon |  |
 | beaker |  |
 | beaker browser |  |
+| LibreWolf | ✅ |
 
 ### macOS
 
