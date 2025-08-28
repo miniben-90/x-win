@@ -34,17 +34,16 @@ pub fn get_active_window() -> Result<WindowInfo> {
     );
   }
 
-  let response = response.unwrap();
-
-  if !response.is_empty() {
-    let response: serde_json::Value = serde_json::from_str(response.as_str())?;
-    match response.is_object() {
-      true => Ok(value_to_window_info(&response)),
-      false => Err(String::from("No data founded for active window").into()),
+  if let Ok(response) = response {
+    if !response.is_empty() {
+      let response: serde_json::Value = serde_json::from_str(response.as_str())?;
+      return match response.is_object() {
+        true => Ok(value_to_window_info(&response)),
+        false => Err(String::from("No data founded for active window").into()),
+      };
     }
-  } else {
-    Ok(init_entity())
   }
+  Ok(init_entity())
 }
 
 pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
@@ -208,8 +207,7 @@ pub fn is_enabled_extension() -> Result<bool> {
 
 pub fn is_installed_extension() -> Result<bool> {
   let response = request_extension_info();
-  if response.is_ok() {
-    let response = response.unwrap();
+  if let Ok(response) = response {
     let response: String = response.body().deserialize().unwrap_or_default();
     if !response.is_empty() {
       return Ok(true);

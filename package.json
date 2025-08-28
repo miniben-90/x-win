@@ -75,5 +75,5 @@
     "clippy:napi": "cargo clippy -- -D warnings",
     "clippy": "yarn clippy:rs && yarn clippy:napi"
   },
-  "packageManager": "yarn@4.9.1"
+  "packageManager": "yarn@4.9.4"
 }

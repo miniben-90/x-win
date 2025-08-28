@@ -340,7 +340,7 @@ export declare function isInstalledExtension(): boolean
 /**
  * Struct to store all informations of the window
 */
-export declare class WindowInfo {
+export class WindowInfo {
   id: number
   os: string
   title: string
