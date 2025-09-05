@@ -24,9 +24,11 @@ on:
 
 jobs:
   check-lint:
-    name: 'Check lint of the code'
+    name: 'Check quality of the code'
     runs-on: ubuntu-latest
     steps:
+      # Add actions/checkout
+      - uses: actions/checkout@v4
       # Setup node
       - name: Setup node
         uses: actions/setup-node@v4
