@@ -4,6 +4,7 @@ env:
   DEBUG: napi:*
   APP_NAME: x-win
   MACOSX_DEPLOYMENT_TARGET: '10.13'
+  CARGO_INCREMENTAL: '1'
 
 on:
   push:
@@ -21,34 +22,39 @@ on:
   pull_request: null
   # release:
   #   types: [published]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  check-lint:
-    name: 'Check quality of the code'
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-      # Add actions/checkout
       - uses: actions/checkout@v5
-      # Setup node
+
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          check-latest: true
-      # Install Rust version
-      - name: Install Rust
+          cache: 'yarn'
+
+      - name: Install
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-      # Install dependencies
+          components: clippy, rustfmt
+
       - name: Install dependencies
         run: yarn install
-      # Check format
-      - name: Check format
-        run: yarn format
-      # Check lint
-      - name: Check lint
+
+      - name: Oxlint
         run: yarn lint
+
+      - name: Cargo fmt
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-features -- -D warnings
 
   build:
     strategy:
@@ -132,7 +138,7 @@ jobs:
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
     needs:
-      - check-lint
+      - lint
     steps:
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
@@ -185,14 +191,6 @@ jobs:
         if: ${{ !matrix.settings.docker }}
         run: yarn install
 
-      # Lint Rust code
-      - name: Ceheck lint Rust
-        run: cargo fmt -- --check
-
-      # Check clippy code
-      - name: Check clippy code
-        run: cargo clippy --all-features -- -D warnings
-
       # Build the project
       - name: Build
         if: ${{ !matrix.settings.docker }}
@@ -219,7 +217,7 @@ jobs:
   test:
     name: Test bindings on ${{ matrix.settings.target }} (${{ matrix.settings.host }}) - node@${{ matrix.node-version }}
     needs:
-      - check-lint
+      - lint
       - build
     strategy:
       fail-fast: false
@@ -313,7 +311,7 @@ jobs:
   universal-macOS:
     name: Build universal macOS binary
     needs:
-      - check-lint
+      - lint
       - build
       - test
     runs-on: macos-latest
@@ -361,7 +359,7 @@ jobs:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       TAG: ${{ github.ref_name }}
     needs:
-      - check-lint
+      - lint
       - build
       - test
       - universal-macOS
