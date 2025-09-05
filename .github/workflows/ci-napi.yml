@@ -28,14 +28,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Add actions/checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Setup node
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           check-latest: true
-          cache: yarn
       # Install Rust version
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -55,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20]
+        node-version: [22]
         settings:
           # Build matrix for MacOS (x64)
           - host: macos-latest
@@ -143,7 +142,7 @@ jobs:
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
 
       # Add actions/checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup node version from matrix.node and install deps
       - name: Setup node
@@ -244,11 +243,11 @@ jobs:
             target: x86_64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:latest
 
-        node-version: [18, 20]
+        node-version: [18, 20, 22]
 
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup yarn to run as x86_64 for darwin arm64
       - name: Setup node x86_64
@@ -319,12 +318,12 @@ jobs:
       - test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           check-latest: true
           cache: yarn
 
@@ -367,13 +366,13 @@ jobs:
       - test
       - universal-macOS
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup node for publishing on npmjs
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           check-latest: true
           cache: yarn
           registry-url: 'https://registry.npmjs.org'
