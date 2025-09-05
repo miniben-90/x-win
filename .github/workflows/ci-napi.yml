@@ -23,12 +23,37 @@ on:
   #   types: [published]
 
 jobs:
+  check-lint:
+    name: 'Check lint of the code'
+    runs-on: ubuntu-latest
+    steps:
+      # Setup node
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          check-latest: true
+          cache: yarn
+      # Install Rust version
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      # Install dependencies
+      - name: Install dependencies
+        run: yarn install
+      # Check format
+      - name: Check format
+        run: yarn format
+      # Check lint
+      - name: Check lint
+        run: yarn lint
+
   build:
     strategy:
       fail-fast: false
       matrix:
         node-version: [20]
-
         settings:
           # Build matrix for MacOS (x64)
           - host: macos-latest
@@ -105,6 +130,8 @@ jobs:
 
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
+    needs:
+      - check-lint
     steps:
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
@@ -165,12 +192,6 @@ jobs:
       - name: Check clippy code
         run: cargo clippy --all-features -- -D warnings
 
-      - name: 'Check format'
-        run: yarn format
-
-      - name: 'Check lint'
-        run: yarn lint
-
       # Build the project
       - name: Build
         if: ${{ !matrix.settings.docker }}
@@ -197,6 +218,7 @@ jobs:
   test:
     name: Test bindings on ${{ matrix.settings.target }} (${{ matrix.settings.host }}) - node@${{ matrix.node-version }}
     needs:
+      - check-lint
       - build
     strategy:
       fail-fast: false
@@ -290,6 +312,7 @@ jobs:
   universal-macOS:
     name: Build universal macOS binary
     needs:
+      - check-lint
       - build
       - test
     runs-on: macos-latest
@@ -337,6 +360,7 @@ jobs:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       TAG: ${{ github.ref_name }}
     needs:
+      - check-lint
       - build
       - test
       - universal-macOS
