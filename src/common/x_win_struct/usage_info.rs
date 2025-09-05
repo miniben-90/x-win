@@ -1,5 +1,3 @@
-#![deny(unused_imports)]
-
 /**
  * Struct to store usage data of the window
  */

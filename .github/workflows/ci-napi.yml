@@ -4,14 +4,15 @@ env:
   DEBUG: napi:*
   APP_NAME: x-win
   MACOSX_DEPLOYMENT_TARGET: '10.13'
+  CARGO_INCREMENTAL: '1'
 
 on:
   push:
     branches:
       - main
     tags:
-      - "napi-*.*.*"
-      - "napi-v*.*.*"
+      - 'napi-*.*.*'
+      - 'napi-v*.*.*'
     paths-ignore:
       - '**/*.md'
       - LICENSE
@@ -21,14 +22,45 @@ on:
   pull_request: null
   # release:
   #   types: [published]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Oxlint
+        run: yarn lint
+
+      - name: Cargo fmt
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-features -- -D warnings
+
   build:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20]
-
+        node-version: [22]
         settings:
           # Build matrix for MacOS (x64)
           - host: macos-latest
@@ -66,13 +98,15 @@ jobs:
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-zig
             build: |-
               set -e &&
+              rustup install 1.88.0 &&
+              rustup default 1.88.0 &&
               sh /usr/local/dokcer-install-deps.sh &&
               cp -r /usr/lib/x86_64-linux-gnu/*xcb* /usr/x86_64-unknown-linux-gnu/x86_64-unknown-linux-gnu/sysroot/usr/lib/ &&
               cp -r /usr/include/xcb /usr/x86_64-unknown-linux-gnu/x86_64-unknown-linux-gnu/sysroot/usr/include/ &&
               cp -r /usr/lib/x86_64-linux-gnu/*xcb* /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/ &&
               cp -r /usr/include/xcb /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/include/ &&
               yarn &&
-              yarn build --target x86_64-unknown-linux-gnu --zig --zig-abi-suffix=2.18 &&
+              yarn build --target x86_64-unknown-linux-gnu.2.18 -x &&
               strip *.node
 
           # Build for linux (using Ubuntu) (x64)
@@ -105,6 +139,8 @@ jobs:
 
     name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
     runs-on: ${{ matrix.settings.host }}
+    needs:
+      - lint
     steps:
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
@@ -114,7 +150,7 @@ jobs:
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
 
       # Add actions/checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup node version from matrix.node and install deps
       - name: Setup node
@@ -157,14 +193,6 @@ jobs:
         if: ${{ !matrix.settings.docker }}
         run: yarn install
 
-      # Lint Rust code
-      - name: Ceheck lint Rust
-        run: cargo fmt -- --check
-
-      # Check clippy code
-      - name: Check clippy code
-        run: cargo clippy --all-features -- -D warnings
-
       # Build the project
       - name: Build
         if: ${{ !matrix.settings.docker }}
@@ -191,6 +219,7 @@ jobs:
   test:
     name: Test bindings on ${{ matrix.settings.target }} (${{ matrix.settings.host }}) - node@${{ matrix.node-version }}
     needs:
+      - lint
       - build
     strategy:
       fail-fast: false
@@ -214,11 +243,11 @@ jobs:
             target: x86_64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:latest
 
-        node-version: [18, 20]
+        node-version: [18, 20, 22]
 
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup yarn to run as x86_64 for darwin arm64
       - name: Setup node x86_64
@@ -284,16 +313,17 @@ jobs:
   universal-macOS:
     name: Build universal macOS binary
     needs:
+      - lint
       - build
       - test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           check-latest: true
           cache: yarn
 
@@ -331,17 +361,18 @@ jobs:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       TAG: ${{ github.ref_name }}
     needs:
+      - lint
       - build
       - test
       - universal-macOS
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup node for publishing on npmjs
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           check-latest: true
           cache: yarn
           registry-url: 'https://registry.npmjs.org'
@@ -350,7 +381,7 @@ jobs:
           # Install dependencies
       - name: Install dependencies
         run: yarn install
-          
+
       # Update package.json and Cargo.toml version
       - name: Set version to package.json
         run: node .scripts/before-publish.cjs
