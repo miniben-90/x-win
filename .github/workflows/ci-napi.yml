@@ -104,7 +104,7 @@ jobs:
               cp -r /usr/lib/x86_64-linux-gnu/*xcb* /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/ &&
               cp -r /usr/include/xcb /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/include/ &&
               yarn &&
-              yarn build --target x86_64-unknown-linux-gnu --zig --zig-abi-suffix=2.18 &&
+              yarn build --target x86_64-unknown-linux-gnu.2.18 -x &&
               strip *.node
 
           # Build for linux (using Ubuntu) (x64)
