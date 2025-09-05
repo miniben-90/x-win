@@ -129,3 +129,5 @@ Cargo.lock
 !.yarn/sdks
 !.yarn/versions
 /npm
+./benchmark/package-lock.json
+./__test__/package-lock.json
