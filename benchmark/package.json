@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@miniben90/x-win": "3.1.0",
+    "get-windows": "9.2.3"
+  }
+}

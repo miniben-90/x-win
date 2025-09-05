@@ -162,11 +162,11 @@ After executing this function, it's vital to **restart the user session** to loa
 
 It is possible to know if the extension is installed or / and enabled using `x_win::is_installed_extension()` and `x_win::is_enabled_extension()`.
 
-| Gnome Distrib. | Tested |
-|---|---|
-| Fedora Workstation 39 | ✅ |
-| Ubuntu 22.04.4 Desktop | ✅ |
-| Debian 12 Desktop | ✅ |
+| Gnome Distrib.         | Tested |
+| ---------------------- | ------ |
+| Fedora Workstation 39  | ✅     |
+| Ubuntu 22.04.4 Desktop | ✅     |
+| Debian 12 Desktop      | ✅     |
 
 ## Darwin
 
@@ -182,56 +182,56 @@ It is possible to get URL of browsers window for macOS and Windows.
 
 ### Windows
 
-| Browser name | Tested |
-|---|---|
-| firefox | ✅ |
-| firefox developer edition | ✅ |
-| google chrome | ✅ |
-| microsoft edge | ✅ |
-| opera software - opera | ✅ |
-| opera software - opera GX | ✅ |
-| brave |  |
-| vivaldi |  |
-| iron |  |
-| epic |  |
-| chromium | ✅ |
-| ucozmedia |  |
-| blisk |  |
-| maxthon |  |
-| beaker |  |
-| beaker browser |  |
-| LibreWolf | ✅ |
+| Browser name              | Tested |
+| ------------------------- | ------ |
+| firefox                   | ✅     |
+| firefox developer edition | ✅     |
+| google chrome             | ✅     |
+| microsoft edge            | ✅     |
+| opera software - opera    | ✅     |
+| opera software - opera GX | ✅     |
+| brave                     |        |
+| vivaldi                   |        |
+| iron                      |        |
+| epic                      |        |
+| chromium                  | ✅     |
+| ucozmedia                 |        |
+| blisk                     |        |
+| maxthon                   |        |
+| beaker                    |        |
+| beaker browser            |        |
+| LibreWolf                 | ✅     |
 
 ### macOS
 
 It will use AppleScript to get informations for chromium browsers and safari
 
-***For the moment Firefox and firefox developer edition are not supported***
+**_For the moment Firefox and firefox developer edition are not supported_**
 
-| Browser name | Tested |
-|---|---|
-| Safari | ✅ |
-| Safari Technology Preview |  |
-| google Chrome | ✅ |
-| google Chrome beta |  |
-| google Chrome dev |  |
-| google Chrome canary |  |
-| brave Browser |  |
-| brave Browser beta |  |
-| brave Browser nightly |  |
-| microsoft edge | ✅ |
-| microsoft edge Beta |  |
-| microsoft edge Dev |  |
-| microsoft edge Canary |  |
-| mighty |  |
-| ghost browser |  |
-| bookry wavebox |  |
-| pushplaylabs sidekick |  |
-| opera software - Opera | ✅ |
-| opera software - OperaNext |  |
-| opera software - OperaDeveloper |  |
-| opera software - OperaGX | ✅ |
-| Vivaldi |  |
+| Browser name                    | Tested |
+| ------------------------------- | ------ |
+| Safari                          | ✅     |
+| Safari Technology Preview       |        |
+| google Chrome                   | ✅     |
+| google Chrome beta              |        |
+| google Chrome dev               |        |
+| google Chrome canary            |        |
+| brave Browser                   |        |
+| brave Browser beta              |        |
+| brave Browser nightly           |        |
+| microsoft edge                  | ✅     |
+| microsoft edge Beta             |        |
+| microsoft edge Dev              |        |
+| microsoft edge Canary           |        |
+| mighty                          |        |
+| ghost browser                   |        |
+| bookry wavebox                  |        |
+| pushplaylabs sidekick           |        |
+| opera software - Opera          | ✅     |
+| opera software - OperaNext      |        |
+| opera software - OperaDeveloper |        |
+| opera software - OperaGX        | ✅     |
+| Vivaldi                         |        |
 
 <hr class="padding-top: 30px;padding-bottom:30px">
 
@@ -239,6 +239,6 @@ It will use AppleScript to get informations for chromium browsers and safari
 
 **Project Inspirations:**
 
-* [active-win](https://github.com/sindresorhus/active-win)
-* [active-win-pos-rs](https://github.com/dimusic/active-win-pos-rs)
-* This project was generated with [@napi-rs/cli](https://github.com/napi-rs)
+- [active-win](https://github.com/sindresorhus/active-win)
+- [active-win-pos-rs](https://github.com/dimusic/active-win-pos-rs)
+- This project was generated with [@napi-rs/cli](https://github.com/napi-rs)

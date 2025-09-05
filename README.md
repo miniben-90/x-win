@@ -27,11 +27,11 @@ yarn add @miniben90/x-win
 `exemple.ts`:
 
 ```typescript
-import { activeWindow, type WindowInfo } from '@miniben90/x-win';
+import { activeWindow, type WindowInfo } from '@miniben90/x-win'
 
-const currentWindow: WindowInfo = activeWindow();
+const currentWindow: WindowInfo = activeWindow()
 
-console.log(currentWindow);
+console.log(currentWindow)
 ```
 
 `response`:
@@ -64,13 +64,11 @@ console.log(currentWindow);
 You can also use asynchronous methods instead. To do so, you just have to use `activeWindowAsync`, for example:
 
 ```typescript
-import { activeWindowAsync, type WindowInfo } from '@miniben90/x-win';
+import { activeWindowAsync, type WindowInfo } from '@miniben90/x-win'
 
-activeWindow()
-.then((currentWindow: WindowInfo) => {
-  console.log(currentWindow);
-});
-
+activeWindow().then((currentWindow: WindowInfo) => {
+  console.log(currentWindow)
+})
 ```
 
 ### Get a list of open windows with information
@@ -78,78 +76,78 @@ activeWindow()
 `exemple.ts`:
 
 ```typescript
-import { openWindows, type WindowInfo } from '@miniben90/x-win';
+import { openWindows, type WindowInfo } from '@miniben90/x-win'
 
-const windows: WindowInfo[] = openWindows();
+const windows: WindowInfo[] = openWindows()
 
-console.log(windows);
+console.log(windows)
 ```
 
 `response`:
 
 ```javascript
-[{
-  id: 26148,
-  info: {
-    execName: "Code",
-    name: "Visual Studio Code",
-    path: "C:\\Users\\miniben\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
-    processId: 26148
+;[
+  {
+    id: 26148,
+    info: {
+      execName: 'Code',
+      name: 'Visual Studio Code',
+      path: 'C:\\Users\\miniben\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe',
+      processId: 26148,
+    },
+    os: 'win32',
+    position: {
+      height: 1048,
+      width: 1936,
+      x: -8,
+      y: -8,
+      isFullScreen: true,
+    },
+    title: '● README.md - x-win - Visual Studio Code',
+    usage: {
+      memory: 113270784,
+    },
+    url: '',
   },
-  os: "win32",
-  position: {
-    height: 1048,
-    width: 1936,
-    x: -8,
-    y: -8,
-    isFullScreen: true
-  },
-  title: "● README.md - x-win - Visual Studio Code",
-  usage: {
-    memory: 113270784
-  },
-  url: ""
-}]
+]
 ```
 
 You can also use asynchronous methods instead. To do so, you just have to use `openWindowsAsync`, for example:
 
 ```typescript
-import { openWindowsAsync, type WindowInfo } from '@miniben90/x-win';
+import { openWindowsAsync, type WindowInfo } from '@miniben90/x-win'
 
-openWindowsAsync()
-.then((windows: WindowInfo[]) => {
-  console.log(windows);
-});
-
+openWindowsAsync().then((windows: WindowInfo[]) => {
+  console.log(windows)
+})
 ```
 
 ### Subscribe to get the current active window
 
 Thread will be start to check every `100ms` for a new active window (checking window title, window id and process id).
 
-* `subscribeActiveWindow`: Create a subscription with a callback function
-* `unsubscribeActiveWindow`: Remove a specific subscription
-* `unsubscribeAllActiveWindow`: Remove all threads
+- `subscribeActiveWindow`: Create a subscription with a callback function
+- `unsubscribeActiveWindow`: Remove a specific subscription
+- `unsubscribeAllActiveWindow`: Remove all threads
 
 ```typescript
-import { subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win';
+import { subscribeActiveWindow, unsubscribeActiveWindow, unsubscribeAllActiveWindow } from '@miniben90/x-win'
 
 const a = subscribeActiveWindow((error, activeWindow) => {
-  console.log('test a', activeWindow);
-});
+  console.log('test a', activeWindow)
+})
 
 const b = subscribeActiveWindow((error, activeWindow) => {
-  console.log('test b', activeWindow);
-});
+  console.log('test b', activeWindow)
+})
 
 const c = subscribeActiveWindow((error, activeWindow) => {
-  console.log('test c', activeWindow);
-});
+  console.log('test c', activeWindow)
+})
 
-setTimeout(() => unsubscribeActiveWindow(c), 5000);
+setTimeout(() => unsubscribeActiveWindow(c), 5000)
 
-setTimeout(() => unsubscribeAllActiveWindow(), 10000);
+setTimeout(() => unsubscribeAllActiveWindow(), 10000)
 ```
 
 ### Get icon from `WindoInfo`
@@ -160,11 +158,11 @@ The icon will be stored in `IconInfo.data` in base64 PNG format.
 Example:
 
 ```typescript
-import { activeWindow, type WindowInfo, type IconInfo } from '@miniben90/x-win';
+import { activeWindow, type WindowInfo, type IconInfo } from '@miniben90/x-win'
 
-const window: WindowInfo = activeWindow();
-const iconInfo: IconInfo = window.getIcon();
-console.log(console);
+const window: WindowInfo = activeWindow()
+const iconInfo: IconInfo = window.getIcon()
+console.log(console)
 ```
 
 Response:
@@ -200,11 +198,11 @@ After executing this function, it's vital to **restart the user session** to loa
 
 It is possible to know if the extension is installed or / and enabled using `isInstalledExtension()` and `isEnabledExtension()`.
 
-| Gnome Distrib. | Tested |
-|---|---|
-| Fedora Workstation 39 | ✅ |
-| Ubuntu 22.04.4 Desktop | ✅ |
-| Debian 12 Desktop | ✅ |
+| Gnome Distrib.         | Tested |
+| ---------------------- | ------ |
+| Fedora Workstation 39  | ✅     |
+| Ubuntu 22.04.4 Desktop | ✅     |
+| Debian 12 Desktop      | ✅     |
 
 ## Darwin
 
@@ -220,74 +218,74 @@ It is possible to get URL of browsers window for macOS and Windows.
 
 ### Windows
 
-| Browser name | Tested |
-|---|---|
-| firefox | ✅ |
-| firefox developer edition | ✅ |
-| google chrome | ✅ |
-| microsoft edge | ✅ |
-| opera software - opera | ✅ |
-| opera software - opera GX | ✅ |
-| brave |  |
-| vivaldi |  |
-| iron |  |
-| epic |  |
-| chromium | ✅ |
-| ucozmedia |  |
-| blisk |  |
-| maxthon |  |
-| beaker |  |
-| beaker browser |  |
-| LibreWolf | ✅ |
+| Browser name              | Tested |
+| ------------------------- | ------ |
+| firefox                   | ✅     |
+| firefox developer edition | ✅     |
+| google chrome             | ✅     |
+| microsoft edge            | ✅     |
+| opera software - opera    | ✅     |
+| opera software - opera GX | ✅     |
+| brave                     |        |
+| vivaldi                   |        |
+| iron                      |        |
+| epic                      |        |
+| chromium                  | ✅     |
+| ucozmedia                 |        |
+| blisk                     |        |
+| maxthon                   |        |
+| beaker                    |        |
+| beaker browser            |        |
+| LibreWolf                 | ✅     |
 
 ### macOS
 
 It will use AppleScript to get informations for chromium browsers and safari
 
-***For the moment Firefox and firefox developer edition are not supported***
+**_For the moment Firefox and firefox developer edition are not supported_**
 
-| Browser name | Tested |
-|---|---|
-| Safari | ✅ |
-| Safari Technology Preview |  |
-| google Chrome | ✅ |
-| google Chrome beta |  |
-| google Chrome dev |  |
-| google Chrome canary |  |
-| brave Browser |  |
-| brave Browser beta |  |
-| brave Browser nightly |  |
-| microsoft edge | ✅ |
-| microsoft edge Beta |  |
-| microsoft edge Dev |  |
-| microsoft edge Canary |  |
-| mighty |  |
-| ghost browser |  |
-| bookry wavebox |  |
-| pushplaylabs sidekick |  |
-| opera software - Opera | ✅ |
-| opera software - OperaNext |  |
-| opera software - OperaDeveloper |  |
-| opera software - OperaGX | ✅ |
-| Vivaldi |  |
+| Browser name                    | Tested |
+| ------------------------------- | ------ |
+| Safari                          | ✅     |
+| Safari Technology Preview       |        |
+| google Chrome                   | ✅     |
+| google Chrome beta              |        |
+| google Chrome dev               |        |
+| google Chrome canary            |        |
+| brave Browser                   |        |
+| brave Browser beta              |        |
+| brave Browser nightly           |        |
+| microsoft edge                  | ✅     |
+| microsoft edge Beta             |        |
+| microsoft edge Dev              |        |
+| microsoft edge Canary           |        |
+| mighty                          |        |
+| ghost browser                   |        |
+| bookry wavebox                  |        |
+| pushplaylabs sidekick           |        |
+| opera software - Opera          | ✅     |
+| opera software - OperaNext      |        |
+| opera software - OperaDeveloper |        |
+| opera software - OperaGX        | ✅     |
+| Vivaldi                         |        |
 
 ## Electron
 
-* To prevent potential crashes and issues, it's recommended to execute recovery operations within a worker thread ([https://nodejs.org/api/worker_threads.html](https://nodejs.org/api/worker_threads.html))
-* For macOS, you can utilize functions to check and request screen permissions ([https://www.electronjs.org/fr/docs/latest/api/system-preferences](https://www.electronjs.org/fr/docs/latest/api/system-preferences))
-* When building your application, it’s important to specify all optional packages to be moved to `asar.unpack` to prevent issues during the signing process. [https://www.electronforge.io/config/plugins/auto-unpack-natives](https://www.electronforge.io/config/plugins/auto-unpack-natives) [https://www.electron.build/app-builder-lib.interface.configuration#asarunpack](https://www.electron.build/app-builder-lib.interface.configuration#asarunpack)
+- To prevent potential crashes and issues, it's recommended to execute recovery operations within a worker thread ([https://nodejs.org/api/worker_threads.html](https://nodejs.org/api/worker_threads.html))
+- For macOS, you can utilize functions to check and request screen permissions ([https://www.electronjs.org/fr/docs/latest/api/system-preferences](https://www.electronjs.org/fr/docs/latest/api/system-preferences))
+- When building your application, it’s important to specify all optional packages to be moved to `asar.unpack` to prevent issues during the signing process. [https://www.electronforge.io/config/plugins/auto-unpack-natives](https://www.electronforge.io/config/plugins/auto-unpack-natives) [https://www.electron.build/app-builder-lib.interface.configuration#asarunpack](https://www.electron.build/app-builder-lib.interface.configuration#asarunpack)
 
 ### Questions
 
-* Why can't I find optional dependencies when I build my application?
+- Why can't I find optional dependencies when I build my application?
 
 When setting up CI/CD to build your application, it's important to enforce the installation of sub-packages for each system to prevent any missing components.
 
 examples:
 
-* `npm install --save-dev @miniben90/x-win-win32-x64-msvc @miniben90/x-win-win32-ia32-msvc @miniben90/x-win-win32-arm64-msvc --ignore-platform --ignore-engines` for win32 system
-* `npm install --save-dev @miniben90/x-win-darwin-arm64 @miniben90/x-win-darwin-universal @miniben90/x-win-darwin-x64 --ignore-platform --ignore-engines` for Darwin system
-* `npm install --save-dev @miniben90/x-win-linux-x64-gnu @miniben90/x-win-linux-x64-musl4 --ignore-platform --ignore-engines` for Linux system
+- `npm install --save-dev @miniben90/x-win-win32-x64-msvc @miniben90/x-win-win32-ia32-msvc @miniben90/x-win-win32-arm64-msvc --ignore-platform --ignore-engines` for win32 system
+- `npm install --save-dev @miniben90/x-win-darwin-arm64 @miniben90/x-win-darwin-universal @miniben90/x-win-darwin-x64 --ignore-platform --ignore-engines` for Darwin system
+- `npm install --save-dev @miniben90/x-win-linux-x64-gnu @miniben90/x-win-linux-x64-musl4 --ignore-platform --ignore-engines` for Linux system
 
 <hr class="padding-top: 30px;padding-bottom:30px">
 
@@ -295,6 +293,6 @@ examples:
 
 **Project Inspirations:**
 
-* [active-win](https://github.com/sindresorhus/active-win)
-* [active-win-pos-rs](https://github.com/dimusic/active-win-pos-rs)
-* This project was generated with [@napi-rs/cli](https://github.com/napi-rs)
+- [active-win](https://github.com/sindresorhus/active-win)
+- [active-win-pos-rs](https://github.com/dimusic/active-win-pos-rs)
+- This project was generated with [@napi-rs/cli](https://github.com/napi-rs)

@@ -2,19 +2,19 @@ name: Build & Test & publich Rust package "x-win"
 
 env:
   APP_NAME: x-win
-  MACOSX_DEPLOYMENT_TARGET: "10.13"
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
 
 on:
   push:
     branches:
       - main
     tags:
-      - "rust-*.*.*"
-      - "rust-v*.*.*"
+      - 'rust-*.*.*'
+      - 'rust-v*.*.*'
     paths-ignore:
-      - "**/*.md"
+      - '**/*.md'
       - LICENSE
-      - "**/*.gitignore"
+      - '**/*.gitignore'
       - .editorconfig
       - docs/**
   pull_request: null
@@ -45,7 +45,7 @@ jobs:
           # Build matrix for Windows (x32)
           - host: windows-latest
             target: i686-pc-windows-msvc
-            architecture: "x86"
+            architecture: 'x86'
 
           # Build matrix for Windows (arm64)
           - host: windows-latest
@@ -174,7 +174,7 @@ jobs:
 
       - name: Install cargo-bump
         run: cargo install cargo-bump
-      
+
       - name: Generate version from ${{ github.ref_name }}
         run: |
           if [[ "${REF_NAME}" =~ ^rust-?v?([0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9]+)?)$ ]]; then

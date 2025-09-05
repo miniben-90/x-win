@@ -10,8 +10,8 @@ on:
     branches:
       - main
     tags:
-      - "napi-*.*.*"
-      - "napi-v*.*.*"
+      - 'napi-*.*.*'
+      - 'napi-v*.*.*'
     paths-ignore:
       - '**/*.md'
       - LICENSE
@@ -164,6 +164,12 @@ jobs:
       # Check clippy code
       - name: Check clippy code
         run: cargo clippy --all-features -- -D warnings
+
+      - name: 'Check format'
+        run: yarn format
+
+      - name: 'Check lint'
+        run: yarn lint
 
       # Build the project
       - name: Build
@@ -350,7 +356,7 @@ jobs:
           # Install dependencies
       - name: Install dependencies
         run: yarn install
-          
+
       # Update package.json and Cargo.toml version
       - name: Set version to package.json
         run: node .scripts/before-publish.cjs

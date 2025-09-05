@@ -11,14 +11,18 @@
     "LICENSE"
   ],
   "napi": {
-    "name": "x-win",
+    "binaryName": "x-win",
     "triples": {
       "additional": [
-        "aarch64-apple-darwin",
-        "aarch64-pc-windows-msvc",
+        "x86_64-pc-windows-msvc",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-linux-musl",
+        "aarch64-unknown-linux-gnu",
         "i686-pc-windows-msvc",
-        "universal-apple-darwin",
-        "x86_64-unknown-linux-musl"
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-musl",
+        "aarch64-pc-windows-msvc"
       ]
     }
   },
@@ -45,35 +49,79 @@
     "open"
   ],
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.4",
-    "ava": "^6.3.0",
-    "husky": "^9.1.7"
+    "@emnapi/core": "^1.4.5",
+    "@emnapi/runtime": "^1.4.5",
+    "@napi-rs/cli": "^3.1.5",
+    "@oxc-node/core": "^0.0.32",
+    "@taplo/cli": "^0.7.0",
+    "@tybys/wasm-util": "^0.10.0",
+    "ava": "^6.4.1",
+    "chalk": "^5.6.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "npm-run-all2": "^8.0.4",
+    "oxlint": "^1.8.0",
+    "prettier": "^3.6.2",
+    "tinybench": "^5.0.0",
+    "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "*.@(js|ts|tsx)": [
+      "oxlint --fix"
+    ],
+    "*.@(js|ts|tsx|yml|yaml|md|json)": [
+      "prettier --write"
+    ],
+    "*.toml": [
+      "taplo format"
+    ]
   },
   "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "workerThreads": false,
     "timeout": "3m",
     "failFast": true,
-    "files": [
-      "__test__/**/*.mjs"
+    "environmentVariables": {
+      "OXC_TSCONFIG_PATH": "./__test__/tsconfig.json"
+    },
+    "nodeArguments": [
+      "--import",
+      "@oxc-node/core/register"
     ]
   },
   "engines": {
-    "node": ">= 14"
+    "node": ">= 10.16.0 < 11 || >= 11.8.0 < 12 || >= 12.0.0"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "semi": false,
+    "trailingComma": "all",
+    "singleQuote": true,
+    "arrowParens": "always"
   },
   "scripts": {
     "artifacts": "napi artifacts",
+    "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish --skip-gh-release -t npm",
+    "format": "run-p format:prettier format:rs format:toml",
+    "format:prettier": "prettier . -w",
+    "format:toml": "taplo format",
+    "format:rs": "cargo fmt",
+    "lint": "oxlint .",
+    "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
-    "universal": "napi universal",
     "version": "napi version",
     "prepare": "husky",
-    "lint:rs": "cd ./x-win-rs && cargo fmt -- --check",
-    "lint:napi": "cargo fmt -- --check",
-    "lint": "yarn lint:rs && yarn lint:napi",
-    "clippy:rs": "cd ./x-win-rs && cargo clippy -- -D warnings",
-    "clippy:napi": "cargo clippy -- -D warnings",
-    "clippy": "yarn clippy:rs && yarn clippy:napi"
+    "clippy:rs": "cd ./x-win-rs && cargo clippy --all-features -- -D warnings",
+    "clippy:napi": "cargo clippy --all-features -- -D warnings",
+    "clippy": "yarn clippy:rs && yarn clippy:napi",
+    "fmt:rs": "cd ./x-win-rs && cargo fmt -- --check",
+    "fmt:napi": "cargo fmt -- --check",
+    "fmt": "yarn fmt:rs && yarn fmt:napi",
+    "checkall": "yarn format && yarn lint && yarn clippy && yarn fmt"
   },
   "packageManager": "yarn@4.9.4"
 }
