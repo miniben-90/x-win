@@ -622,26 +622,45 @@ fn get_url_for_chromium(
   automation: &IUIAutomation,
   element: &IUIAutomationElement,
 ) -> crate::common::result::Result<String> {
-  unsafe {
+  let search_url = search_url_chromium(automation, element);
+  if let Ok(search_url) = search_url {
+    Ok(search_url)
+  } else {
+    // If not found fallback to use ctrl+l to get it
+    let url = get_url_for_chromium_from_ctrlk(automation, element)?;
+    Ok(url)
+  }
+}
+
+/**
+ * Search url field for chromium system
+ */
+fn search_url_chromium(
+  automation: &IUIAutomation,
+  element: &IUIAutomationElement,
+) -> Result<String, Box<dyn std::error::Error>> {
+  let search_element = unsafe {
     let variant = VARIANT::from(0xC36E);
     let condition = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)?;
-    let test = element.FindFirst(TreeScope_Children, &condition);
-    if test.is_ok() {
-      let test = test?;
-      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
-      if variant.is_ok() {
-        let variant = variant?;
-        if !variant.is_empty() {
-          let url = decode_variant_string(&variant);
-          return Ok(url);
-        }
+    let mut search_element = element.FindFirst(TreeScope_Children, &condition);
+    // If no result in direct search
+    if search_element.is_err() {
+      // Go deeper
+      search_element = element.FindFirst(TreeScope_Descendants, &condition);
+    }
+    search_element
+  };
+  if let Ok(element) = search_element {
+    let variant = unsafe { element.GetCurrentPropertyValue(UIA_ValueValuePropertyId) };
+    if variant.is_ok() {
+      let variant = variant?;
+      if !variant.is_empty() {
+        let url = decode_variant_string(&variant);
+        return Ok(url);
       }
     }
   }
-
-  // If not found fallback to use ctrl+l to get it
-  let url = get_url_for_chromium_from_ctrlk(automation, element)?;
-  Ok(url)
+  Err("No result".into())
 }
 
 /** Fallback to recover url from ctrl+l keyboard access */
