@@ -82,6 +82,7 @@ jobs:
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
             build: |-
               set -e &&
+              rustup update &&
               sh /usr/local/dokcer-install-deps.sh &&
               rustup target add x86_64-unknown-linux-musl &&
               yarn &&
