@@ -243,7 +243,10 @@ export interface ProcessInfo {
  * ```
  *
  */
-export declare function subscribeActiveWindow(callback: (error: Error | null, info: WindowInfo | undefined) => void, interval?: number): number
+export declare function subscribeActiveWindow(
+  callback: (error: Error | null, info: WindowInfo | undefined) => void,
+  interval?: number,
+): number
 
 /** * Uninstall "@mininben90/x-win" Gnome extension.
  * This function will disable and remove extension files.
