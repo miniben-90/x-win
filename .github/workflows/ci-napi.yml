@@ -27,9 +27,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-#
-# Part Bluid
-#
+  #
+  # Part Bluid
+  #
   lint:
     defaults:
       run:
@@ -66,8 +66,7 @@ jobs:
           echo "RUSTUP_HOME=/tmp/rustup" >> $GITHUB_ENV
           echo "/tmp/cargo/bin" >> $GITHUB_PATH
       # Install lib dev required for compilation of the project
-      - name: (Linux) Install libx11 & libxcb for building
-        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
+      - name: Install libx11 & libxcb for building
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
@@ -86,9 +85,9 @@ jobs:
       # Lint the code with clippy
       - name: Lint the code with Clippy (Darwin)
         run: cargo clippy --all-features --target ${{ matrix.settings.target }} -- -D warnings
-#
-# Build part
-#
+  #
+  # Build part
+  #
   build:
     strategy:
       fail-fast: false
