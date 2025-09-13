@@ -60,9 +60,8 @@ jobs:
           echo "/tmp/cargo/bin" >> $GITHUB_PATH
       # Install lib dev required for compilation of the project
       - name: Install libx11 & libxcb for building
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
+        if: startsWith(matrix.settings.target, 'x86_64-unknown-linux')
+        run: bash ${{ github.workspace }}/.github/dokcer-install-deps.sh
       # Install Rust toolchain with clippy and rustfmt
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
