@@ -14,6 +14,7 @@ assignees: miniben-90
 A clear and concise description of what the bug is.
 
 **To Reproduce**
+Set a sample of your code who generate an error
 
 ```typescript
 // Your example here
