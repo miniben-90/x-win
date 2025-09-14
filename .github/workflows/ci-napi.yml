@@ -114,7 +114,7 @@ jobs:
             flags: '-x'
           - name: Linux GNU x64
             target: x86_64-unknown-linux-gnu
-            flags: '--use-napi-cross'
+            flags: '-x'
             glibc: '2.18'
           - name: Linux MUSL x64
             target: x86_64-unknown-linux-musl
