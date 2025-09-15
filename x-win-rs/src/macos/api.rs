@@ -167,12 +167,11 @@ fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
       continue;
     }
 
-    let app: &NSRunningApplication = unsafe {
-      msg_send![
-        class!(NSRunningApplication),
-        runningApplicationWithProcessIdentifier: process_id
-      ]
-    };
+    let app = get_running_application_from_pid(process_id as u32);
+    if app.is_err() {
+      continue;
+    }
+    let app = app.unwrap();
 
     let is_not_active = !unsafe { app.isActive() };
 
@@ -317,34 +316,33 @@ fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
     && window_rect.origin.x.eq(&screen_rect.origin.x)
 }
 
+// Recover browser url using process id to get it
 fn get_browser_url(process_id: u32) -> String {
-  let process_id = process_id as i64;
-  let app: &NSRunningApplication = unsafe {
-    msg_send![
-      class!(NSRunningApplication),
-      runningApplicationWithProcessIdentifier: process_id as i32
-    ]
-  };
+  let app = get_running_application_from_pid(process_id);
 
-  let bundle_identifier = get_bundle_identifier(app);
-  if bundle_identifier.is_empty() {
-    return String::from("");
-  }
+  if app.is_ok() {
+    let app = app.unwrap();
+    let bundle_identifier = get_bundle_identifier(app);
 
-  if is_browser_bundle_id(&bundle_identifier) {
-    let mut command =
-      format!("tell app id \"{bundle_identifier}\" to get URL of active tab of front window");
-    if is_from_document(&bundle_identifier) {
-      command = format!("tell app id \"{bundle_identifier}\" to get URL of front document");
+    if bundle_identifier.is_empty() {
+      return String::from("");
     }
-    // else if is_firefox_browser(&bundle_identifier)
-    // {
-    //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
-    // }
-    execute_applescript(&command)
-  } else {
-    String::from("")
+
+    if is_browser_bundle_id(&bundle_identifier) {
+      let mut command =
+        format!("tell app id \"{bundle_identifier}\" to get URL of active tab of front window");
+      if is_from_document(&bundle_identifier) {
+        command = format!("tell app id \"{bundle_identifier}\" to get URL of front document");
+      }
+      // else if is_firefox_browser(&bundle_identifier)
+      // {
+      //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
+      // }
+      return execute_applescript(&command);
+    }
   }
+
+  String::from("")
 }
 
 fn get_bundle_identifier(app: &NSRunningApplication) -> String {
@@ -419,5 +417,20 @@ fn get_cf_string_value(dict: &CFDictionary, key: &str) -> String {
       Some(value) => (*value).to_string(),
       None => String::from(""),
     }
+  }
+}
+
+fn get_running_application_from_pid(process_id: u32) -> Result<&'static NSRunningApplication> {
+  let process_id = process_id as i64;
+  let app: *mut NSRunningApplication = unsafe {
+    msg_send![
+      class!(NSRunningApplication),
+      runningApplicationWithProcessIdentifier: process_id as i32
+    ]
+  };
+  if app.is_null() {
+    Err(String::from("Application not found with pid").into())
+  } else {
+    Ok(unsafe { &*app })
   }
 }
