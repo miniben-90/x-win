@@ -68,7 +68,7 @@ jobs:
       # Install lib dev required for compilation of the project
       - name: Install libx11 & libxcb for building
         if: startsWith(matrix.settings.target, 'x86_64-unknown-linux')
-        run: bash ${{ github.workspace }}/.github/dokcer-install-deps.sh
+        run: bash ${{ github.workspace }}/.github/docker-install-deps.sh
       # Install Rust toolchain with clippy and rustfmt
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -137,7 +137,7 @@ jobs:
       # Install lib dev required for compilation of the project
       - name: Install libx11 & libxcb for building
         if: startsWith(matrix.settings.target, 'x86_64-unknown-linux')
-        run: bash ${{ github.workspace }}/.github/dokcer-install-deps.sh
+        run: bash ${{ github.workspace }}/.github/docker-install-deps.sh
 
       # Cargo cache
       - name: Cache cargo registry
@@ -197,6 +197,8 @@ jobs:
       # Build for target
       - name: Build ${{ matrix.settings.target }}${{ matrix.settings.glibc && format('.{0}', matrix.settings.glibc) || '' }}
         run: yarn build --target ${{ matrix.settings.target }}${{ matrix.settings.glibc && format('.{0}', matrix.settings.glibc) || '' }} ${{ matrix.settings.flags }}
+        env:
+          XWIN_CACHE_DIR: ${{ github.workspace }}/.xwin
 
       # Upload artifact for the next steps (macos and test)
       - name: Upload artifact
@@ -299,6 +301,8 @@ jobs:
             sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
             cd /work
             yarn test
+
+  # Generate universal for macos
 
   universal-macOS:
     name: Build universal macOS binary

@@ -61,7 +61,7 @@ jobs:
       # Install lib dev required for compilation of the project
       - name: Install libx11 & libxcb for building
         if: startsWith(matrix.settings.target, 'x86_64-unknown-linux')
-        run: bash ${{ github.workspace }}/.github/dokcer-install-deps.sh
+        run: bash ${{ github.workspace }}/.github/docker-install-deps.sh
       # Install Rust toolchain with clippy and rustfmt
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
