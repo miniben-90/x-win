@@ -320,15 +320,12 @@ fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
 fn get_browser_url(process_id: u32) -> String {
   let app = get_running_application_from_pid(process_id);
 
-  if app.is_ok() {
-    let app = app.unwrap();
-    let bundle_identifier = get_bundle_identifier(app);
-
-    if bundle_identifier.is_empty() {
-      return String::from("");
-    }
-
-    if is_browser_bundle_id(&bundle_identifier) {
+  match app {
+    Ok(app) => {
+      let bundle_identifier = get_bundle_identifier(app);
+      if bundle_identifier.is_empty() || !is_browser_bundle_id(&bundle_identifier) {
+        return String::from("");
+      }
       let mut command =
         format!("tell app id \"{bundle_identifier}\" to get URL of active tab of front window");
       if is_from_document(&bundle_identifier) {
@@ -338,11 +335,10 @@ fn get_browser_url(process_id: u32) -> String {
       // {
       //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
       // }
-      return execute_applescript(&command);
+      execute_applescript(&command)
     }
+    Err(_) => String::from(""),
   }
-
-  String::from("")
 }
 
 fn get_bundle_identifier(app: &NSRunningApplication) -> String {
