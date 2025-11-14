@@ -70,9 +70,9 @@ impl Api for MacosAPI {
     if !window_info.info.path.is_empty() {
       let path: &NSString = &NSString::from_str(&window_info.info.path);
 
-      let nsimage: &NSImage = unsafe { &NSWorkspace::sharedWorkspace().iconForFile(path) };
-      if unsafe { nsimage.isValid() } {
-        let imagesize = unsafe { nsimage.size() };
+      let nsimage: &NSImage = &NSWorkspace::sharedWorkspace().iconForFile(path);
+      if nsimage.isValid() {
+        let imagesize = nsimage.size();
         let rect: &CGRect = &CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
         let cgref: &CGImage = unsafe {
           msg_send![nsimage, CGImageForProposedRect: rect, context: null_mut::<NSObject>(), hints: null_mut::<NSObject>()]
@@ -80,7 +80,7 @@ impl Api for MacosAPI {
         let nsbitmapref = NSBitmapImageRep::alloc();
         let imagerep: Retained<NSBitmapImageRep> =
           unsafe { msg_send![nsbitmapref, initWithCGImage: cgref] };
-        let _: () = unsafe { imagerep.setSize(imagesize) };
+        let _: () = imagerep.setSize(imagesize);
         let pngdata = unsafe {
           imagerep
             .representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
@@ -116,7 +116,7 @@ fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
   let options = CGWindowListOption::OptionOnScreenOnly
     | CGWindowListOption::ExcludeDesktopElements
     | CGWindowListOption::OptionIncludingWindow;
-  let window_list_info: &CFArray = unsafe { &CGWindowListCopyWindowInfo(options, 0).unwrap() };
+  let window_list_info: &CFArray = &CGWindowListCopyWindowInfo(options, 0).unwrap();
   let windows_count = CFArray::count(window_list_info);
 
   let screen_rect = get_screen_rect();
@@ -173,7 +173,7 @@ fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
     }
     let app = app.unwrap();
 
-    let is_not_active = !unsafe { app.isActive() };
+    let is_not_active = !app.isActive();
 
     if only_active && is_not_active {
       continue;
@@ -188,7 +188,7 @@ fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
     let app_name = get_cf_string_value(&window_cf_dictionary, "kCGWindowOwnerName");
     let title = get_cf_string_value(&window_cf_dictionary, "kCGWindowName");
 
-    let path: String = unsafe {
+    let path: String = {
       match app.bundleURL() {
         Some(nsurl) => match nsurl.path() {
           Some(path) => path.to_string(),
@@ -342,11 +342,9 @@ fn get_browser_url(process_id: u32) -> String {
 }
 
 fn get_bundle_identifier(app: &NSRunningApplication) -> String {
-  unsafe {
-    match app.bundleIdentifier() {
-      Some(bundle_identifier) => bundle_identifier.to_string(),
-      None => String::from(""),
-    }
+  match app.bundleIdentifier() {
+    Some(bundle_identifier) => bundle_identifier.to_string(),
+    None => String::from(""),
   }
 }
 
