@@ -4,11 +4,3 @@ rustflags = ["-C", "target-feature=-crt-static", "-lm"]
 [target.aarch64-unknown-linux-musl]
 linker = "aarch64-linux-musl-gcc"
 rustflags = ["-C", "target-feature=-crt-static", "-lm"]
-
-[target.x86_64-unknown-linux-gnu]
-linker = "zig"
-rustflags = [
-  "-C", "link-arg=-target",
-  "-C", "link-arg=x86_64-linux-gnu.2.18",
-  "-C", "link-arg=-lc",
-]
