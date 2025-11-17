@@ -22,7 +22,7 @@ once_cell = "1.21.3"
 base64 = "0.22.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.61.3", features = [
+windows = { version = "0.62.2", features = [
   "Win32_Foundation",
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_Threading",
@@ -41,22 +41,22 @@ windows = { version = "0.61.3", features = [
   "Win32_Graphics_Gdi",
   "Win32_Graphics_Imaging",
 ] }
-png = "0.17.16"
+png = "0.18.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 xcb = { version = "1.6.0" }
 x11 = { version = "2.21.0", features = ["xlib"], optional = true }
 zbus = { version = "5.10.0" }
 serde_json = { version = "1.0.143" }
-image = "0.25.6"
+image = "0.25.9"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2 = { version = "0.6.2" }
-objc2-core-foundation = { version = "0.3.1" }
-objc2-core-graphics = { version = "0.3.1" }
-objc2-foundation = { version = "0.3.1", features = ["NSArray", "NSString", "NSGeometry", "NSProcessInfo"] }
-objc2-app-kit = { version = "0.3.1", features = ["NSImage", "NSRunningApplication", "NSWorkspace", "NSBitmapImageRep", "NSImageRep", "NSScreen"] }
-block2 = "0.6.1"
+objc2 = { version = "0.6.3" }
+objc2-core-foundation = { version = "0.3.2" }
+objc2-core-graphics = { version = "0.3.2" }
+objc2-foundation = { version = "0.3.2", features = ["NSArray", "NSString", "NSGeometry", "NSProcessInfo"] }
+objc2-app-kit = { version = "0.3.2", features = ["NSImage", "NSRunningApplication", "NSWorkspace", "NSBitmapImageRep", "NSImageRep", "NSScreen"] }
+block2 = "0.6.2"
 
 [profile.release]
 lto = true
