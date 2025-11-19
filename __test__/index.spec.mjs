@@ -230,10 +230,10 @@ test('getIconAsync', async (t) => {
 })
 
 test('Check exec_name & path', (t) => {
-  const data = activeWindow();
-  t.notDeepEqual(data.info.execName, "");
-  t.notDeepEqual(data.info.path, "");
-  return t.pass();
+  const data = activeWindow()
+  t.notDeepEqual(data.info.execName, '')
+  t.notDeepEqual(data.info.path, '')
+  return t.pass()
 })
 
 if (os.platform() === 'win32' || os.platform() === 'darwin') {
