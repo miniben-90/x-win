@@ -118,7 +118,7 @@ jobs:
             # glibc: '2.18'
           - name: Linux MUSL x64
             target: x86_64-unknown-linux-musl
-            flags: '-x'
+            flags: '--use-napi-cross'
     runs-on: ${{ matrix.settings.host || 'ubuntu-latest' }}
     name: Build ${{ matrix.settings.name }} (${{ matrix.settings.target }}) - node@${{ matrix.node-version }}
     steps:
