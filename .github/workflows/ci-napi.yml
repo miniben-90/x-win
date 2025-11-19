@@ -202,7 +202,7 @@ jobs:
 
       # Upload artifact for the next steps (macos and test)
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
@@ -268,7 +268,7 @@ jobs:
 
       # Download artifacts
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: bindings-${{ matrix.settings.target }}
           path: .
@@ -322,19 +322,19 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: bindings-x86_64-apple-darwin
-          path: artifacts
+          path: .
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: bindings-aarch64-apple-darwin
-          path: artifacts
+          path: .
       - name: Combine binaries
         run: yarn universalize
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-universal-apple-darwin
           path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
@@ -380,7 +380,7 @@ jobs:
 
       # Download artifacts from build part
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: artifacts
 
