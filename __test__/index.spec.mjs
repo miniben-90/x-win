@@ -229,6 +229,13 @@ test('getIconAsync', async (t) => {
   return t.pass()
 })
 
+test('Check exec_name & path', (t) => {
+  const data = activeWindow();
+  t.notDeepEqual(data.info.execName, "");
+  t.notDeepEqual(data.info.path, "");
+  return t.pass();
+})
+
 if (os.platform() === 'win32' || os.platform() === 'darwin') {
   test.skip('url getter - activeWindow', (t) => {
     console.time('activeWindow')

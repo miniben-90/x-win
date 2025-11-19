@@ -25,7 +25,8 @@ use objc2_core_foundation::{
   CGSize,
 };
 use objc2_core_graphics::{
-  CGRectMakeWithDictionaryRepresentation, CGWindowListCopyWindowInfo, CGWindowListOption,
+  kCGNullWindowID, CGRectMakeWithDictionaryRepresentation, CGWindowListCopyWindowInfo,
+  CGWindowListOption,
 };
 use objc2_foundation::{MainThreadMarker, NSDictionary, NSObject, NSRect, NSString};
 
@@ -70,9 +71,9 @@ impl Api for MacosAPI {
     if !window_info.info.path.is_empty() {
       let path: &NSString = &NSString::from_str(&window_info.info.path);
 
-      let nsimage: &NSImage = unsafe { &NSWorkspace::sharedWorkspace().iconForFile(path) };
-      if unsafe { nsimage.isValid() } {
-        let imagesize = unsafe { nsimage.size() };
+      let nsimage: &NSImage = &NSWorkspace::sharedWorkspace().iconForFile(path);
+      if nsimage.isValid() {
+        let imagesize = nsimage.size();
         let rect: &CGRect = &CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
         let cgref: &CGImage = unsafe {
           msg_send![nsimage, CGImageForProposedRect: rect, context: null_mut::<NSObject>(), hints: null_mut::<NSObject>()]
@@ -80,7 +81,7 @@ impl Api for MacosAPI {
         let nsbitmapref = NSBitmapImageRep::alloc();
         let imagerep: Retained<NSBitmapImageRep> =
           unsafe { msg_send![nsbitmapref, initWithCGImage: cgref] };
-        let _: () = unsafe { imagerep.setSize(imagesize) };
+        let _: () = imagerep.setSize(imagesize);
         let pngdata = unsafe {
           imagerep
             .representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
@@ -113,12 +114,11 @@ impl Api for MacosAPI {
 fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
   let mut windows: Vec<WindowInfo> = Vec::new();
 
-  let options = CGWindowListOption::OptionOnScreenOnly
+  let option = CGWindowListOption::OptionOnScreenOnly
     | CGWindowListOption::ExcludeDesktopElements
     | CGWindowListOption::OptionIncludingWindow;
-  let window_list_info: &CFArray = unsafe { &CGWindowListCopyWindowInfo(options, 0).unwrap() };
+  let window_list_info: &CFArray = &CGWindowListCopyWindowInfo(option, kCGNullWindowID).unwrap();
   let windows_count = CFArray::count(window_list_info);
-
   let screen_rect = get_screen_rect();
 
   for idx in 0..windows_count {
@@ -173,7 +173,7 @@ fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
     }
     let app = app.unwrap();
 
-    let is_not_active = !unsafe { app.isActive() };
+    let is_not_active = !app.isActive();
 
     if only_active && is_not_active {
       continue;
@@ -188,27 +188,27 @@ fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
     let app_name = get_cf_string_value(&window_cf_dictionary, "kCGWindowOwnerName");
     let title = get_cf_string_value(&window_cf_dictionary, "kCGWindowName");
 
-    let path: String = unsafe {
+    let (path, exec_name) = {
+      let mut path: String = String::new();
+      let mut exec_name: String = String::new();
       match app.bundleURL() {
-        Some(nsurl) => match nsurl.path() {
-          Some(path) => path.to_string(),
-          None => String::from(""),
-        },
-        None => String::from(""),
+        Some(nsurl) => {
+          if let Some(nsurl) = nsurl.path() {
+            path = nsurl.to_string();
+            exec_name = std::path::Path::new(&path)
+              .file_name()
+              .unwrap_or_default()
+              .to_str()
+              .unwrap_or_default()
+              .to_string();
+          }
+        }
+        None => {
+          path = String::from("");
+          exec_name = String::from("");
+        }
       }
-    };
-
-    let exec_name: String = {
-      match path.is_empty() {
-        true => match std::path::Path::new(&path).file_name() {
-          Some(os_str) => match os_str.to_str() {
-            Some(exec_name) => exec_name.to_owned(),
-            None => String::from(""),
-          },
-          None => String::from(""),
-        },
-        false => String::from(""),
-      }
+      (path, exec_name)
     };
 
     let memory = get_cf_number_value(&window_cf_dictionary, "kCGWindowMemoryUsage");
@@ -342,11 +342,9 @@ fn get_browser_url(process_id: u32) -> String {
 }
 
 fn get_bundle_identifier(app: &NSRunningApplication) -> String {
-  unsafe {
-    match app.bundleIdentifier() {
-      Some(bundle_identifier) => bundle_identifier.to_string(),
-      None => String::from(""),
-    }
+  match app.bundleIdentifier() {
+    Some(bundle_identifier) => bundle_identifier.to_string(),
+    None => String::from(""),
   }
 }
 
