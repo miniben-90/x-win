@@ -19,7 +19,8 @@
       "x86_64-unknown-linux-musl",
       "i686-pc-windows-msvc",
       "x86_64-pc-windows-msvc",
-      "aarch64-pc-windows-msvc"
+      "aarch64-pc-windows-msvc",
+      "universal-apple-darwin"
     ]
   },
   "author": {
@@ -117,7 +118,8 @@
     "fmt:rs": "cd ./x-win-rs && cargo fmt -- --check",
     "fmt:napi": "cargo fmt -- --check",
     "fmt": "yarn fmt:rs && yarn fmt:napi",
-    "checkall": "yarn format && yarn lint && yarn clippy && yarn fmt"
+    "checkall": "yarn format && yarn lint && yarn clippy && yarn fmt",
+    "universalize": "napi universalize"
   },
   "packageManager": "yarn@4.11.0"
 }
