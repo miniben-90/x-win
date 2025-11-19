@@ -119,5 +119,5 @@
     "fmt": "yarn fmt:rs && yarn fmt:napi",
     "checkall": "yarn format && yarn lint && yarn clippy && yarn fmt"
   },
-  "packageManager": "yarn@4.9.4"
+  "packageManager": "yarn@4.11.0"
 }

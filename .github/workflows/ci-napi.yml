@@ -95,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22]
+        node-version: [24]
         settings:
           - name: Darwin x64
             target: x86_64-apple-darwin
@@ -235,7 +235,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:latest
 
-        node-version: [18, 20, 22]
+        node-version: [18, 20, 22, 24]
 
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -316,7 +316,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           check-latest: true
           cache: yarn
       - name: Install dependencies
@@ -360,7 +360,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           check-latest: true
           cache: yarn
           registry-url: 'https://registry.npmjs.org'
