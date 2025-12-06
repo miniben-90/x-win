@@ -112,6 +112,10 @@ impl Api for MacosAPI {
 }
 
 fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
+  objc2::rc::autoreleasepool(|_pool| get_windows_informations_inner(only_active))
+}
+
+fn get_windows_informations_inner(only_active: bool) -> Result<Vec<WindowInfo>> {
   let mut windows: Vec<WindowInfo> = Vec::new();
 
   let option = CGWindowListOption::OptionOnScreenOnly
