@@ -1,5 +1,3 @@
-#![deny(unused_imports)]
-
 /**
  * Struct to store position and size of the window
  */

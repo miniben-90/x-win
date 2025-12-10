@@ -6,3 +6,5 @@ cd ..
 cargo fmt -- --check
 cargo clippy --all-features -- -D warnings
 yarn test
+yarn lint
+yarn format

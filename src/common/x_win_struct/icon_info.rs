@@ -1,11 +1,8 @@
-#![deny(unused_imports)]
-
 /**
  * Struct to store process information of the window
  */
 #[derive(Debug, Clone)]
 #[napi(object)]
-#[repr(C)]
 pub struct IconInfo {
   pub data: String,
   pub height: u32,

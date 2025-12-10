@@ -1,4 +1,5 @@
 #![deny(unsafe_op_in_unsafe_fn)]
+#![deny(clippy::all)]
 
 #[cfg(target_os = "macos")]
 #[macro_use]
