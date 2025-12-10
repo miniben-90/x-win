@@ -15,7 +15,7 @@ use crate::common::{
 };
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use objc2::rc::Retained;
+use objc2::rc::{autoreleasepool, Retained};
 use objc2::{AllocAnyThread, Encode, RefEncode};
 use objc2_app_kit::{
   NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSRunningApplication, NSScreen, NSWorkspace,
@@ -68,51 +68,55 @@ impl Api for MacosAPI {
   }
 
   fn get_app_icon(&self, window_info: &WindowInfo) -> Result<IconInfo> {
-    if !window_info.info.path.is_empty() {
-      let path: &NSString = &NSString::from_str(&window_info.info.path);
-
-      let nsimage: &NSImage = &NSWorkspace::sharedWorkspace().iconForFile(path);
-      if nsimage.isValid() {
-        let imagesize = nsimage.size();
-        let rect: &CGRect = &CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
-        let cgref: &CGImage = unsafe {
-          msg_send![nsimage, CGImageForProposedRect: rect, context: null_mut::<NSObject>(), hints: null_mut::<NSObject>()]
-        };
-        let nsbitmapref = NSBitmapImageRep::alloc();
-        let imagerep: Retained<NSBitmapImageRep> =
-          unsafe { msg_send![nsbitmapref, initWithCGImage: cgref] };
-        let _: () = imagerep.setSize(imagesize);
-        let pngdata = unsafe {
-          imagerep
-            .representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
-        };
-        match pngdata {
-          Some(pngdata) => {
-            let bytes = unsafe { pngdata.as_bytes_unchecked() };
-            let data = BASE64_STANDARD.encode(bytes);
-            let icon = IconInfo {
-              data: format!("data:image/png;base64,{data}"),
-              width: imagesize.width as u32,
-              height: imagesize.height as u32,
-            };
-            return Ok(icon);
-          }
-          None => {
-            return Ok(empty_icon());
-          }
-        }
-      }
-    }
-    Ok(empty_icon())
+    autoreleasepool(|_pool| get_app_icon(window_info))
   }
 
   fn get_browser_url(&self, window_info: &WindowInfo) -> Result<String> {
-    Ok(get_browser_url(window_info.info.process_id))
+    autoreleasepool(|_pool| get_browser_url(window_info.info.process_id))
   }
 }
 
+fn get_app_icon(window_info: &WindowInfo) -> Result<IconInfo> {
+  if !window_info.info.path.is_empty() {
+    let path: &NSString = &NSString::from_str(&window_info.info.path);
+
+    let nsimage: &NSImage = &NSWorkspace::sharedWorkspace().iconForFile(path);
+    if nsimage.isValid() {
+      let imagesize = nsimage.size();
+      let rect: &CGRect = &CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
+      let cgref: &CGImage = unsafe {
+        msg_send![nsimage, CGImageForProposedRect: rect, context: null_mut::<NSObject>(), hints: null_mut::<NSObject>()]
+      };
+      let nsbitmapref = NSBitmapImageRep::alloc();
+      let imagerep: Retained<NSBitmapImageRep> =
+        unsafe { msg_send![nsbitmapref, initWithCGImage: cgref] };
+      let _: () = imagerep.setSize(imagesize);
+      let pngdata = unsafe {
+        imagerep
+          .representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
+      };
+      match pngdata {
+        Some(pngdata) => {
+          let bytes = unsafe { pngdata.as_bytes_unchecked() };
+          let data = BASE64_STANDARD.encode(bytes);
+          let icon = IconInfo {
+            data: format!("data:image/png;base64,{data}"),
+            width: imagesize.width as u32,
+            height: imagesize.height as u32,
+          };
+          return Ok(icon);
+        }
+        None => {
+          return Ok(empty_icon());
+        }
+      }
+    }
+  }
+  Ok(empty_icon())
+}
+
 fn get_windows_informations(only_active: bool) -> Result<Vec<WindowInfo>> {
-  objc2::rc::autoreleasepool(|_pool| get_windows_informations_inner(only_active))
+  autoreleasepool(|_pool| get_windows_informations_inner(only_active))
 }
 
 fn get_windows_informations_inner(only_active: bool) -> Result<Vec<WindowInfo>> {
@@ -321,14 +325,14 @@ fn is_full_screen(window_rect: CGRect, screen_rect: NSRect) -> bool {
 }
 
 // Recover browser url using process id to get it
-fn get_browser_url(process_id: u32) -> String {
+fn get_browser_url(process_id: u32) -> Result<String> {
   let app = get_running_application_from_pid(process_id);
 
   match app {
     Ok(app) => {
       let bundle_identifier = get_bundle_identifier(app);
       if bundle_identifier.is_empty() || !is_browser_bundle_id(&bundle_identifier) {
-        return String::from("");
+        return Ok(String::from(""));
       }
       let mut command =
         format!("tell app id \"{bundle_identifier}\" to get URL of active tab of front window");
@@ -339,9 +343,9 @@ fn get_browser_url(process_id: u32) -> String {
       // {
       //   command = format!("tell app id \"{}\" to get URL of active tab of front window", bundle_identifier);
       // }
-      execute_applescript(&command)
+      Ok(execute_applescript(&command))
     }
-    Err(_) => String::from(""),
+    Err(_) => Ok(String::from("")),
   }
 }
 
