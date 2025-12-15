@@ -3,7 +3,9 @@
   "compilerOptions": {
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
-    "outDir": "lib"
+    "outDir": "lib",
+    "resolveJsonModule": true,
+    "esModuleInterop": true
   },
   "include": ["."],
   "exclude": ["lib"]

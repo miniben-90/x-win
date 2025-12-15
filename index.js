@@ -13,14 +13,6 @@ const isMusl = () => {
     musl = isMuslFromFilesystem()
     if (musl === null) {
       musl = isMuslFromReport()
-function isMusl() {
-  // For Node 10
-  if (!process.report || typeof process.report.getReport !== 'function') {
-    try {
-      const lddPath = require('child_process').execSync('which ldd').toString().trim()
-      return readFileSync(lddPath, 'utf8').includes('musl')
-    } catch (e) {
-      return true
     }
     if (musl === null) {
       musl = isMuslFromChildProcess()
@@ -273,75 +265,6 @@ function requireNative() {
       if (isMusl()) {
         try {
           return require('./x-win.linux-x64-musl.node')
-        break
-      case 'arm':
-        if (isMusl()) {
-          localFileExisted = existsSync(
-            join(__dirname, 'x-win.linux-arm-musleabihf.node')
-          )
-          try {
-            if (localFileExisted) {
-              nativeBinding = require('./x-win.linux-arm-musleabihf.node')
-            } else {
-              nativeBinding = require('@miniben90/x-win-linux-arm-musleabihf')
-            }
-          } catch (e) {
-            loadError = e
-          }
-        } else {
-          localFileExisted = existsSync(
-            join(__dirname, 'x-win.linux-arm-gnueabihf.node')
-          )
-          try {
-            if (localFileExisted) {
-              nativeBinding = require('./x-win.linux-arm-gnueabihf.node')
-            } else {
-              nativeBinding = require('@miniben90/x-win-linux-arm-gnueabihf')
-            }
-          } catch (e) {
-            loadError = e
-          }
-        }
-        break
-      case 'riscv64':
-        if (isMusl()) {
-          localFileExisted = existsSync(
-            join(__dirname, 'x-win.linux-riscv64-musl.node')
-          )
-          try {
-            if (localFileExisted) {
-              nativeBinding = require('./x-win.linux-riscv64-musl.node')
-            } else {
-              nativeBinding = require('@miniben90/x-win-linux-riscv64-musl')
-            }
-          } catch (e) {
-            loadError = e
-          }
-        } else {
-          localFileExisted = existsSync(
-            join(__dirname, 'x-win.linux-riscv64-gnu.node')
-          )
-          try {
-            if (localFileExisted) {
-              nativeBinding = require('./x-win.linux-riscv64-gnu.node')
-            } else {
-              nativeBinding = require('@miniben90/x-win-linux-riscv64-gnu')
-            }
-          } catch (e) {
-            loadError = e
-          }
-        }
-        break
-      case 's390x':
-        localFileExisted = existsSync(
-          join(__dirname, 'x-win.linux-s390x-gnu.node')
-        )
-        try {
-          if (localFileExisted) {
-            nativeBinding = require('./x-win.linux-s390x-gnu.node')
-          } else {
-            nativeBinding = require('@miniben90/x-win-linux-s390x-gnu')
-          }
         } catch (e) {
           loadErrors.push(e)
         }

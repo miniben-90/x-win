@@ -26,10 +26,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  id-token: write
-  contents: write
-  
+#permissions:
+#  id-token: write
+#  contents: write
+
 jobs:
   #
   # Part Bluid
@@ -393,7 +393,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**
-          
 
       # Move artifacts at there places
       - name: Run napi artifacts to struct deps
