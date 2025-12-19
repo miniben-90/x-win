@@ -19,6 +19,9 @@ export declare class WindowInfo {
   /** * Getter to recover browser url
    */
   get url(): string
+  /** * Return an Object to make it easy to use data instead of the class
+   */
+  toObject(): WindowInfoObject
 }
 
 /** * Retrieve information the about currently active window.
@@ -346,6 +349,19 @@ export declare function unsubscribeAllActiveWindow(): void
  */
 export interface UsageInfo {
   memory: number
+}
+
+/** * Struct to store all informations of the window
+ */
+export interface WindowInfoObject {
+  id: number
+  os: string
+  title: string
+  position: WindowPosition
+  info: ProcessInfo
+  usage: UsageInfo
+  icon: IconInfo
+  url: string
 }
 
 /** * Struct to store position and size of the window

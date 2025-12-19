@@ -15,12 +15,12 @@ crate-type = ["cdylib"]
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
 base64 = "0.22.1"
-napi = { version = "3.7.0", default-features = false, features = [
+napi = { version = "3.7.1", default-features = false, features = [
   "napi4",
   "async",
   "compat-mode",
 ] }
-napi-derive = "3.4.0"
+napi-derive = "3.4.1"
 once_cell = "1.21.3"
 x-win = { path = "./x-win-rs" }
 

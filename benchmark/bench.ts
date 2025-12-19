@@ -7,7 +7,7 @@ import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const benchmarkActiveWindow: Bench = new Bench({
-  name: 'Benchmark between repo version, previous version and latest get-windows',
+  name: 'Benchmark between local repo, previous version of x-win and latest version of get-windows',
   concurrency: 'task',
   iterations: 1000,
   setup: (_task, mode) => {

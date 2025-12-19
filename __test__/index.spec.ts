@@ -10,6 +10,7 @@ import {
   unsubscribeActiveWindow,
   unsubscribeAllActiveWindow,
   WindowInfo,
+  WindowInfoObject,
 } from '../index.js'
 import { exec } from 'node:child_process'
 
@@ -61,7 +62,7 @@ const defaultStruct = {
  * @param {*} t
  * @param {*} data
  */
-function compareStruct(t: ExecutionContext, data: WindowInfo) {
+function compareStruct(t: ExecutionContext, data: WindowInfo | WindowInfoObject) {
   const defaultkeys = Object.entries(defaultStruct)
   for (const [key, value] of defaultkeys) {
     /** For darwin with permission issue should ignore title it will be empty */
@@ -228,6 +229,42 @@ test('getIconAsync', async (t) => {
   const iconInfo = await data.getIconAsync()
   console.timeEnd('getIconAsync')
   compareIconStruct(t, iconInfo)
+  return t.pass()
+})
+
+test('toObject - activeWindow', (t) => {
+  console.time('toObject - activeWindow')
+  const data = activeWindow().toObject()
+  console.timeEnd('toObject - activeWindow')
+  compareStruct(t, data)
+  return t.pass()
+})
+
+test('toObject - openWindows', (t) => {
+  console.time('toObject - openWindows')
+  const list = openWindows()
+  console.timeEnd('toObject - openWindows')
+  for (const data of list) {
+    compareStruct(t, data)
+  }
+  return t.pass()
+})
+
+test('toObject - activeWindowAsync', async (t) => {
+  console.time('toObject - activeWindowAsync')
+  const data = await activeWindowAsync()
+  console.timeEnd('toObject - activeWindowAsync')
+  compareStruct(t, data)
+  return t.pass()
+})
+
+test('toObject - openWindowsAsync', async (t) => {
+  console.time('toObject - openWindowsAsync')
+  const list = await openWindowsAsync()
+  console.timeEnd('toObject - openWindowsAsync')
+  for (const data of list) {
+    compareStruct(t, data)
+  }
   return t.pass()
 })
 

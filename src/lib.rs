@@ -8,7 +8,10 @@ use napi_derive::napi;
 
 use common::{
   thread::ThreadManager,
-  x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  x_win_struct::{
+    icon_info::IconInfo,
+    window_info::{WindowInfo, WindowInfoObject},
+  },
 };
 use error::xwin_error;
 use napi::{bindgen_prelude::AsyncTask, JsNumber, Result, Task};
@@ -120,6 +123,26 @@ impl WindowInfo {
   #[napi(getter)]
   pub fn url(&self) -> Result<String> {
     get_url(self)
+  }
+
+  /**
+   * Return an Object to make it easy to use data instead of the class
+   */
+  #[napi]
+  pub fn to_object(&self) -> Result<WindowInfoObject> {
+    let window_info = &self.clone();
+    let url = window_info.url().unwrap().clone();
+    let icon: IconInfo = window_info.get_icon().unwrap().clone();
+    Ok(WindowInfoObject {
+      id: window_info.id,
+      title: window_info.title.clone(),
+      position: window_info.position().unwrap(),
+      usage: window_info.usage().unwrap(),
+      info: window_info.info().unwrap(),
+      icon,
+      url,
+      os: window_info.os.clone(),
+    })
   }
 }
 
