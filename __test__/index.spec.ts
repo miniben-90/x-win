@@ -1,19 +1,22 @@
-import test from 'ava'
+import test, { ExecutionContext } from 'ava'
 import os from 'os'
 import {
   activeWindow,
   activeWindowAsync,
+  IconInfo,
   openWindows,
   openWindowsAsync,
   subscribeActiveWindow,
   unsubscribeActiveWindow,
   unsubscribeAllActiveWindow,
+  WindowInfo,
+  WindowInfoObject,
 } from '../index.js'
 import { exec } from 'node:child_process'
 
 const Browsers = ['msedge', 'Safari']
 
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
@@ -39,7 +42,7 @@ async function killBrowserToTest() {
   await sleep(2000)
 }
 
-test.before.skip(async () => {
+test.before.skip(async (_t) => {
   if (isWinOrDarwinOs()) {
     await runBrowserToTest()
   }
@@ -59,7 +62,7 @@ const defaultStruct = {
  * @param {*} t
  * @param {*} data
  */
-function compareStruct(t, data) {
+function compareStruct(t: ExecutionContext, data: WindowInfo | WindowInfoObject) {
   const defaultkeys = Object.entries(defaultStruct)
   for (const [key, value] of defaultkeys) {
     /** For darwin with permission issue should ignore title it will be empty */
@@ -70,13 +73,13 @@ function compareStruct(t, data) {
       if (key === 'os') {
         t.deepEqual(value, data[key])
       } else {
-        t.notDeepEqual(value, data[key])
+        t.notDeepEqual(value, (data as any)[key])
       }
     }
   }
 }
 
-function compareIconStruct(t, data) {
+function compareIconStruct(t: ExecutionContext, data: IconInfo) {
   t.notDeepEqual(data.data, '')
   t.notDeepEqual(data.width, 0)
   t.notDeepEqual(data.height, 0)
@@ -103,9 +106,9 @@ test('openWindows', (t) => {
 
 test('subscribeActiveWindow', async (t) => {
   try {
-    const data1 = await new Promise((resolve, reject) => {
+    const data1: WindowInfo = await new Promise((resolve, reject) => {
       console.time('subscribeActiveWindow1')
-      const r = subscribeActiveWindow((error, info) => {
+      const r = subscribeActiveWindow((_error, info) => {
         console.timeEnd('subscribeActiveWindow1')
         if (info?.id) {
           unsubscribeActiveWindow(r)
@@ -116,9 +119,9 @@ test('subscribeActiveWindow', async (t) => {
       })
     })
 
-    const data2 = await new Promise((resolve, reject) => {
+    const data2: WindowInfo = await new Promise((resolve, reject) => {
       console.time('subscribeActiveWindow2')
-      const r = subscribeActiveWindow((error, info) => {
+      const r = subscribeActiveWindow((_error, info) => {
         console.timeEnd('subscribeActiveWindow2')
         if (info?.id) {
           unsubscribeActiveWindow(r)
@@ -129,9 +132,9 @@ test('subscribeActiveWindow', async (t) => {
       })
     })
 
-    const data3 = await new Promise((resolve, reject) => {
+    const data3: WindowInfo = await new Promise((resolve, reject) => {
       console.time('subscribeActiveWindow3')
-      const r = subscribeActiveWindow((error, info) => {
+      const r = subscribeActiveWindow((_error, info) => {
         console.timeEnd('subscribeActiveWindow3')
         if (info?.id) {
           unsubscribeActiveWindow(r)
@@ -153,8 +156,8 @@ test('subscribeActiveWindow', async (t) => {
 
 test('unsubscribeAllActiveWindow', async (t) => {
   try {
-    const data1 = await new Promise((resolve, reject) => {
-      subscribeActiveWindow((error, info) => {
+    const data1: WindowInfo = await new Promise((resolve, reject) => {
+      subscribeActiveWindow((_error, info) => {
         if (info?.id) {
           resolve(info)
         } else {
@@ -163,8 +166,8 @@ test('unsubscribeAllActiveWindow', async (t) => {
       })
     })
 
-    const data2 = await new Promise((resolve, reject) => {
-      subscribeActiveWindow((error, info) => {
+    const data2: WindowInfo = await new Promise((resolve, reject) => {
+      subscribeActiveWindow((_error, info) => {
         if (info?.id) {
           resolve(info)
         } else {
@@ -173,8 +176,8 @@ test('unsubscribeAllActiveWindow', async (t) => {
       })
     })
 
-    const data3 = await new Promise((resolve, reject) => {
-      subscribeActiveWindow((error, info) => {
+    const data3: WindowInfo = await new Promise((resolve, reject) => {
+      subscribeActiveWindow((_error, info) => {
         if (info?.id) {
           resolve(info)
         } else {
@@ -229,10 +232,39 @@ test('getIconAsync', async (t) => {
   return t.pass()
 })
 
-test('Check exec_name & path', (t) => {
-  const data = activeWindow()
-  t.notDeepEqual(data.info.execName, '')
-  t.notDeepEqual(data.info.path, '')
+test('toObject - activeWindow', (t) => {
+  console.time('toObject - activeWindow')
+  const data = activeWindow().toObject()
+  console.timeEnd('toObject - activeWindow')
+  compareStruct(t, data)
+  return t.pass()
+})
+
+test('toObject - openWindows', (t) => {
+  console.time('toObject - openWindows')
+  const list = openWindows()
+  console.timeEnd('toObject - openWindows')
+  for (const data of list) {
+    compareStruct(t, data)
+  }
+  return t.pass()
+})
+
+test('toObject - activeWindowAsync', async (t) => {
+  console.time('toObject - activeWindowAsync')
+  const data = await activeWindowAsync()
+  console.timeEnd('toObject - activeWindowAsync')
+  compareStruct(t, data)
+  return t.pass()
+})
+
+test('toObject - openWindowsAsync', async (t) => {
+  console.time('toObject - openWindowsAsync')
+  const list = await openWindowsAsync()
+  console.timeEnd('toObject - openWindowsAsync')
+  for (const data of list) {
+    compareStruct(t, data)
+  }
   return t.pass()
 })
 
@@ -241,7 +273,7 @@ if (os.platform() === 'win32' || os.platform() === 'darwin') {
     console.time('activeWindow')
     const data = activeWindow()
     console.timeEnd('activeWindow')
-    t.not(data.url.startsWith('http'))
+    t.not(data.url.startsWith('http'), false)
     return t.pass()
   })
 
@@ -249,7 +281,7 @@ if (os.platform() === 'win32' || os.platform() === 'darwin') {
     console.time('url getter - activeWindowAsync')
     const data = await activeWindowAsync()
     console.timeEnd('url getter - activeWindowAsync')
-    t.not(data.url.startsWith('http'))
+    t.not(data.url.startsWith('http'), false)
     return t.pass()
   })
 

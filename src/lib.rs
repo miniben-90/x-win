@@ -1,23 +1,26 @@
 #![deny(unsafe_op_in_unsafe_fn)]
-//#![deny(clippy::all)]
 //#![allow(unused_imports)]
 
 mod common;
 mod error;
 
+use napi_derive::napi;
+
 use common::{
   thread::ThreadManager,
-  x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
+  x_win_struct::{
+    icon_info::IconInfo,
+    window_info::{WindowInfo, WindowInfoObject},
+  },
 };
 use error::xwin_error;
-use napi::{bindgen_prelude::AsyncTask, JsFunction, JsNumber, Result, Task};
-use napi_derive::napi;
+use napi::{bindgen_prelude::AsyncTask, JsNumber, Result, Task};
 use x_win::{empty_entity, get_active_window, get_browser_url, get_open_windows, get_window_icon};
 
 #[macro_use]
 extern crate napi_derive;
 
-use napi::threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode};
+use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
 use std::{thread, time::Duration};
 
 use once_cell::sync::Lazy;
@@ -120,6 +123,26 @@ impl WindowInfo {
   #[napi(getter)]
   pub fn url(&self) -> Result<String> {
     get_url(self)
+  }
+
+  /**
+   * Return an Object to make it easy to use data instead of the class
+   */
+  #[napi]
+  pub fn to_object(&self) -> Result<WindowInfoObject> {
+    let window_info = &self.clone();
+    let url = window_info.url().unwrap().clone();
+    let icon: IconInfo = window_info.get_icon().unwrap().clone();
+    Ok(WindowInfoObject {
+      id: window_info.id,
+      title: window_info.title.clone(),
+      position: window_info.position().unwrap(),
+      usage: window_info.usage().unwrap(),
+      info: window_info.info().unwrap(),
+      icon,
+      url,
+      os: window_info.os.clone(),
+    })
   }
 }
 
@@ -328,7 +351,10 @@ pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
 #[napi(
   ts_args_type = "callback: (error: Error | null, info: WindowInfo | undefined) => void, interval?: number"
 )]
-pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>) -> Result<u32> {
+pub fn subscribe_active_window(
+  callback: ThreadsafeFunction<WindowInfo>,
+  interval: Option<JsNumber>,
+) -> Result<u32> {
   let interval: u64 = {
     let interval = interval
       .map(|jsnumber| jsnumber.get_int64())
@@ -340,13 +366,13 @@ pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>)
       100
     }
   };
-  let tsfn: ThreadsafeFunction<WindowInfo, ErrorStrategy::CalleeHandled> = callback
-    .create_threadsafe_function(
-      0,
-      |ctx: napi::threadsafe_function::ThreadSafeCallContext<WindowInfo>| Ok(vec![ctx.value]),
-    )?;
+  // let tsfn: ThreadsafeFunction<WindowInfo, true> = callback
+  //   .create_threadsafe_function(
+  //     0,
+  //     |ctx: napi::threadsafe_function::ThreadSafeCallContext<WindowInfo>| Ok(vec![ctx.value]),
+  //   )?;
 
-  let tsfn_clone: ThreadsafeFunction<WindowInfo, ErrorStrategy::CalleeHandled> = tsfn.clone();
+  // let tsfn_clone: ThreadsafeFunction<WindowInfo, ErrorStrategy::CalleeHandled> = tsfn.clone();
 
   let thread_manager = THREAD_MANAGER.lock().unwrap();
 
@@ -363,21 +389,21 @@ pub fn subscribe_active_window(callback: JsFunction, interval: Option<JsNumber>)
             Ok(new_current_window) => {
               if new_current_window.id.ne(&current_window.id)
                 || new_current_window.title.ne(&current_window.title)
-                || new_current_window
-                  .info
-                  .process_id
-                  .ne(&current_window.info.process_id)
+                // || new_current_window
+                //   .info
+                //   .process_id
+                //   .ne(&current_window.info.process_id)
                 || (new_current_window.id.eq(&0) && first_loop)
               {
                 current_window = new_current_window.clone().into();
-                tsfn_clone.call(
+                callback.call(
                   Ok(new_current_window.into()),
                   ThreadsafeFunctionCallMode::Blocking,
                 );
               }
             }
             Err(err) => {
-              tsfn_clone.call(Err(xwin_error(err)), ThreadsafeFunctionCallMode::Blocking);
+              callback.call(Err(xwin_error(err)), ThreadsafeFunctionCallMode::Blocking);
               break;
             }
           }

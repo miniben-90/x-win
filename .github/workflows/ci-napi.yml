@@ -4,14 +4,15 @@ env:
   DEBUG: napi:*
   APP_NAME: x-win
   MACOSX_DEPLOYMENT_TARGET: '10.13'
+  CARGO_INCREMENTAL: '1'
 
 on:
   push:
     branches:
       - main
     tags:
-      - "napi-*.*.*"
-      - "napi-v*.*.*"
+      - 'napi-*.*.*'
+      - 'napi-v*.*.*'
     paths-ignore:
       - '**/*.md'
       - LICENSE
@@ -21,174 +22,191 @@ on:
   pull_request: null
   # release:
   #   types: [published]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
-permissions:
-  id-token: write
-  contents: write
-  
+#permissions:
+#  id-token: write
+#  contents: write
+
 jobs:
-  build:
+  #
+  # Part Bluid
+  #
+  lint:
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/x-win-rs
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20]
-
         settings:
-          # Build matrix for MacOS (x64)
-          - host: macos-latest
+          - name: Darwin
             target: x86_64-apple-darwin
-            build: |
-              yarn build --target x86_64-apple-darwin
-              strip -x *.node
-
-          # Build matrix for MacOS (arm64)
-          - host: macos-latest
-            target: aarch64-apple-darwin
-            build: |
-              yarn build --target aarch64-apple-darwin
-              strip -x *.node
-
-          # Build matrix for Windows (x64)
-          - host: windows-latest
+          - name: Windows
             target: x86_64-pc-windows-msvc
-            build: yarn build
-
-          # Build matrix for Windows (x32)
-          - host: windows-latest
-            target: i686-pc-windows-msvc
-            build: yarn build --target i686-pc-windows-msvc
-            architecture: 'x86'
-
-          # Build matrix for Windows (arm64)
-          - host: windows-latest
-            target: aarch64-pc-windows-msvc
-            build: yarn build --target aarch64-pc-windows-msvc
-
-          # Build for linux (using Ubuntu) (x64)
-          - host: ubuntu-latest
+          - name: Linux GNU
             target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-zig
-            build: |-
-              set -e &&
-              rustup update &&
-              sh /usr/local/docker-install-deps.sh &&
-              cp -r /usr/lib/x86_64-linux-gnu/*xcb* /usr/x86_64-unknown-linux-gnu/x86_64-unknown-linux-gnu/sysroot/usr/lib/ &&
-              cp -r /usr/include/xcb /usr/x86_64-unknown-linux-gnu/x86_64-unknown-linux-gnu/sysroot/usr/include/ &&
-              cp -r /usr/lib/x86_64-linux-gnu/*xcb* /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/ &&
-              cp -r /usr/include/xcb /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/include/ &&
-              yarn &&
-              yarn build --target x86_64-unknown-linux-gnu --zig --zig-abi-suffix=2.18 &&
-              strip *.node
-
-          # Build for linux (using Ubuntu) (x64)
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: |-
-              set -e &&
-              rustup update &&
-              sh /usr/local/docker-install-deps.sh &&
-              rustup target add x86_64-unknown-linux-musl &&
-              yarn &&
-              yarn build --target x86_64-unknown-linux-musl &&
-              strip *.node
-
-          # Disabled problem with lxcb
-          # # Build for linux (using Ubuntu) (arm64)
-          # - host: ubuntu-latest
-          #   target: aarch64-unknown-linux-gnu
-          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-          #   build: |-
-          #     set -e &&
-          #     sudo echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy main" > /etc/apt/sources.list.d/arm64-ports.list &&
-          #     sudo apt-get update &&
-          #     sudo apt-get upgrade -y --fix-missing &&
-          #     sudo apt-get install -y --fix-missing --no-install-recommends gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu &&
-          #     sudo apt-get install -y --fix-missing --no-install-recommends libx11-dev libx11-dev:arm64 libx11-xcb-dev libx11-xcb-dev:arm64 libxcb1-dev libxcb1-dev:arm64 libxcb-ewmh-dev libxcb-ewmh-dev:arm64 libxcb-randr0-dev libxcb-randr0-dev:arm64 &&
-          #     yarn install &&
-          #     yarn build --target aarch64-unknown-linux-gnu &&
-          #     aarch64-unknown-linux-gnu-strip *.node
-
-    name: stable - ${{ matrix.settings.target }} - node@${{ matrix.node-version }}
-    runs-on: ${{ matrix.settings.host }}
+    name: Check quality of code for ${{ matrix.settings.name }} (${{ matrix.settings.target }})
     steps:
-      # Install lib dev required for compilation of the project
-      - name: (Linux) Install libx11 & libxcb for building
-        if: ${{ matrix.settings.host == 'ubuntu-latest' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libxcb-ewmh-dev libxcb-randr0-dev
-
-      # Add actions/checkout
-      - uses: actions/checkout@v4
-
-      # Setup node version from matrix.node and install deps
-      - name: Setup node
-        if: ${{ !matrix.settings.docker }}
-        uses: actions/setup-node@v4
+      # Checkout repo
+      - uses: actions/checkout@v5
+      # Config cache
+      - name: Cache cargo registry
+        uses: actions/cache@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          check-latest: true
-          cache: yarn
-          architecture: ${{ matrix.settings.architecture || '' }}
-
-      # Setup yarn with ia32 for windows x86
-      - name: Setup node x86
-        if: ${{ matrix.settings.target == 'i686-pc-windows-msvc' }}
-        run: yarn config set supportedArchitectures.cpu "ia32"
-        shell: bash
-
-      # Install Rust version
+          path: |
+            ~/.cargo
+            ${{ github.workspace }}/.xwin
+          key: ${{ matrix.settings.target }}-cargo-cache
+      # Configure Cargo/Rustup paths ONLY when running under act to avoid rename file error
+      - name: Configure Rust paths for act
+        if: ${{ env.ACT }}
+        run: |
+          mkdir -p /tmp/cargo /tmp/rustup
+          echo "CARGO_HOME=/tmp/cargo" >> $GITHUB_ENV
+          echo "RUSTUP_HOME=/tmp/rustup" >> $GITHUB_ENV
+          echo "/tmp/cargo/bin" >> $GITHUB_PATH
+      # Install lib dev required for compilation of the project
+      - name: Install libx11 & libxcb for building
+        if: startsWith(matrix.settings.target, 'x86_64-unknown-linux')
+        run: bash ${{ github.workspace }}/.github/docker-install-deps.sh
+      # Install Rust toolchain with clippy and rustfmt
       - name: Install Rust
-        if: ${{ !matrix.settings.docker }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.settings.target }}
+      # Add clippy and rustfmt
+      - name: Install Clippy and Rustfmt component
+        run: rustup component add clippy rustfmt
+      # Run Format rust code
+      - name: Format Rust Code
+        run: cargo fmt -- --check
+      # Lint the code with clippy
+      - name: Lint the code with Clippy (Darwin)
+        run: cargo clippy --all-features --target ${{ matrix.settings.target }} -- -D warnings
+
+  #
+  # Build part
+  #
+
+  build:
+    needs:
+      - lint
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [24]
+        settings:
+          - name: Darwin x64
+            target: x86_64-apple-darwin
+            host: macos-latest
+          - name: Darwin Silicon
+            target: aarch64-apple-darwin
+            host: macos-latest
+          - name: Windows x64
+            target: x86_64-pc-windows-msvc
+            flags: '-x'
+          - name: Windows i686
+            target: i686-pc-windows-msvc
+            flags: '-x'
+          - name: Windows ARM64
+            target: aarch64-pc-windows-msvc
+            flags: '-x'
+          - name: Linux GNU x64
+            target: x86_64-unknown-linux-gnu
+            flags: '--use-napi-cross'
+            # glibc: '2.18'
+          - name: Linux MUSL x64
+            target: x86_64-unknown-linux-musl
+            flags: '--use-napi-cross'
+    runs-on: ${{ matrix.settings.host || 'ubuntu-latest' }}
+    name: Build ${{ matrix.settings.name }} (${{ matrix.settings.target }}) - node@${{ matrix.node-version }}
+    steps:
+      # Checkout repo
+      - uses: actions/checkout@v5
+
+      # Configure Cargo/Rustup paths ONLY when running under act to avoid rename file error
+      - name: Configure Rust paths for act
+        if: ${{ env.ACT }}
+        run: |
+          mkdir -p /tmp/cargo /tmp/rustup
+          echo "CARGO_HOME=/tmp/cargo" >> $GITHUB_ENV
+          echo "RUSTUP_HOME=/tmp/rustup" >> $GITHUB_ENV
+          echo "/tmp/cargo/bin" >> $GITHUB_PATH
+
+      # Install lib dev required for compilation of the project
+      - name: Install libx11 & libxcb for building
+        if: startsWith(matrix.settings.target, 'x86_64-unknown-linux')
+        run: bash ${{ github.workspace }}/.github/docker-install-deps.sh
+
+      # Cargo cache
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            ${{ github.workspace }}/.xwin
+            ~/.napi-rs
+            ./target
+          key: ${{ matrix.settings.target }}-cargo-cache
+
+      # Installing Rust toolchain with target
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           targets: ${{ matrix.settings.target }}
 
-      # Set Cache cargo
-      - name: Cache cargo
-        uses: actions/cache@v3
+      # Copy XCB lib for zig build
+      - name: Copy XCB into napi cross sysroot
+        if: ${{ matrix.settings.target == 'x86_64-unknown-linux-gnu' }}
+        run: |
+          set -eux
+          TOOLCHAIN_DIR="$(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/lib"
+          echo "Injecting libxcb into $TOOLCHAIN_DIR"
+          mkdir -p "$TOOLCHAIN_DIR"
+          cp -a /usr/lib/x86_64-linux-gnu/libxcb.so* "$TOOLCHAIN_DIR/" || true
+          ls -l "$TOOLCHAIN_DIR" | grep libxcb || true
+
+      # Setup node with yarn cache
+      - name: Install node ${{ matrix.node-version }}
+        uses: actions/setup-node@v5
         with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            .cargo-cache
-            target/
-          key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+
+      # Install ziglang for crossbuild
+      - name: Install ziglang
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.14.1
+
+      # Install cargo toolchains
+      - name: Install cargo toolchains
+        if: ${{ matrix.settings.host != 'macos-latest' }}
+        uses: taiki-e/install-action@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tool: cargo-zigbuild,cargo-xwin
 
       # Install deps
       - name: Install dependencies
-        if: ${{ !matrix.settings.docker }}
         run: yarn install
 
-      # Lint Rust code
-      - name: Ceheck lint Rust
-        run: cargo fmt -- --check
-
-      # Check clippy code
-      - name: Check clippy code
-        run: cargo clippy --all-features -- -D warnings
-
-      # Build the project
-      - name: Build
-        if: ${{ !matrix.settings.docker }}
-        run: ${{ matrix.settings.build }}
-        shell: bash
-
-      # Build docker
-      - name: Build (Docker)
-        if: ${{ matrix.settings.docker }}
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ${{ matrix.settings.docker }}
-          options: '--user 0:0 -v ${{ github.workspace }}/.github/docker-install-deps.sh:/usr/local/docker-install-deps.sh -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build'
-          run: ${{ matrix.settings.build }}
+      # Build for target
+      - name: Build ${{ matrix.settings.target }}${{ matrix.settings.glibc && format('.{0}', matrix.settings.glibc) || '' }}
+        run: yarn build --target ${{ matrix.settings.target }}${{ matrix.settings.glibc && format('.{0}', matrix.settings.glibc) || '' }} ${{ matrix.settings.flags }}
+        env:
+          XWIN_CACHE_DIR: ${{ github.workspace }}/.xwin
 
       # Upload artifact for the next steps (macos and test)
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
@@ -197,6 +215,7 @@ jobs:
   test:
     name: Test bindings on ${{ matrix.settings.target }} (${{ matrix.settings.host }}) - node@${{ matrix.node-version }}
     needs:
+      - lint
       - build
     strategy:
       fail-fast: false
@@ -205,9 +224,9 @@ jobs:
           - host: windows-latest
             target: x86_64-pc-windows-msvc
 
-          - host: windows-latest
-            target: i686-pc-windows-msvc
-            architecture: 'x86'
+          # - host: windows-latest
+          #   target: i686-pc-windows-msvc
+          #   architecture: 'x86'
 
           - host: macos-latest
             target: aarch64-apple-darwin
@@ -220,11 +239,11 @@ jobs:
             target: x86_64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:latest
 
-        node-version: [18, 20]
+        node-version: [18, 20, 22, 24]
 
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup yarn to run as x86_64 for darwin arm64
       - name: Setup node x86_64
@@ -234,7 +253,7 @@ jobs:
       # Setup node version from matrix.node and install deps
       - name: Setup node
         if: ${{ !matrix.settings.image }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           check-latest: true
@@ -253,7 +272,7 @@ jobs:
 
       # Download artifacts
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: bindings-${{ matrix.settings.target }}
           path: .
@@ -287,42 +306,39 @@ jobs:
             cd /work
             yarn test
 
+  # Generate universal for macos
+
   universal-macOS:
     name: Build universal macOS binary
     needs:
+      - lint
       - build
       - test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v5
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           check-latest: true
           cache: yarn
-
       - name: Install dependencies
         run: yarn install
-
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: bindings-x86_64-apple-darwin
-          path: artifacts
-
+          path: .
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: bindings-aarch64-apple-darwin
-          path: artifacts
-
+          path: .
       - name: Combine binaries
-        run: yarn universal
-
+        run: yarn universalize
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bindings-universal-apple-darwin
           path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
@@ -337,17 +353,18 @@ jobs:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       TAG: ${{ github.ref_name }}
     needs:
+      - lint
       - build
       - test
       - universal-macOS
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Setup node for publishing on npmjs
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           check-latest: true
           cache: yarn
           registry-url: 'https://registry.npmjs.org'
@@ -356,7 +373,7 @@ jobs:
           # Install dependencies
       - name: Install dependencies
         run: yarn install
-          
+
       # Update package.json and Cargo.toml version
       - name: Set version to package.json
         run: node .scripts/before-publish.cjs
@@ -367,7 +384,7 @@ jobs:
 
       # Download artifacts from build part
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: artifacts
 
@@ -376,7 +393,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**
-          
 
       # Move artifacts at there places
       - name: Run napi artifacts to struct deps

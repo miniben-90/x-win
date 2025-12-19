@@ -1,23 +1,43 @@
-#![deny(unused_imports)]
-
-use super::{process_info::ProcessInfo, usage_info::UsageInfo, window_position::WindowPosition};
+use super::{
+  icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo,
+  window_position::WindowPosition,
+};
 
 /**
  * Struct to store all informations of the window
  */
 #[derive(Debug, Clone)]
-#[napi(constructor)]
-pub struct WindowInfo {
+#[napi(object)]
+pub struct WindowInfoObject {
   pub id: u32,
   pub os: String,
   pub title: String,
   pub position: WindowPosition,
   pub info: ProcessInfo,
   pub usage: UsageInfo,
+  pub icon: IconInfo,
+  pub url: String,
+}
+
+/**
+ * Struct to store all informations of the window
+ */
+#[derive(Debug, Clone)]
+#[napi]
+pub struct WindowInfo {
+  pub id: u32,
+  pub os: String,
+  pub title: String,
+  position: WindowPosition,
+  info: ProcessInfo,
+  usage: UsageInfo,
 }
 
 #[napi]
 impl WindowInfo {
+  #[napi(constructor)]
+  pub fn constructor() {}
+
   pub fn new(
     id: u32,
     os: String,
@@ -34,6 +54,21 @@ impl WindowInfo {
       info,
       usage,
     }
+  }
+
+  #[napi(getter)]
+  pub fn position(&self) -> napi::Result<WindowPosition> {
+    Ok(self.position.clone())
+  }
+
+  #[napi(getter)]
+  pub fn info(&self) -> napi::Result<ProcessInfo> {
+    Ok(self.info.clone())
+  }
+
+  #[napi(getter)]
+  pub fn usage(&self) -> napi::Result<UsageInfo> {
+    Ok(self.usage.clone())
   }
 }
 

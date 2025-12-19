@@ -1,31 +1,32 @@
 [package]
-edition = "2021"
-name = "x-win-napi"
-version = "0.0.0"
-authors = ["BENKHADRA Hocine <miniben90@hotmail.com>"]
-keywords = ["window", "active", "current", "position", "open"]
-description = "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows."
-repository = "https://github.com/miniben-90/x-win"
-license = "MIT"
-rust-version = "1.77.0"
+authors      = ["BENKHADRA Hocine <miniben90@hotmail.com>"]
+description  = "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows."
+edition      = "2021"
+keywords     = ["window", "active", "current", "position", "open"]
+license      = "MIT"
+name         = "x-win-napi"
+repository   = "https://github.com/miniben-90/x-win"
+rust-version = "1.79.0"
+version      = "0.0.0"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
-napi = { version = "2.16.17", default-features = false, features = [
+base64 = "0.22.1"
+napi = { version = "3.7.1", default-features = false, features = [
   "napi4",
   "async",
+  "compat-mode",
 ] }
-napi-derive = "2.16.13"
+napi-derive = "3.4.1"
 once_cell = "1.21.3"
-base64 = "0.22.1"
 x-win = { path = "./x-win-rs" }
 
 [build-dependencies]
-napi-build = "2.2.1"
+napi-build = "2.3.1"
 
 [profile.release]
-lto = true
+lto   = true
 panic = "abort"
