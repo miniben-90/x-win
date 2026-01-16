@@ -52,7 +52,7 @@ use windows::{
       Com::*,
       ProcessStatus::PROCESS_MEMORY_COUNTERS,
       Threading::{
-        GetProcessId, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+        OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
         PROCESS_QUERY_LIMITED_INFORMATION,
       },
     },
@@ -523,7 +523,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
 
   if let Ok(handle) = open_process_handle(lpdwprocessid) {
     let position: WindowPosition = get_rect_window(hwnd);
-    let id = unsafe { GetProcessId(handle) };
+    let id = hwnd.0 as u32;
     let parent_process: ProcessInfo = get_process_path_and_name(handle, hwnd, lpdwprocessid);
 
     let mut process_memory_counters = PROCESS_MEMORY_COUNTERS::default();
