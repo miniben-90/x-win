@@ -45,10 +45,10 @@ png ={ version = "0.18.0" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 image      = "0.25.9"
-serde_json = { version = "1.0.145" }
+serde_json = { version = "1.0.149" }
 x11        = { version = "2.21.0", features = ["xlib"], optional = true }
-xcb        = { version = "1.6.0" }
-zbus       = { version = "5.12.0" }
+xcb        = { version = "1.7.0" }
+zbus       = { version = "5.13.1" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6.2"
