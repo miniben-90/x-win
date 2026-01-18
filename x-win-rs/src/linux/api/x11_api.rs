@@ -115,7 +115,7 @@ impl Api for X11Api {
 
     let root_window = setup.roots().next();
     if root_window.is_some() {
-      let window = unsafe { XidNew::new(window_info.id) };
+      let window = XidNew::new(window_info.id);
       let icon_atom = get_window_icon_atom(&conn);
       if icon_atom != x::ATOM_NONE {
         let icon_cookie = conn.send_request(&x::GetProperty {
