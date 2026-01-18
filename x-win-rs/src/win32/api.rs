@@ -52,7 +52,7 @@ use windows::{
       Com::*,
       ProcessStatus::PROCESS_MEMORY_COUNTERS,
       Threading::{
-        GetProcessId, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+        OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
         PROCESS_QUERY_LIMITED_INFORMATION,
       },
     },
@@ -238,36 +238,36 @@ unsafe extern "system" fn enum_desktop_windows_proc<Callback: FnMut(HWND) -> boo
   lparam: LPARAM,
 ) -> BOOL {
   let callback = lparam.0 as *mut Callback;
-  unsafe {
-    if IsWindow(Some(hwnd)).as_bool() && IsWindowVisible(hwnd).as_bool() {
-      let mut pwi: WINDOWINFO = WINDOWINFO::default();
-      let _ = GetWindowInfo(hwnd, &mut pwi);
-      if ((pwi.dwExStyle & WS_EX_TOOLWINDOW
-        == windows::Win32::UI::WindowsAndMessaging::WINDOW_EX_STYLE(0)
-        && pwi.dwStyle & WS_CAPTION == WS_CAPTION)
-        || pwi.dwWindowStatus == WS_ACTIVECAPTION.0
-        || is_fullscreen(hwnd).as_bool())
-        && pwi.dwStyle & WS_CHILD == windows::Win32::UI::WindowsAndMessaging::WINDOW_STYLE(0)
-      {
-        let mut clocked_val: i32 = 0;
-        let cbattribute = std::mem::size_of::<i32>() as u32;
-        let result = DwmGetWindowAttribute(
+  if unsafe { IsWindow(Some(hwnd)).as_bool() && IsWindowVisible(hwnd).as_bool() } {
+    let mut pwi: WINDOWINFO = WINDOWINFO::default();
+    let _ = unsafe { GetWindowInfo(hwnd, &mut pwi) };
+    if ((pwi.dwExStyle & WS_EX_TOOLWINDOW
+      == windows::Win32::UI::WindowsAndMessaging::WINDOW_EX_STYLE(0)
+      && pwi.dwStyle & WS_CAPTION == WS_CAPTION)
+      || pwi.dwWindowStatus == WS_ACTIVECAPTION.0
+      || is_fullscreen(hwnd).as_bool())
+      && pwi.dwStyle & WS_CHILD == windows::Win32::UI::WindowsAndMessaging::WINDOW_STYLE(0)
+    {
+      let mut clocked_val: i32 = 0;
+      let cbattribute = std::mem::size_of::<i32>() as u32;
+      let result = unsafe {
+        DwmGetWindowAttribute(
           hwnd,
           DWMWA_CLOAKED,
           &mut clocked_val as *mut i32 as *mut _,
           cbattribute,
-        );
-        if result.is_ok() && clocked_val == 0 {
-          // If problem with callback stop loop
-          if !((*callback)(hwnd)) {
-            return FALSE;
-          }
+        )
+      };
+      if result.is_ok() && clocked_val == 0 {
+        // If problem with callback stop loop
+        if !(unsafe { (*callback)(hwnd) }) {
+          return FALSE;
         }
       }
     }
-
-    TRUE
   }
+
+  TRUE
 }
 
 extern "system" fn enum_child_windows_func(hwnd: HWND, lparam: LPARAM) -> BOOL {
@@ -523,7 +523,6 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
 
   if let Ok(handle) = open_process_handle(lpdwprocessid) {
     let position: WindowPosition = get_rect_window(hwnd);
-    let id = unsafe { GetProcessId(handle) };
     let parent_process: ProcessInfo = get_process_path_and_name(handle, hwnd, lpdwprocessid);
 
     let mut process_memory_counters = PROCESS_MEMORY_COUNTERS::default();
@@ -539,7 +538,7 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
     let exec_name = parent_process.exec_name.to_lowercase();
     if exec_name.ne(&"searchhost") {
       window_info = WindowInfo {
-        id,
+        id: hwnd.0 as u32,
         os: os_name(),
         title: get_window_title(hwnd),
         position,
@@ -555,36 +554,33 @@ fn get_window_information(hwnd: HWND) -> WindowInfo {
 }
 
 fn get_browser_url(hwnd: HWND, exec_name: String) -> crate::common::result::Result<String> {
-  unsafe {
-    let mut url: String = String::from("");
+  let mut url: String = String::from("");
 
-    if CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok() {
-      let automation: Result<IUIAutomation, _> = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL);
-      if automation.is_ok() {
-        let automation: IUIAutomation = automation?;
-        let element: Result<IUIAutomationElement, _> = automation.ElementFromHandle(hwnd);
-        if element.is_ok() {
-          let element: IUIAutomationElement = element?;
-          /* Chromium part to get url from search bar */
-          match &exec_name.to_lowercase() {
-            x if x.contains("firefox") || x.contains("librewolf") => {
-              url = get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())?;
+  if unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok() } {
+    let automation: Result<IUIAutomation, _> =
+      unsafe { CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL) };
+    if let Ok(automation) = automation {
+      let element: Result<IUIAutomationElement, _> = unsafe { automation.ElementFromHandle(hwnd) };
+      if let Ok(element) = element {
+        /* Chromium part to get url from search bar */
+        match &exec_name.to_lowercase() {
+          x if x.contains("firefox") || x.contains("librewolf") => {
+            url = get_url_from_automation_id(&automation, &element, "urlbar-input".to_owned())?;
+          }
+          x if x.contains("msedge") => {
+            url = get_url_from_automation_id(&automation, &element, "view_1022".to_owned())?;
+            if url.is_empty() {
+              url = get_url_from_automation_id(&automation, &element, "view_1020".to_owned())?;
             }
-            x if x.contains("msedge") => {
-              url = get_url_from_automation_id(&automation, &element, "view_1022".to_owned())?;
-              if url.is_empty() {
-                url = get_url_from_automation_id(&automation, &element, "view_1020".to_owned())?;
-              }
-            }
-            _ => {
-              url = get_url_for_chromium(&automation, &element)?;
-            }
-          };
-        }
+          }
+          _ => {
+            url = get_url_for_chromium(&automation, &element)?;
+          }
+        };
       }
     }
-    Ok(url)
   }
+  Ok(url)
 }
 
 /**
@@ -595,19 +591,18 @@ fn get_url_from_automation_id(
   element: &IUIAutomationElement,
   automation_id: String,
 ) -> crate::common::result::Result<String> {
-  unsafe {
-    let variant = VARIANT::from(::windows::core::BSTR::from(automation_id));
-    let condition = automation.CreatePropertyCondition(UIA_AutomationIdPropertyId, &variant)?;
-    let test = element.FindFirst(TreeScope_Subtree, &condition);
-    if test.is_ok() {
-      let test = test?;
-      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
-      if variant.is_ok() {
-        let variant = variant?;
-        if !variant.is_empty() {
-          let url = decode_variant_string(&variant);
-          return Ok(url);
-        }
+  let variant = VARIANT::from(::windows::core::BSTR::from(automation_id));
+  let condition =
+    unsafe { automation.CreatePropertyCondition(UIA_AutomationIdPropertyId, &variant) }?;
+  let test = unsafe { element.FindFirst(TreeScope_Subtree, &condition) };
+  if test.is_ok() {
+    let test = test?;
+    let variant = unsafe { test.GetCurrentPropertyValue(UIA_ValueValuePropertyId) };
+    if variant.is_ok() {
+      let variant = variant?;
+      if !variant.is_empty() {
+        let url = decode_variant_string(&variant);
+        return Ok(url);
       }
     }
   }
@@ -652,8 +647,7 @@ fn search_url_chromium(
   };
   if let Ok(element) = search_element {
     let variant = unsafe { element.GetCurrentPropertyValue(UIA_ValueValuePropertyId) };
-    if variant.is_ok() {
-      let variant = variant?;
+    if let Ok(variant) = variant {
       if !variant.is_empty() {
         let url = decode_variant_string(&variant);
         return Ok(url);
@@ -668,22 +662,21 @@ fn get_url_for_chromium_from_ctrlk(
   automation: &IUIAutomation,
   element: &IUIAutomationElement,
 ) -> crate::common::result::Result<String> {
-  unsafe {
+  let first_browser_element = unsafe {
     let variant = VARIANT::from(0xC354);
     let condition1 = automation.CreatePropertyCondition(UIA_ControlTypePropertyId, &variant)?;
     let variant = VARIANT::from(::windows::core::BSTR::from("Ctrl+L"));
     let condition2 = automation.CreatePropertyCondition(UIA_AccessKeyPropertyId, &variant)?;
     let condition = automation.CreateAndCondition(&condition1, &condition2)?;
-    let test = element.FindFirst(TreeScope_Subtree, &condition);
-    if test.is_ok() {
-      let test = test?;
-      let variant = test.GetCurrentPropertyValue(UIA_ValueValuePropertyId);
-      if variant.is_ok() {
-        let variant = variant?;
-        if !variant.is_empty() {
-          let url = decode_variant_string(&variant);
-          return Ok(url);
-        }
+    element.FindFirst(TreeScope_Subtree, &condition)
+  };
+  if let Ok(first_browser_element) = first_browser_element {
+    let variant =
+      unsafe { first_browser_element.GetCurrentPropertyValue(UIA_ValueValuePropertyId) };
+    if let Ok(variant) = variant {
+      if !variant.is_empty() {
+        let url = decode_variant_string(&variant);
+        return Ok(url);
       }
     }
   }

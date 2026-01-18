@@ -131,14 +131,14 @@ impl WindowInfo {
   #[napi]
   pub fn to_object(&self) -> Result<WindowInfoObject> {
     let window_info = &self.clone();
-    let url = window_info.url().unwrap().clone();
-    let icon: IconInfo = window_info.get_icon().unwrap().clone();
+    let url = window_info.url()?.clone();
+    let icon: IconInfo = window_info.get_icon()?.clone();
     Ok(WindowInfoObject {
       id: window_info.id,
       title: window_info.title.clone(),
-      position: window_info.position().unwrap(),
-      usage: window_info.usage().unwrap(),
-      info: window_info.info().unwrap(),
+      position: window_info.position()?,
+      usage: window_info.usage()?,
+      info: window_info.info()?,
       icon,
       url,
       os: window_info.os.clone(),
@@ -366,57 +366,54 @@ pub fn subscribe_active_window(
       100
     }
   };
-  // let tsfn: ThreadsafeFunction<WindowInfo, true> = callback
-  //   .create_threadsafe_function(
-  //     0,
-  //     |ctx: napi::threadsafe_function::ThreadSafeCallContext<WindowInfo>| Ok(vec![ctx.value]),
-  //   )?;
 
-  // let tsfn_clone: ThreadsafeFunction<WindowInfo, ErrorStrategy::CalleeHandled> = tsfn.clone();
+  let thread_manager = THREAD_MANAGER
+    .lock()
+    .map_err(|_| napi::Error::from_reason("Filed to lock THREAD_MANAGER"))?;
 
-  let thread_manager = THREAD_MANAGER.lock().unwrap();
-
-  let id = thread_manager.start_thread(move |receiver| {
-    let mut current_window: WindowInfo = empty_entity().into();
-    let mut first_loop: bool = true;
-    loop {
-      match receiver.try_recv() {
-        Ok(_) | Err(std::sync::mpsc::TryRecvError::Disconnected) => {
-          break;
-        }
-        _ => {
-          match get_active_window() {
-            Ok(new_current_window) => {
-              if new_current_window.id.ne(&current_window.id)
+  let id = thread_manager
+    .start_thread(move |receiver| {
+      let mut current_window: WindowInfo = empty_entity().into();
+      let mut first_loop: bool = true;
+      loop {
+        match receiver.try_recv() {
+          Ok(_) | Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+            break;
+          }
+          _ => {
+            match get_active_window() {
+              Ok(new_current_window) => {
+                if new_current_window.id.ne(&current_window.id)
                 || new_current_window.title.ne(&current_window.title)
                 // || new_current_window
                 //   .info
                 //   .process_id
                 //   .ne(&current_window.info.process_id)
                 || (new_current_window.id.eq(&0) && first_loop)
-              {
-                current_window = new_current_window.clone().into();
-                callback.call(
-                  Ok(new_current_window.into()),
-                  ThreadsafeFunctionCallMode::Blocking,
-                );
+                {
+                  current_window = new_current_window.clone().into();
+                  callback.call(
+                    Ok(new_current_window.into()),
+                    ThreadsafeFunctionCallMode::Blocking,
+                  );
+                }
+              }
+              Err(err) => {
+                callback.call(Err(xwin_error(err)), ThreadsafeFunctionCallMode::Blocking);
+                break;
               }
             }
-            Err(err) => {
-              callback.call(Err(xwin_error(err)), ThreadsafeFunctionCallMode::Blocking);
-              break;
-            }
+            thread::sleep(Duration::from_millis(interval));
           }
-          thread::sleep(Duration::from_millis(interval));
+        }
+        if first_loop {
+          first_loop = false;
         }
       }
-      if first_loop {
-        first_loop = false;
-      }
-    }
-  });
+    })
+    .map_err(napi::Error::from_reason)?;
 
-  Ok(id.unwrap())
+  Ok(id)
 }
 
 /**
@@ -466,11 +463,11 @@ pub fn subscribe_active_window(
  */
 #[napi]
 pub fn unsubscribe_active_window(thread_id: u32) -> Result<()> {
-  THREAD_MANAGER
-    .lock()
-    .unwrap()
-    .stop_thread(thread_id)
-    .unwrap();
+  if let Ok(thread_manager) = THREAD_MANAGER.lock() {
+    thread_manager
+      .stop_thread(thread_id)
+      .map_err(napi::Error::from_reason)?;
+  }
   Ok(())
 }
 

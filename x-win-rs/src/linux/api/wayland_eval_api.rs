@@ -30,7 +30,7 @@ get_active_window();
   if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str())?;
     if response.is_object() {
-      return Ok(value_to_window_info(&response));
+      return Ok(value_to_window_info(&response)?);
     }
   }
 
@@ -49,15 +49,19 @@ get_open_windows();
   let response = call_script(&script)?;
   if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str())?;
-
-    let response = match response.as_array() {
-      Some(result) => result.iter().map(value_to_window_info).collect(),
-      None => vec![],
-    };
-    Ok(response)
-  } else {
-    Ok(vec![])
+    match response.as_array() {
+      Some(values) => {
+        let mut response: Vec<WindowInfo> = vec![];
+        for value in values {
+          let value = value_to_window_info(value)?;
+          response.push(value);
+        }
+        return Ok(response);
+      }
+      _ => return Ok(vec![]),
+    }
   }
+  Ok(vec![])
 }
 
 fn call_script(script: &String) -> Result<String> {
@@ -89,7 +93,7 @@ get_icon({0});
     if !response.is_empty() {
       let response: serde_json::Value = serde_json::from_str(response.as_str())?;
       if response.is_object() {
-        return Ok(value_to_icon_info(&response));
+        return Ok(value_to_icon_info(&response)?);
       }
     }
   }

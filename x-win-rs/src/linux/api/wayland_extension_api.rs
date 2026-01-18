@@ -38,7 +38,7 @@ pub fn get_active_window() -> Result<WindowInfo> {
     if !response.is_empty() {
       let response: serde_json::Value = serde_json::from_str(response.as_str())?;
       return match response.is_object() {
-        true => Ok(value_to_window_info(&response)),
+        true => Ok(value_to_window_info(&response)?),
         false => Err(String::from("No data founded for active window").into()),
       };
     }
@@ -57,19 +57,23 @@ pub fn get_open_windows() -> Result<Vec<WindowInfo>> {
     );
   }
 
-  let response = response.unwrap();
+  let response = response?;
 
   if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str())?;
-
-    let response = match response.as_array() {
-      Some(result) => result.iter().map(value_to_window_info).collect(),
-      None => vec![],
-    };
-    Ok(response)
-  } else {
-    Ok(vec![])
+    match response.as_array() {
+      Some(values) => {
+        let mut response: Vec<WindowInfo> = vec![];
+        for value in values {
+          let value = value_to_window_info(value)?;
+          response.push(value);
+        }
+        return Ok(response);
+      }
+      _ => return Ok(vec![]),
+    }
   }
+  Ok(vec![])
 }
 
 pub fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
@@ -78,7 +82,7 @@ pub fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
     if !response.is_empty() {
       let response: serde_json::Value = serde_json::from_str(response.as_str())?;
       if response.is_object() {
-        return Ok(value_to_icon_info(&response));
+        return Ok(value_to_icon_info(&response)?);
       }
     }
   }
@@ -86,17 +90,17 @@ pub fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
 }
 
 pub fn install_extension() -> Result<bool> {
-  if std::fs::metadata(get_extension_path()).is_ok() {
-    if std::fs::metadata(get_extension_file_path()).is_ok() {
+  if std::fs::metadata(get_extension_path()?).is_ok() {
+    if std::fs::metadata(get_extension_file_path()?).is_ok() {
       remove_extension_file()?;
     }
-    if std::fs::metadata(get_medata_file_path()).is_ok() {
+    if std::fs::metadata(get_medata_file_path()?).is_ok() {
       remove_metadata_file()?;
     }
-  } else if let Err(create_folder_err) = std::fs::create_dir_all(get_extension_path()) {
+  } else if let Err(create_folder_err) = std::fs::create_dir_all(get_extension_path()?) {
     panic!(
       "Not possible to create extension folder to \"{}\"!\nRaison: {}",
-      get_extension_path().to_string_lossy(),
+      get_extension_path()?.to_string_lossy(),
       create_folder_err
     );
   }
@@ -122,20 +126,20 @@ pub fn install_extension() -> Result<bool> {
     script
   };
 
-  if fs::write(get_extension_file_path(), script).is_ok() {
-    if fs::write(get_medata_file_path(), GNOME_XWIN_EXTENSION_META).is_ok() {
+  if fs::write(get_extension_file_path()?, script).is_ok() {
+    if fs::write(get_medata_file_path()?, GNOME_XWIN_EXTENSION_META).is_ok() {
       Ok(true)
     } else {
       remove_extension_file()?;
       panic!(
         "Not possible to write \"{}\" file!",
-        get_medata_file_path().to_string_lossy()
+        get_medata_file_path()?.to_string_lossy()
       );
     }
   } else {
     panic!(
       "Not possible to write \"{}\" file!",
-      get_extension_file_path().to_string_lossy()
+      get_extension_file_path()?.to_string_lossy()
     );
   }
 }
@@ -190,7 +194,7 @@ pub fn is_enabled_extension() -> Result<bool> {
   if !response.is_empty() {
     let response: serde_json::Value = serde_json::from_str(response.as_str())?;
     if response.is_object() {
-      let response = response.as_object().unwrap();
+      let response = response.as_object().ok_or("Expected JSON object")?;
       if response.contains_key("enabled") {
         let response = response["enabled"].as_bool().unwrap_or(false);
         return Ok(response);
@@ -227,34 +231,31 @@ fn request_extension_info() -> Result<Message> {
   )?)
 }
 
-fn get_extension_path() -> path::PathBuf {
-  let home_dir: String = env::var_os("HOME")
-    .unwrap()
-    .clone()
-    .to_string_lossy()
-    .to_string();
+fn get_extension_path() -> Result<path::PathBuf> {
+  let home_dir = env::var_os("HOME").ok_or("HOME env not available")?;
+  let home_dir = home_dir.clone().to_string_lossy().to_string();
   let extension_dir: String = GNOME_XWIN_EXTENSION_FOLDER_PATH.to_owned();
-  [home_dir, extension_dir].iter().collect()
+  Ok([home_dir, extension_dir].iter().collect())
 }
 
 fn cleanup_extension_folder() -> Result<()> {
-  Ok(fs::remove_dir_all(get_extension_path())?)
+  Ok(fs::remove_dir_all(get_extension_path()?)?)
 }
 
-fn get_extension_file_path() -> path::PathBuf {
-  get_extension_path().join("extension.js")
+fn get_extension_file_path() -> Result<path::PathBuf> {
+  Ok(get_extension_path()?.join("extension.js"))
 }
 
-fn get_medata_file_path() -> path::PathBuf {
-  get_extension_path().join("metadata.json")
+fn get_medata_file_path() -> Result<path::PathBuf> {
+  Ok(get_extension_path()?.join("metadata.json"))
 }
 
 fn remove_metadata_file() -> Result<()> {
-  Ok(fs::remove_file(get_medata_file_path())?)
+  Ok(fs::remove_file(get_medata_file_path()?)?)
 }
 
 fn remove_extension_file() -> Result<()> {
-  Ok(fs::remove_file(get_extension_file_path())?)
+  Ok(fs::remove_file(get_extension_file_path()?)?)
 }
 
 fn call_script(method_name: &str) -> Result<String> {
