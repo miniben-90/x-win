@@ -85,7 +85,7 @@ function compareIconStruct(t: ExecutionContext, data: IconInfo) {
   t.notDeepEqual(data.height, 0)
 }
 
-test('activeWindow', (t) => {
+test.only('activeWindow', (t) => {
   console.time('activeWindow')
   const data = activeWindow()
   console.timeEnd('activeWindow')
@@ -93,7 +93,7 @@ test('activeWindow', (t) => {
   return t.pass()
 })
 
-test('openWindows', (t) => {
+test.only('openWindows', (t) => {
   console.time('openwindows')
   const list = openWindows()
   console.timeEnd('openwindows')

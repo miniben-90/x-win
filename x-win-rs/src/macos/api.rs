@@ -179,7 +179,7 @@ fn get_windows_informations_inner(only_active: bool) -> Result<Vec<WindowInfo>> 
     if app.is_err() {
       continue;
     }
-    let app = app.unwrap();
+    let app = app?;
 
     let is_not_active = !app.isActive();
 
