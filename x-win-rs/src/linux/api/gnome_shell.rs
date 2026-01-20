@@ -39,7 +39,7 @@ pub const GNOME_XWIN_GET_ICON_SCRIPT: &str = r#"function _get_icon(window_id) {
       .filter(x => _filterWindow)
       .find(x => x && x.get_meta_window && x.get_meta_window() && x.get_meta_window().get_id() === window_id)
       .get_meta_window();
-    if (meta_window) { 
+    if (meta_window) {
       const tracker = Shell.WindowTracker.get_default();
       const window_app = tracker.get_window_app(meta_window);
       if (window_app) {
@@ -384,54 +384,54 @@ export default class XWinWaylandExtension extends Extension {
 "#;
 
 pub fn number_to_u32(value: &serde_json::Value) -> u32 {
-  if value.is_number() {
-    return value.as_u64().unwrap() as u32;
-  }
-  0
+  value.as_u64().map(|v| v as u32).unwrap_or(0)
 }
 
 pub fn number_to_i32(value: &serde_json::Value) -> i32 {
-  if value.is_number() {
-    return value.as_i64().unwrap() as i32;
-  }
-  0
+  value.as_i64().map(|v| v as i32).unwrap_or(0)
 }
 
-pub fn value_to_icon_info(response: &serde_json::Value) -> IconInfo {
-  let response = response.as_object().unwrap();
-  IconInfo {
-    data: response["data"].as_str().unwrap().to_string(),
+pub fn value_to_icon_info(response: &serde_json::Value) -> Result<IconInfo, &'static str> {
+  let response = response.as_object().ok_or("Expected JSON object")?;
+
+  Ok(IconInfo {
+    data: response["data"].as_str().unwrap_or("").to_string(),
     height: number_to_u32(&response["height"]),
     width: number_to_u32(&response["width"]),
-  }
+  })
 }
 
-pub fn value_to_window_info(response: &serde_json::Value) -> WindowInfo {
-  let response = response.as_object().unwrap();
-  let position = response["position"].as_object().unwrap();
-  let info = response["info"].as_object().unwrap();
-  let usage = response["usage"].as_object().unwrap();
-  WindowInfo {
+pub fn value_to_window_info(response: &serde_json::Value) -> Result<WindowInfo, &'static str> {
+  let response = response.as_object().ok_or("Expected JSON object")?;
+  let position = response["position"]
+    .as_object()
+    .ok_or("Expected JSON object")?;
+  let info = response["info"].as_object().ok_or("Expected JSON object")?;
+  let usage = response["usage"]
+    .as_object()
+    .ok_or("Expected JSON object")?;
+
+  Ok(WindowInfo {
     id: number_to_u32(&response["id"]),
-    os: response["os"].as_str().unwrap().to_string(),
-    title: response["title"].as_str().unwrap().to_string(),
+    os: response["os"].as_str().unwrap_or("linux").to_string(),
+    title: response["title"].as_str().unwrap_or("").to_string(),
     position: WindowPosition {
       height: number_to_i32(&position["height"]),
       width: number_to_i32(&position["width"]),
       x: number_to_i32(&position["x"]),
       y: number_to_i32(&position["y"]),
-      is_full_screen: position["isFullScreen"].as_bool().unwrap(),
+      is_full_screen: position["isFullScreen"].as_bool().unwrap_or(false),
     },
     info: ProcessInfo {
-      exec_name: info["exec_name"].as_str().unwrap().to_string(),
-      name: info["name"].as_str().unwrap().to_string(),
-      path: info["path"].as_str().unwrap().to_string(),
+      exec_name: info["exec_name"].as_str().unwrap_or("").to_string(),
+      name: info["name"].as_str().unwrap_or("").to_string(),
+      path: info["path"].as_str().unwrap_or("").to_string(),
       process_id: number_to_u32(&info["process_id"]),
     },
     usage: UsageInfo {
       memory: number_to_u32(&usage["memory"]),
     },
-  }
+  })
 }
 
 pub struct GnomeVersion {
