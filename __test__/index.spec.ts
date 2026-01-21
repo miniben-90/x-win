@@ -85,7 +85,7 @@ function compareIconStruct(t: ExecutionContext, data: IconInfo) {
   t.notDeepEqual(data.height, 0)
 }
 
-test.only('activeWindow', (t) => {
+test('activeWindow', (t) => {
   console.time('activeWindow')
   const data = activeWindow()
   console.timeEnd('activeWindow')
@@ -93,7 +93,7 @@ test.only('activeWindow', (t) => {
   return t.pass()
 })
 
-test.only('openWindows', (t) => {
+test('openWindows', (t) => {
   console.time('openwindows')
   const list = openWindows()
   console.timeEnd('openwindows')
@@ -243,16 +243,16 @@ test('toObject - activeWindow', (t) => {
 test('toObject - openWindows', (t) => {
   console.time('toObject - openWindows')
   const list = openWindows()
-  console.timeEnd('toObject - openWindows')
   for (const data of list) {
-    compareStruct(t, data)
+    compareStruct(t, data.toObject())
   }
+  console.timeEnd('toObject - openWindows')
   return t.pass()
 })
 
 test('toObject - activeWindowAsync', async (t) => {
   console.time('toObject - activeWindowAsync')
-  const data = await activeWindowAsync()
+  const data = (await activeWindowAsync()).toObject()
   console.timeEnd('toObject - activeWindowAsync')
   compareStruct(t, data)
   return t.pass()
@@ -261,10 +261,10 @@ test('toObject - activeWindowAsync', async (t) => {
 test('toObject - openWindowsAsync', async (t) => {
   console.time('toObject - openWindowsAsync')
   const list = await openWindowsAsync()
-  console.timeEnd('toObject - openWindowsAsync')
   for (const data of list) {
-    compareStruct(t, data)
+    compareStruct(t, data.toObject())
   }
+  console.timeEnd('toObject - openWindowsAsync')
   return t.pass()
 })
 
