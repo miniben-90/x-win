@@ -392,7 +392,8 @@ jobs:
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**
+          files: |
+            artifacts/**
 
       # Move artifacts at there places
       - name: Run napi artifacts to struct deps
