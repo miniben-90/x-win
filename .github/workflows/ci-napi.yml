@@ -323,25 +323,30 @@ jobs:
           node-version: 24
           check-latest: true
           cache: yarn
+
       - name: Install dependencies
         run: yarn install
+
       - name: Download macOS x64 artifact
         uses: actions/download-artifact@v6
         with:
           name: bindings-x86_64-apple-darwin
           path: .
+
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v6
         with:
           name: bindings-aarch64-apple-darwin
           path: .
+
       - name: Combine binaries
         run: yarn universalize
+
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
           name: bindings-universal-apple-darwin
-          path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
+          path: ${{ github.workspace }}/${{ env.APP_NAME }}.darwin-universal.node
           if-no-files-found: error
 
   publish:
