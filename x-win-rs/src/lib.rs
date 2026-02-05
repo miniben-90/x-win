@@ -319,7 +319,7 @@ mod tests {
   #[cfg(not(target_os = "linux"))]
   #[test]
   #[ignore = "Not working on ci/cd"]
-  fn test_get_brower_url() -> Result<()> {
+  fn test_get_browser_url() -> Result<()> {
     #[allow(unused)]
     let _context = TestContext::setup();
     let open_windows = &get_open_windows().unwrap();
@@ -337,7 +337,7 @@ mod tests {
 
   #[cfg(target_os = "linux")]
   #[test]
-  fn test_get_brower_url() -> Result<()> {
+  fn test_get_browser_url() -> Result<()> {
     let open_windows = &get_open_windows().unwrap();
     assert_ne!(open_windows.len(), 0);
     let window_info = open_windows.first().unwrap().to_owned();
