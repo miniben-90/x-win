@@ -271,16 +271,26 @@ mod tests {
 
   #[test]
   fn test_get_active_window() -> Result<()> {
-    let window_info = get_active_window().unwrap();
-    test_struct(window_info)
+    match get_active_window() {
+      Ok(window_info) => test_struct(window_info),
+      Err(err) => Err(err),
+    }
   }
 
   #[test]
   fn test_get_open_windows() -> Result<()> {
-    let open_windows = get_open_windows().unwrap();
-    assert_ne!(open_windows.len(), 0);
-    let window_info = open_windows.first().unwrap().to_owned();
-    test_struct(window_info)
+    match get_open_windows() {
+      Ok(open_windows) => {
+        assert_ne!(open_windows.len(), 0);
+
+        if let Some(window_info) = open_windows.first() {
+          test_struct(window_info.to_owned())
+        } else {
+          Err("No open window".into())
+        }
+      }
+      Err(err) => Err(err),
+    }
   }
 
   #[test]
@@ -300,53 +310,120 @@ mod tests {
   }
 
   #[test]
-  fn test_get_window_icon() -> Result<()> {
-    let window_info: &WindowInfo = &get_active_window().unwrap();
-    let icon_info = get_window_icon(window_info).unwrap();
-    assert_ne!(icon_info.data, "");
-    assert_ne!(icon_info.height, 0);
-    assert_ne!(icon_info.width, 0);
-    let open_windows = &get_open_windows().unwrap();
-    assert_ne!(open_windows.len(), 0);
-    let window_info = open_windows.first().unwrap().to_owned();
-    let icon_info = get_window_icon(&window_info).unwrap();
-    assert_ne!(icon_info.data, "");
-    assert_ne!(icon_info.height, 0);
-    assert_ne!(icon_info.width, 0);
-    Ok(())
+  fn test_get_window_icon_from_active_window() -> Result<()> {
+    match get_active_window() {
+      Ok(window_info) => match get_window_icon(&window_info) {
+        Ok(icon_info) => {
+          assert_ne!(icon_info.data, "");
+          assert_ne!(icon_info.height, 0);
+          assert_ne!(icon_info.width, 0);
+          Ok(())
+        }
+        Err(err) => Err(err),
+      },
+      Err(err) => Err(err),
+    }
+  }
+
+  #[test]
+  fn test_get_window_icon_from_open_windows() -> Result<()> {
+    match get_open_windows() {
+      Ok(open_windows) => match open_windows.first() {
+        Some(window_info) => match get_window_icon(&window_info) {
+          Ok(icon_info) => {
+            assert_ne!(icon_info.data, "");
+            assert_ne!(icon_info.height, 0);
+            assert_ne!(icon_info.width, 0);
+            Ok(())
+          }
+          Err(err) => Err(err),
+        },
+        None => Err("No open window".into()),
+      },
+      Err(err) => Err(err),
+    }
   }
 
   #[cfg(not(target_os = "linux"))]
   #[test]
   #[ignore = "Not working on ci/cd"]
-  fn test_get_brower_url() -> Result<()> {
+  fn test_get_browser_url_from_active_window() -> Result<()> {
+    #[allow(unused)]
+    let _context: TestContext = TestContext::setup();
+    match get_active_window() {
+      Ok(window_info) => match get_browser_url(&window_info) {
+        Ok(url) => {
+          assert!(url.starts_with("http"));
+          Ok(())
+        }
+        Err(err) => Err(err),
+      },
+      Err(err) => Err(err),
+    }
+  }
+
+  #[cfg(not(target_os = "linux"))]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_get_browser_url_from_open_windows() -> Result<()> {
     #[allow(unused)]
     let _context = TestContext::setup();
-    let open_windows = &get_open_windows().unwrap();
-    assert_ne!(open_windows.len(), 0);
-    let window_info = open_windows.first().unwrap().to_owned();
-    let url = get_browser_url(&window_info).unwrap();
-    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
-    assert!(url.starts_with("http"));
-    let window_info = &get_active_window().unwrap().to_owned();
-    let url = get_browser_url(window_info).unwrap();
-    println!("URL: {:?}; process: {:?}", url, window_info.info.name);
-    assert!(url.starts_with("http"));
-    Ok(())
+    match get_open_windows() {
+      Ok(open_windows) => {
+        assert_ne!(open_windows.len(), 0);
+        match open_windows.first() {
+          Some(window_info) => match get_browser_url(window_info) {
+            Ok(url) => {
+              assert!(url.starts_with("http"));
+              Ok(())
+            }
+            Err(err) => Err(err),
+          },
+          None => Err("No open window".into()),
+        }
+      }
+      Err(err) => Err(err),
+    }
   }
 
   #[cfg(target_os = "linux")]
   #[test]
-  fn test_get_brower_url() -> Result<()> {
-    let open_windows = &get_open_windows().unwrap();
-    assert_ne!(open_windows.len(), 0);
-    let window_info = open_windows.first().unwrap().to_owned();
-    let url = get_browser_url(&window_info).unwrap();
-    assert!(url.eq("URL recovery not supported on Linux distribution!"));
-    let window_info = &get_active_window().unwrap().to_owned();
-    let url = get_browser_url(&window_info).unwrap();
-    assert!(url.eq("URL recovery not supported on Linux distribution!"));
-    Ok(())
+  #[ignore = "Not working on ci/cd"]
+  fn test_get_browser_url_from_active_window() -> Result<()> {
+    #[allow(unused)]
+    match get_active_window() {
+      Ok(window_info) => match get_browser_url(&window_info) {
+        Ok(url) => {
+          assert!(url.eq("URL recovery not supported on Linux distribution!"));
+          Ok(())
+        }
+        Err(err) => Err(err),
+      },
+      Err(err) => Err(err),
+    }
+  }
+
+  #[cfg(target_os = "linux")]
+  #[test]
+  #[ignore = "Not working on ci/cd"]
+  fn test_get_browser_url_from_open_windows() -> Result<()> {
+    #[allow(unused)]
+    match get_open_windows() {
+      Ok(open_windows) => {
+        assert_ne!(open_windows.len(), 0);
+        match open_windows.first() {
+          Some(window_info) => match get_browser_url(window_info) {
+            Ok(url) => {
+              assert!(url.eq("URL recovery not supported on Linux distribution!"));
+              Ok(())
+            }
+            Err(err) => Err(err),
+          },
+          None => Err("No open window".into()),
+        }
+      }
+      Err(err) => Err(err),
+    }
   }
 
   #[cfg(all(feature = "macos_permission", target_os = "macos"))]

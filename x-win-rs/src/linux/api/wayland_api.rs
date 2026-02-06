@@ -24,10 +24,14 @@ use super::{
 };
 
 fn gnome_use_eval() -> bool {
-  let gnome_singleton = GNOME_SINGLETON.lock().unwrap();
-  let use_eval: bool = gnome_singleton.use_eval;
-  let _ = gnome_singleton.deref();
-  use_eval
+  match GNOME_SINGLETON.lock() {
+    Ok(gnome_singleton) => {
+      let use_eval: bool = gnome_singleton.use_eval;
+      let _ = gnome_singleton.deref();
+      use_eval
+    }
+    Err(_) => false,
+  }
 }
 
 /**

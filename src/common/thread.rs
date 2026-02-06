@@ -24,7 +24,7 @@ impl ThreadManager {
     F: Fn(mpsc::Receiver<()>) + Send + 'static,
   {
     let key = {
-      let mut id = self.id.lock().unwrap();
+      let mut id = self.id.lock().expect("Can't lock the id of the thread.");
       let key = *id;
       *id += 1;
       key
@@ -37,36 +37,48 @@ impl ThreadManager {
     let handle = thread::spawn(move || {
       work(receiver);
     });
-    threads_clone.lock().unwrap().insert(key, sender_);
+    threads_clone
+      .lock()
+      .expect("Can't lock the thread.")
+      .insert(key, sender_);
     let threads_clone_for_cleanup = Arc::clone(&self.threads);
     thread::spawn(move || {
       let _ = handle.join();
-      threads_clone_for_cleanup.lock().unwrap().remove(&key);
+      threads_clone_for_cleanup
+        .lock()
+        .expect("Can't lock the clean thread.")
+        .remove(&key);
     });
     Ok(key)
   }
 
   pub fn stop_thread(&self, key: u32) -> Result<(), String> {
-    let sender_mutex = {
-      let threads = self.threads.lock().unwrap();
-      threads
-        .get(&key)
-        .cloned()
-        .ok_or_else(|| "Thread not found.".to_string())?
-    };
-    sender_mutex
-      .send(())
-      .map_err(|_| "Failed to send stop signal.".to_string())?;
-    Ok(())
+    match self.threads.lock() {
+      Ok(threads) => match threads.get(&key) {
+        Some(sender_mutex) => {
+          sender_mutex
+            .clone()
+            .send(())
+            .map_err(|_| "Failed to send stop signal.".to_string())?;
+          Ok(())
+        }
+        None => Ok(()),
+      },
+      Err(err) => Err(err.to_string()),
+    }
   }
 
   pub fn stop_all_threads(&self) -> Result<(), String> {
-    let threads = self.threads.lock().unwrap();
-    for (_, sender) in threads.iter() {
-      sender
-        .send(())
-        .map_err(|_| "Failed to send stop signal.".to_string())?;
+    match self.threads.lock() {
+      Ok(threads) => {
+        for (_, sender) in threads.iter() {
+          sender
+            .send(())
+            .map_err(|_| "Failed to send stop signal.".to_string())?;
+        }
+        Ok(())
+      }
+      Err(err) => Err(err.to_string()),
     }
-    Ok(())
   }
 }

@@ -125,126 +125,128 @@ fn get_windows_informations_inner(only_active: bool) -> Result<Vec<WindowInfo>> 
   let option = CGWindowListOption::OptionOnScreenOnly
     | CGWindowListOption::ExcludeDesktopElements
     | CGWindowListOption::OptionIncludingWindow;
-  let window_list_info: &CFArray = &CGWindowListCopyWindowInfo(option, kCGNullWindowID).unwrap();
-  let windows_count = CFArray::count(window_list_info);
-  let screen_rect = get_screen_rect();
 
-  for idx in 0..windows_count {
-    let window_cf_dictionary_ref =
-      unsafe { CFArray::value_at_index(window_list_info, idx) as *const CFDictionary };
+  if let Some(window_list_info) = &CGWindowListCopyWindowInfo(option, kCGNullWindowID) {
+    let windows_count = CFArray::count(window_list_info);
+    let screen_rect = get_screen_rect();
 
-    if window_cf_dictionary_ref.is_null() {
-      continue;
-    }
-    let window_cf_dictionary =
-      unsafe { CFRetained::retain(std::ptr::NonNull::from(&*window_cf_dictionary_ref)) };
-    let is_screen: bool = get_cf_boolean_value(&window_cf_dictionary, "kCGWindowIsOnscreen");
-    if !is_screen {
-      continue;
-    }
+    for idx in 0..windows_count {
+      let window_cf_dictionary_ref =
+        unsafe { CFArray::value_at_index(window_list_info, idx) as *const CFDictionary };
 
-    let window_layer = get_cf_number_value(&window_cf_dictionary, "kCGWindowLayer");
+      if window_cf_dictionary_ref.is_null() {
+        continue;
+      }
+      let window_cf_dictionary =
+        unsafe { CFRetained::retain(std::ptr::NonNull::from(&*window_cf_dictionary_ref)) };
+      let is_screen: bool = get_cf_boolean_value(&window_cf_dictionary, "kCGWindowIsOnscreen");
+      if !is_screen {
+        continue;
+      }
 
-    if window_layer.lt(&0) || window_layer.gt(&100) {
-      continue;
-    }
+      let window_layer = get_cf_number_value(&window_cf_dictionary, "kCGWindowLayer");
 
-    let bounds = get_cf_window_bounds_value(&window_cf_dictionary);
+      if window_layer.lt(&0) || window_layer.gt(&100) {
+        continue;
+      }
 
-    if bounds.is_none() {
-      continue;
-    }
+      let bounds = get_cf_window_bounds_value(&window_cf_dictionary);
 
-    let bounds = match bounds {
-      Some(bounds) => bounds,
-      None => CGRect {
-        origin: CGPoint { x: 0.0, y: 0.0 },
-        size: CGSize {
-          width: 0.0,
-          height: 0.0,
+      if bounds.is_none() {
+        continue;
+      }
+
+      let bounds = match bounds {
+        Some(bounds) => bounds,
+        None => CGRect {
+          origin: CGPoint { x: 0.0, y: 0.0 },
+          size: CGSize {
+            width: 0.0,
+            height: 0.0,
+          },
         },
-      },
-    };
+      };
 
-    if bounds.size.height.lt(&50.0) || bounds.size.width.lt(&50.0) {
-      continue;
-    }
+      if bounds.size.height.lt(&50.0) || bounds.size.width.lt(&50.0) {
+        continue;
+      }
 
-    let process_id = get_cf_number_value(&window_cf_dictionary, "kCGWindowOwnerPID");
-    if process_id == 0 {
-      continue;
-    }
+      let process_id = get_cf_number_value(&window_cf_dictionary, "kCGWindowOwnerPID");
+      if process_id == 0 {
+        continue;
+      }
 
-    let app = get_running_application_from_pid(process_id as u32);
-    if app.is_err() {
-      continue;
-    }
-    let app = app?;
+      let app = get_running_application_from_pid(process_id as u32);
+      if app.is_err() {
+        continue;
+      }
+      let app = app?;
 
-    let is_not_active = !app.isActive();
+      let is_not_active = !app.isActive();
 
-    if only_active && is_not_active {
-      continue;
-    }
+      if only_active && is_not_active {
+        continue;
+      }
 
-    let bundle_identifier = get_bundle_identifier(app);
+      let bundle_identifier = get_bundle_identifier(app);
 
-    if bundle_identifier.eq("com.apple.dock") {
-      continue;
-    }
+      if bundle_identifier.eq("com.apple.dock") {
+        continue;
+      }
 
-    let app_name = get_cf_string_value(&window_cf_dictionary, "kCGWindowOwnerName");
-    let title = get_cf_string_value(&window_cf_dictionary, "kCGWindowName");
+      let app_name = get_cf_string_value(&window_cf_dictionary, "kCGWindowOwnerName");
+      let title = get_cf_string_value(&window_cf_dictionary, "kCGWindowName");
 
-    let (path, exec_name) = {
-      let mut path: String = String::new();
-      let mut exec_name: String = String::new();
-      match app.bundleURL() {
-        Some(nsurl) => {
-          if let Some(nsurl) = nsurl.path() {
-            path = nsurl.to_string();
-            exec_name = std::path::Path::new(&path)
-              .file_name()
-              .unwrap_or_default()
-              .to_str()
-              .unwrap_or_default()
-              .to_string();
+      let (path, exec_name) = {
+        let mut path: String = String::new();
+        let mut exec_name: String = String::new();
+        match app.bundleURL() {
+          Some(nsurl) => {
+            if let Some(nsurl) = nsurl.path() {
+              path = nsurl.to_string();
+              exec_name = std::path::Path::new(&path)
+                .file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+                .to_string();
+            }
+          }
+          None => {
+            path = String::from("");
+            exec_name = String::from("");
           }
         }
-        None => {
-          path = String::from("");
-          exec_name = String::from("");
-        }
+        (path, exec_name)
+      };
+
+      let memory = get_cf_number_value(&window_cf_dictionary, "kCGWindowMemoryUsage");
+      let id = get_cf_number_value(&window_cf_dictionary, "kCGWindowNumber");
+      windows.push(WindowInfo {
+        id: id as u32,
+        os: os_name(),
+        title,
+        position: WindowPosition {
+          x: bounds.origin.x as i32,
+          y: bounds.origin.y as i32,
+          width: bounds.size.width as i32,
+          height: bounds.size.height as i32,
+          is_full_screen: is_full_screen(bounds, screen_rect),
+        },
+        info: ProcessInfo {
+          process_id: process_id as u32,
+          path: path.to_owned(),
+          name: app_name.to_owned(),
+          exec_name: exec_name.to_owned(),
+        },
+        usage: UsageInfo {
+          memory: memory as u32,
+        },
+      });
+
+      if only_active && is_not_active {
+        break;
       }
-      (path, exec_name)
-    };
-
-    let memory = get_cf_number_value(&window_cf_dictionary, "kCGWindowMemoryUsage");
-    let id = get_cf_number_value(&window_cf_dictionary, "kCGWindowNumber");
-    windows.push(WindowInfo {
-      id: id as u32,
-      os: os_name(),
-      title,
-      position: WindowPosition {
-        x: bounds.origin.x as i32,
-        y: bounds.origin.y as i32,
-        width: bounds.size.width as i32,
-        height: bounds.size.height as i32,
-        is_full_screen: is_full_screen(bounds, screen_rect),
-      },
-      info: ProcessInfo {
-        process_id: process_id as u32,
-        path: path.to_owned(),
-        name: app_name.to_owned(),
-        exec_name: exec_name.to_owned(),
-      },
-      usage: UsageInfo {
-        memory: memory as u32,
-      },
-    });
-
-    if only_active && is_not_active {
-      break;
     }
   }
 
