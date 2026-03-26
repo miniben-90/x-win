@@ -284,6 +284,7 @@ fn is_browser_bundle_id(bundle_id: &str) -> bool {
       | "company.thebrowser.Browser"
       | "com.sigmaos.sigmaos.macos"
       | "com.SigmaOS.SigmaOS"
+      | "net.imput.helium"
   )
 }
 
