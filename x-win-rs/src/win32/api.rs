@@ -733,7 +733,7 @@ fn cleanup_hicons(phiconlarge: HICON, phiconsmall: HICON) {
 /// This is used instead of trusting `VerQueryValueW`'s `puLen` directly, since that API
 /// inconsistently returns byte counts vs character counts for wide strings.
 /// See: https://devblogs.microsoft.com/oldnewthing/20061222-00/?p=28623
-fn vec_u16_to_string(value: &Vec<u16>) -> String {
+fn vec_u16_to_string(value: &[u16]) -> String {
   match value.iter().position(|&c| c == 0) {
     Some(null_pos) => String::from_utf16_lossy(&value[0..null_pos]),
     None => String::from_utf16_lossy(value),
