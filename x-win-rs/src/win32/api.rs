@@ -465,8 +465,13 @@ fn get_process_name_from_path(process_path: &Path) -> crate::common::result::Res
         return Err(String::from("Recovery file description failed").into());
       }
 
-      let file_description =
-        unsafe { u16_ptr_to_string(file_description_ptr.cast(), query_len as usize) };
+      let file_description = {
+        let description = unsafe {
+          &std::slice::from_raw_parts::<u16>(file_description_ptr.cast(), query_len as usize)
+            .to_vec()
+        };
+        vec_u16_to_string(description)
+      };
 
       Ok(file_description)
     }
@@ -724,17 +729,15 @@ fn cleanup_hicons(phiconlarge: HICON, phiconsmall: HICON) {
   };
 }
 
-/// Read a null-terminated u16 slice from a pointer, using `max_len` as an upper bound.
+/// Convert a Vec<u16> to a String, stopping at the first null terminator.
 /// This is used instead of trusting `VerQueryValueW`'s `puLen` directly, since that API
 /// inconsistently returns byte counts vs character counts for wide strings.
 /// See: https://devblogs.microsoft.com/oldnewthing/20061222-00/?p=28623
-unsafe fn u16_ptr_to_string(ptr: *const u16, max_len: usize) -> String {
-  let mut len = 0;
-  while len < max_len && unsafe { *ptr.add(len) } != 0 {
-    len += 1;
+fn vec_u16_to_string(value: &Vec<u16>) -> String {
+  match value.iter().position(|&c| c == 0) {
+    Some(null_pos) => String::from_utf16_lossy(&value[0..null_pos]),
+    None => String::from_utf16_lossy(value),
   }
-  let slice = unsafe { std::slice::from_raw_parts(ptr, len) };
-  String::from_utf16_lossy(slice)
 }
 
 #[cfg(test)]
@@ -742,7 +745,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_u16_ptr_to_string_stops_at_null() {
+  fn test_vec_u16_to_string_stops_at_null() {
     // Simulate: "Spotify\0" followed by garbage, with query_len = byte count (16)
     // instead of character count (8). The old code would read all 16 u16 values.
     let data: Vec<u16> = vec![
@@ -751,30 +754,29 @@ mod tests {
       'F' as u16, 'i' as u16, 'l' as u16, 'e' as u16, // garbage after null
       'V' as u16, 'e' as u16, 'r' as u16, 's' as u16,
     ];
-    // query_len = 16 (as if the API returned byte count instead of char count)
-    let result = unsafe { u16_ptr_to_string(data.as_ptr(), 16) };
+    let result = vec_u16_to_string(&data);
     assert_eq!(result, "Spotify");
   }
 
   #[test]
-  fn test_u16_ptr_to_string_no_null_respects_max_len() {
+  fn test_vec_u16_to_string_no_null() {
     let data: Vec<u16> = vec!['A' as u16, 'B' as u16, 'C' as u16];
-    let result = unsafe { u16_ptr_to_string(data.as_ptr(), 3) };
+    let result = vec_u16_to_string(&data);
     assert_eq!(result, "ABC");
   }
 
   #[test]
-  fn test_u16_ptr_to_string_empty() {
+  fn test_vec_u16_to_string_empty() {
     let data: Vec<u16> = vec![0];
-    let result = unsafe { u16_ptr_to_string(data.as_ptr(), 1) };
+    let result = vec_u16_to_string(&data);
     assert_eq!(result, "");
   }
 
   #[test]
-  fn test_u16_ptr_to_string_correct_query_len() {
+  fn test_vec_u16_to_string_null_in_middle() {
     // When query_len is correct (character count including null), should still work
     let data: Vec<u16> = vec!['H' as u16, 'i' as u16, 0];
-    let result = unsafe { u16_ptr_to_string(data.as_ptr(), 3) };
+    let result = vec_u16_to_string(&data);
     assert_eq!(result, "Hi");
   }
 }
