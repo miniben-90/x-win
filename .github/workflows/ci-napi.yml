@@ -239,7 +239,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:latest
 
-        node-version: [18, 20, 22, 24]
+        node-version: [20, 22, 24]
 
     runs-on: ${{ matrix.settings.host }}
     steps:

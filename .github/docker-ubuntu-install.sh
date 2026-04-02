@@ -1,6 +1,6 @@
 #!bin/bash
 
-node_version=${1:-22}
+node_version=${1:-24}
 
 # Install nodejs version x.x
 curl -fsSL https://deb.nodesource.com/setup_$node_version.x | sudo -E bash
