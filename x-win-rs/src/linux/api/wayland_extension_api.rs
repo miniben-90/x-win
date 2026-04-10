@@ -194,23 +194,19 @@ pub fn is_enabled_extension() -> Result<bool> {
   if !body.is_empty() {
     let response: HashMap<String, OwnedValue> = body.deserialize()?;
     if !response.is_empty() {
-      let enabled = response
-        .get("enabled")
-        .and_then(|v| {
-          println!("test: {:?}", v);
-          v.downcast_ref::<bool>().ok()
-        })
-        .unwrap_or(false);
-      if !enabled {
-        // Fallback for gnome between 42 and 44
-        let state = response
-          .get("state")
-          .and_then(|v| v.downcast_ref::<f64>().ok())
-          .unwrap_or(0.0);
-        return Ok(state.eq(&1.0));
-      } else {
-        return Ok(true);
+      let state = response
+        .get("state")
+        .and_then(|v| v.downcast_ref::<f64>().ok())
+        .unwrap_or(0.0);
+      // State 3 = Error
+      if state.eq(&3.0) {
+        return Err(
+    format!(
+      r#""{GNOME_XWIN_UUID}" extension is installed but does not work correctly. Please check your journalctl to find the error."#
+    ).into()
+  );
       }
+      return Ok(state.eq(&1.0));
     }
   }
 
@@ -227,11 +223,19 @@ pub fn is_installed_extension() -> Result<bool> {
   if !body.is_empty() {
     let response: HashMap<String, OwnedValue> = body.deserialize()?;
     if !response.is_empty() {
-      let uuid = response
-        .get("uuid")
-        .and_then(|v| v.downcast_ref::<String>().ok())
-        .unwrap_or_default();
-      return Ok(GNOME_XWIN_UUID.eq(&uuid));
+      let state = response
+        .get("state")
+        .and_then(|v| v.downcast_ref::<f64>().ok())
+        .unwrap_or(0.0);
+      // State 3 = Error
+      if state.eq(&3.0) {
+        return Err(
+    format!(
+      r#""{GNOME_XWIN_UUID}" extension is installed but does not work correctly. Please check your journalctl to find the error."#
+    ).into()
+  );
+      }
+      return Ok(state.ne(&0.0));
     }
   }
   Ok(false)
