@@ -385,21 +385,33 @@ export default class XWinWaylandExtension extends Extension {
 }
 "#;
 
-pub fn number_to_u32(value: &serde_json::Value) -> u32 {
-  value.as_u64().map(|v| v as u32).unwrap_or(0)
+fn number_to_u32(value: &serde_json::Map<String, serde_json::Value>, key: &str) -> u32 {
+  value_to_i64(value, key) as u32
 }
 
-pub fn number_to_i32(value: &serde_json::Value) -> i32 {
-  value.as_i64().map(|v| v as i32).unwrap_or(0)
+fn number_to_i32(value: &serde_json::Map<String, serde_json::Value>, key: &str) -> i32 {
+  value_to_i64(value, key) as i32
+}
+
+fn value_to_i64(value: &serde_json::Map<String, serde_json::Value>, key: &str) -> i64 {
+  value.get(key).and_then(|v| v.as_i64()).unwrap_or(0)
+}
+
+fn str_to_string(value: &serde_json::Map<String, serde_json::Value>, key: &str) -> String {
+  value
+    .get(key)
+    .and_then(|v| v.as_str())
+    .unwrap_or("")
+    .to_string()
 }
 
 pub fn value_to_icon_info(response: &serde_json::Value) -> Result<IconInfo, &'static str> {
   let response = response.as_object().ok_or("Expected JSON object")?;
 
   Ok(IconInfo {
-    data: response["data"].as_str().unwrap_or("").to_string(),
-    height: number_to_u32(&response["height"]),
-    width: number_to_u32(&response["width"]),
+    data: str_to_string(response, "data"),
+    height: number_to_u32(&response, "height"),
+    width: number_to_u32(&response, "width"),
   })
 }
 
@@ -414,24 +426,27 @@ pub fn value_to_window_info(response: &serde_json::Value) -> Result<WindowInfo, 
     .ok_or("Expected JSON object")?;
 
   Ok(WindowInfo {
-    id: number_to_u32(&response["id"]),
-    os: response["os"].as_str().unwrap_or("linux").to_string(),
-    title: response["title"].as_str().unwrap_or("").to_string(),
+    id: number_to_u32(response, "id"),
+    os: str_to_string(response, "os"),
+    title: str_to_string(response, "title"),
     position: WindowPosition {
-      height: number_to_i32(&position["height"]),
-      width: number_to_i32(&position["width"]),
-      x: number_to_i32(&position["x"]),
-      y: number_to_i32(&position["y"]),
-      is_full_screen: position["isFullScreen"].as_bool().unwrap_or(false),
+      height: number_to_i32(position, "height"),
+      width: number_to_i32(position, "width"),
+      x: number_to_i32(position, "x"),
+      y: number_to_i32(position, "y"),
+      is_full_screen: position
+        .get("isFullScreen")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false),
     },
     info: ProcessInfo {
-      exec_name: info["exec_name"].as_str().unwrap_or("").to_string(),
-      name: info["name"].as_str().unwrap_or("").to_string(),
-      path: info["path"].as_str().unwrap_or("").to_string(),
-      process_id: number_to_u32(&info["process_id"]),
+      exec_name: str_to_string(info, "exec_name"),
+      name: str_to_string(info, "name"),
+      path: str_to_string(info, "path"),
+      process_id: number_to_u32(info, "process_id"),
     },
     usage: UsageInfo {
-      memory: number_to_u32(&usage["memory"]),
+      memory: number_to_u32(usage, "memory"),
     },
   })
 }
@@ -454,3 +469,312 @@ impl GnomeVersion {
 
 pub static GNOME_SINGLETON: Lazy<Mutex<GnomeVersion>> =
   Lazy::new(|| Mutex::new(GnomeVersion::new()));
+
+#[cfg(test)]
+mod tests {
+  use crate::common::x_win_struct::{
+    icon_info::IconInfo, process_info::ProcessInfo, usage_info::UsageInfo, window_info::WindowInfo,
+    window_position::WindowPosition,
+  };
+  use crate::linux::api::gnome_shell::{
+    number_to_i32, number_to_u32, str_to_string, value_to_icon_info, value_to_window_info,
+  };
+
+  /**
+   * Test str_to_string function
+   */
+  #[test]
+  fn test_str_to_string() -> Result<(), Box<dyn std::error::Error>> {
+    let title = {
+      let value: serde_json::Value = serde_json::from_str("{}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      str_to_string(value, "title")
+    };
+
+    assert_eq!(title, "");
+
+    let title = {
+      let value: serde_json::Value = serde_json::from_str("{\"title\":\"\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      str_to_string(value, "title")
+    };
+    assert_eq!(title, "");
+
+    let title = {
+      let value: serde_json::Value = serde_json::from_str("{\"title\":\"test\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      str_to_string(value, "title")
+    };
+    assert_eq!(title, "test");
+
+    Ok(())
+  }
+
+  /**
+   * Test number_to_u32 function
+   */
+  #[test]
+  fn test_number_to_u32() -> Result<(), Box<dyn std::error::Error>> {
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_u32(value, "width")
+    };
+
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":\"\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_u32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":\"test\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_u32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":0}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_u32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":0.0}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_u32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":1000}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_u32(value, "width")
+    };
+    assert_eq!(width, 1000);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":\"1000\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_u32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    Ok(())
+  }
+
+  /**
+   * Test number_to_i32 function
+   */
+  #[test]
+  fn test_number_to_i32() -> Result<(), Box<dyn std::error::Error>> {
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_i32(value, "width")
+    };
+
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":\"\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_i32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":\"test\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_i32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":0}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_i32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":0.0}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_i32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":1000}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_i32(value, "width")
+    };
+    assert_eq!(width, 1000);
+
+    let width = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\":\"1000\"}")?;
+      let value = value.as_object().ok_or("failed to test")?;
+      number_to_i32(value, "width")
+    };
+    assert_eq!(width, 0);
+
+    Ok(())
+  }
+
+  /**
+   * Test value_to_icon_info function
+   */
+  #[test]
+  fn test_value_to_icon_info() -> Result<(), Box<dyn std::error::Error>> {
+    let icon_info = {
+      let value: serde_json::Value = serde_json::from_str("{}")?;
+      value_to_icon_info(&value)?
+    };
+
+    assert_eq!(
+      icon_info,
+      IconInfo {
+        data: String::from(""),
+        height: 0,
+        width: 0,
+      }
+    );
+
+    let icon_info = {
+      let value: serde_json::Value =
+        serde_json::from_str("{\"data\": \"test\", \"width\": 100, \"height\": 200}")?;
+      value_to_icon_info(&value)?
+    };
+
+    assert_eq!(
+      icon_info,
+      IconInfo {
+        data: String::from("test"),
+        height: 200,
+        width: 100,
+      }
+    );
+
+    let icon_info = {
+      let value: serde_json::Value = serde_json::from_str("{\"width\": 100, \"height\": 200}")?;
+      value_to_icon_info(&value)?
+    };
+
+    assert_eq!(
+      icon_info,
+      IconInfo {
+        data: String::from(""),
+        height: 200,
+        width: 100,
+      }
+    );
+
+    let icon_info = {
+      let value: serde_json::Value = serde_json::from_str("{\"data\": \"test\", \"height\": 200}")?;
+      value_to_icon_info(&value)?
+    };
+
+    assert_eq!(
+      icon_info,
+      IconInfo {
+        data: String::from("test"),
+        height: 200,
+        width: 0,
+      }
+    );
+
+    let icon_info = {
+      let value: serde_json::Value = serde_json::from_str("{\"data\": \"test\", \"width\": 100}")?;
+      value_to_icon_info(&value)?
+    };
+
+    assert_eq!(
+      icon_info,
+      IconInfo {
+        data: String::from("test"),
+        height: 0,
+        width: 100,
+      }
+    );
+
+    Ok(())
+  }
+
+  /**
+   * Test value_to_window_info function
+   */
+  #[test]
+  fn test_value_to_window_info() -> Result<(), Box<dyn std::error::Error>> {
+    // Test total blank values
+    let window_info = {
+      let value: serde_json::Value = serde_json::from_str(
+        r#"{"id":0,"os":"","info":{"process_id":0,"name":"","path":"","exec_name":""},"title":"","position":{"width":0,"height":0,"x":0,"y":0,"isFullScreen":false},"usage":{"memory":0}}"#,
+      )?;
+      value_to_window_info(&value)?
+    };
+
+    assert_eq!(
+      window_info,
+      WindowInfo::new(
+        0,
+        String::from(""),
+        String::from(""),
+        WindowPosition::new(0, 0, 0, 0, false),
+        ProcessInfo::new(0, String::from(""), String::from(""), String::from("")),
+        UsageInfo::new(0)
+      )
+    );
+
+    // Test without name attribute
+    let window_info = {
+      let value: serde_json::Value = serde_json::from_str(
+        r#"{"id":0,"os":"","info":{"process_id":0,"path":"","exec_name":""},"title":"","position":{"width":0,"height":0,"x":0,"y":0,"isFullScreen":false},"usage":{"memory":0}}"#,
+      )?;
+      value_to_window_info(&value)?
+    };
+
+    assert_eq!(
+      window_info,
+      WindowInfo::new(
+        0,
+        String::from(""),
+        String::from(""),
+        WindowPosition::new(0, 0, 0, 0, false),
+        ProcessInfo::new(0, String::from(""), String::from(""), String::from("")),
+        UsageInfo::new(0)
+      )
+    );
+
+    // Test without name attribute
+    let window_info = {
+      let value: serde_json::Value = serde_json::from_str(
+        r#"{"id":3038270935,"os":"linux","info":{"process_id":95389,"name":"gnome-terminal-server","path":"/usr/libexec/gnome-terminal-server","exec_name":"gnome-terminal-server"},"title":"new terminal","position":{"width":866,"height":629,"x":1077,"y":192,"isFullScreen":true},"usage":{"memory":139473}}"#,
+      )?;
+      value_to_window_info(&value)?
+    };
+
+    assert_eq!(
+      window_info,
+      WindowInfo::new(
+        3038270935,
+        String::from("linux"),
+        String::from("new terminal"),
+        WindowPosition::new(1077, 192, 866, 629, true),
+        ProcessInfo::new(
+          95389,
+          String::from("/usr/libexec/gnome-terminal-server"),
+          String::from("gnome-terminal-server"),
+          String::from("gnome-terminal-server")
+        ),
+        UsageInfo::new(139473)
+      )
+    );
+
+    Ok(())
+  }
+}
