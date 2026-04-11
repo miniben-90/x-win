@@ -410,8 +410,8 @@ pub fn value_to_icon_info(response: &serde_json::Value) -> Result<IconInfo, &'st
 
   Ok(IconInfo {
     data: str_to_string(response, "data"),
-    height: number_to_u32(&response, "height"),
-    width: number_to_u32(&response, "width"),
+    height: number_to_u32(response, "height"),
+    width: number_to_u32(response, "width"),
   })
 }
 
