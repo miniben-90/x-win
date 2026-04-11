@@ -5,7 +5,7 @@ use super::{process_info::ProcessInfo, usage_info::UsageInfo, window_position::W
 /**
  * Struct to store all informations of the window
  */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct WindowInfo {
   pub id: u32,
   pub os: String,
