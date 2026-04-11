@@ -149,6 +149,7 @@ function _strcut_data(window_actor) {
         process_id: 0,
         path: '',
         exec_name: '',
+        name: '',
       },
       position: {
         width: 0,
@@ -276,6 +277,7 @@ function _strcut_data(window_actor) {
         process_id: 0,
         path: '',
         exec_name: '',
+        name: '',
       },
       position: {
         width: 0,
