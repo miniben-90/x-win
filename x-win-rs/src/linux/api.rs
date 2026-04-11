@@ -94,7 +94,7 @@ impl APIGnome for LinuxAPI {
 
   fn is_installed_extension() -> Result<bool> {
     if is_wayland_desktop() {
-      WaylandApi::disable_extension()
+      WaylandApi::is_installed_extension()
     } else {
       Ok(false)
     }

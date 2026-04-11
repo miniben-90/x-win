@@ -3,7 +3,7 @@
 /**
  * Struct to store Icon information
  */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 #[repr(C)]
 pub struct IconInfo {
   pub data: String,

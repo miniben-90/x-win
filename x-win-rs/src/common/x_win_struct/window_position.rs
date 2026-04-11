@@ -3,7 +3,7 @@
 /**
  * Struct to store position and size of the window
  */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct WindowPosition {
   pub x: i32,
   pub y: i32,

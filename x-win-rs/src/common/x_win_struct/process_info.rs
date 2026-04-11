@@ -3,7 +3,7 @@
 /**
  * Struct to store process information of the window
  */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 #[repr(C)]
 pub struct ProcessInfo {
   pub process_id: u32,

@@ -1,6 +1,6 @@
-use zbus::{blocking::Connection, Message};
+use zbus::{blocking::Connection, zvariant::OwnedValue, Message};
 
-use std::{env, fs, ops::Deref, path};
+use std::{collections::HashMap, env, fs, ops::Deref, path};
 
 use crate::{
   common::{
@@ -190,15 +190,23 @@ pub fn uninstall_extension() -> Result<bool> {
 
 pub fn is_enabled_extension() -> Result<bool> {
   let response = request_extension_info()?;
-  let response: String = response.body().deserialize().unwrap_or_default();
-  if !response.is_empty() {
-    let response: serde_json::Value = serde_json::from_str(response.as_str())?;
-    if response.is_object() {
-      let response = response.as_object().ok_or("Expected JSON object")?;
-      if response.contains_key("enabled") {
-        let response = response["enabled"].as_bool().unwrap_or(false);
-        return Ok(response);
+  let body = response.body();
+  if !body.is_empty() {
+    let response: HashMap<String, OwnedValue> = body.deserialize()?;
+    if !response.is_empty() {
+      let state = response
+        .get("state")
+        .and_then(|v| v.downcast_ref::<f64>().ok())
+        .unwrap_or(0.0);
+      // State 3 = Error
+      if state.eq(&3.0) {
+        return Err(
+    format!(
+      r#""{GNOME_XWIN_UUID}" extension is installed but does not work correctly. Please check your journalctl to find the error."#
+    ).into()
+  );
       }
+      return Ok(state.eq(&1.0));
     }
   }
 
@@ -210,11 +218,24 @@ pub fn is_enabled_extension() -> Result<bool> {
 }
 
 pub fn is_installed_extension() -> Result<bool> {
-  let response = request_extension_info();
-  if let Ok(response) = response {
-    let response: String = response.body().deserialize().unwrap_or_default();
+  let response = request_extension_info()?;
+  let body = response.body();
+  if !body.is_empty() {
+    let response: HashMap<String, OwnedValue> = body.deserialize()?;
     if !response.is_empty() {
-      return Ok(true);
+      let state = response
+        .get("state")
+        .and_then(|v| v.downcast_ref::<f64>().ok())
+        .unwrap_or(0.0);
+      // State 3 = Error
+      if state.eq(&3.0) {
+        return Err(
+    format!(
+      r#""{GNOME_XWIN_UUID}" extension is installed but does not work correctly. Please check your journalctl to find the error."#
+    ).into()
+  );
+      }
+      return Ok(state.ne(&0.0));
     }
   }
   Ok(false)

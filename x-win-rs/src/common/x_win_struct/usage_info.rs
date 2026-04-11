@@ -3,7 +3,7 @@
 /**
  * Struct to store usage data of the window
  */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct UsageInfo {
   pub memory: u32,
 }
