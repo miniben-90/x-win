@@ -150,7 +150,7 @@ setTimeout(() => unsubscribeActiveWindow(c), 5000)
 setTimeout(() => unsubscribeAllActiveWindow(), 10000)
 ```
 
-### Get icon from `WindoInfo`
+### Get icon from `WindowInfo`
 
 It is possible to get an icon from the `WindowInfo` class object using `getIcon` or `getIconAsync`, which will return an `IconInfo` struct.
 The icon will be stored in `IconInfo.data` in base64 PNG format.
@@ -226,7 +226,7 @@ It is possible to get URL of browsers window for macOS and Windows.
 | microsoft edge            | ✅     |
 | opera software - opera    | ✅     |
 | opera software - opera GX | ✅     |
-| brave                     |        |
+| brave                     | ✅     |
 | vivaldi                   |        |
 | iron                      |        |
 | epic                      |        |
