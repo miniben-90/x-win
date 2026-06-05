@@ -45,10 +45,10 @@ windows = { version = "0.62.2", features = [
 
 [target.'cfg(target_os = "linux")'.dependencies]
 image      = "0.25.10"
-serde_json = { version = "1.0.149" }
+serde_json = { version = "1.0.150" }
 x11        = { version = "2.21.0", features = ["xlib"], optional = true }
 xcb        = { version = "1.7.0" }
-zbus       = { version = "5.14.0" }
+zbus       = { version = "5.16.0" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6.2"
