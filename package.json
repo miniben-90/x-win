@@ -23,6 +23,10 @@
       "universal-apple-darwin"
     ]
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "author": {
     "name": "BENKHADRA Hocine",
     "email": "contact@benkhadra.com",
@@ -46,20 +50,20 @@
     "open"
   ],
   "devDependencies": {
-    "@emnapi/core": "^1.10.0",
-    "@emnapi/runtime": "^1.10.0",
-    "@napi-rs/cli": "^3.7.0",
+    "@emnapi/core": "^1.11.1",
+    "@emnapi/runtime": "^1.11.1",
+    "@napi-rs/cli": "^3.7.2",
     "@oxc-node/core": "^0.1.0",
     "@taplo/cli": "^0.7.0",
-    "@tybys/wasm-util": "^0.10.2",
-    "@types/node": "^25.9.1",
+    "@tybys/wasm-util": "^0.10.3",
+    "@types/node": "^25.9.4",
     "ava": "^8.0.1",
     "chalk": "^5.6.2",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.7",
-    "npm-run-all2": "^9.0.1",
-    "oxlint": "^1.68.0",
-    "prettier": "^3.8.3",
+    "lint-staged": "^17.0.8",
+    "npm-run-all2": "^9.0.2",
+    "oxlint": "^1.71.0",
+    "prettier": "^3.8.4",
     "tinybench": "^6.0.2",
     "typescript": "^6.0.3"
   },
@@ -109,8 +113,9 @@
     "format:toml": "taplo format",
     "format:rs": "cargo fmt",
     "lint": "oxlint .",
-    "prepublishOnly": "napi prepublish -t npm",
+    "prepublishOnly": "napi prepublish -t npm --no-gh-release",
     "test": "ava",
+    "preversion": "napi build --platform && git add .",
     "version": "napi version",
     "prepare": "husky",
     "clippy:rs": "cd ./x-win-rs && cargo clippy --all-features -- -D warnings",
@@ -122,5 +127,5 @@
     "checkall": "yarn format && yarn lint && yarn clippy && yarn fmt",
     "universalize": "napi universalize"
   },
-  "packageManager": "yarn@4.16.0"
+  "packageManager": "yarn@4.17.0"
 }

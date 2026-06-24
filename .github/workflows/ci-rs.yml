@@ -41,10 +41,10 @@ jobs:
     name: Check quality of code for ${{ matrix.settings.name }} (${{ matrix.settings.target }})
     steps:
       # Checkout repo
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       # Config cache
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo
@@ -127,7 +127,7 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       # Add actions/checkout
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Install lib dev required for compilation of the project
       - name: (Linux) Install libx11 & libxcb for building
@@ -146,7 +146,7 @@ jobs:
 
       # Set Cache cargo
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -200,7 +200,7 @@ jobs:
 
       # Upload artifact for the next steps (test and publish)
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-rs-${{ matrix.settings.host }}-${{ matrix.settings.target }}
           path: ${{ github.workspace }}/x-win-rs/target/${{ matrix.settings.target }}
@@ -221,11 +221,11 @@ jobs:
       - lint
       - build-n-test
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Download artifacts from build part
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ${{ github.workspace }}/x-win-rs/target
 
