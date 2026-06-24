@@ -52,7 +52,7 @@ jobs:
     name: Check quality of code for ${{ matrix.settings.name }} (${{ matrix.settings.target }})
     steps:
       # Checkout repo
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       # Config cache
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -127,7 +127,7 @@ jobs:
     name: Build ${{ matrix.settings.name }} (${{ matrix.settings.target }}) - node@${{ matrix.node-version }}
     steps:
       # Checkout repo
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Configure Cargo/Rustup paths ONLY when running under act to avoid rename file error
       - name: Configure Rust paths for act
@@ -174,7 +174,7 @@ jobs:
 
       # Setup node with yarn cache
       - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
@@ -206,7 +206,7 @@ jobs:
 
       # Upload artifact for the next steps (macos and test)
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ github.workspace }}/${{ env.APP_NAME }}.*.node
@@ -243,7 +243,7 @@ jobs:
 
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Setup yarn to run as x86_64 for darwin arm64
       - name: Setup node x86_64
@@ -253,7 +253,7 @@ jobs:
       # Setup node version from matrix.node and install deps
       - name: Setup node
         if: ${{ !matrix.settings.image }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           check-latest: true
@@ -272,7 +272,7 @@ jobs:
 
       # Download artifacts
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: bindings-${{ matrix.settings.target }}
           path: .
@@ -316,9 +316,9 @@ jobs:
       - test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Setup node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           check-latest: true
@@ -328,13 +328,13 @@ jobs:
         run: yarn install
 
       - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: bindings-x86_64-apple-darwin
           path: .
 
       - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: bindings-aarch64-apple-darwin
           path: .
@@ -343,7 +343,7 @@ jobs:
         run: yarn universalize
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: bindings-universal-apple-darwin
           path: ${{ github.workspace }}/${{ env.APP_NAME }}.darwin-universal.node
@@ -363,11 +363,11 @@ jobs:
       - test
       - universal-macOS
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Setup node for publishing on npmjs
       - name: Setup node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           check-latest: true
@@ -389,7 +389,7 @@ jobs:
 
       # Download artifacts from build part
       - name: Download all artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
