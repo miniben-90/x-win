@@ -263,7 +263,11 @@ fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosit
  * Get window title
  */
 fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
-  _get_string_response(conn, window, x::ATOM_WM_NAME)
+  let mut title = _get_string_response(conn, window, x::ATOM_WM_NAME);
+  if title.is_empty() {
+    title = _get_string_response(conn, window, x::ATOM_WM_NAME);
+  }
+  title
 }
 
 fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::Atom) -> String {
@@ -277,7 +281,7 @@ fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::
   });
   if let Ok(window_title) = conn.wait_for_reply(window_title) {
     let window_title: &[u8] = window_title.value();
-    unsafe { std::str::from_utf8_unchecked(window_title).to_string() }
+    String::from_utf8_lossy(window_title).to_string()
   } else {
     String::from("")
   }
