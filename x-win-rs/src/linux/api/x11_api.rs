@@ -263,7 +263,14 @@ fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosit
  * Get window title
  */
 fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
-  let mut title = _get_string_response(conn, window, x::ATOM_WM_NAME);
+  let mut title: String = {
+    let atom_net_wm_name = get_atom(conn, b"_NET_WM_NAME", true);
+    if !atom_net_wm_name.is_none() {
+      _get_string_response(conn, window, atom_net_wm_name)
+    } else {
+      String::from("")
+    }
+  };
   if title.is_empty() {
     title = _get_string_response(conn, window, x::ATOM_WM_NAME);
   }
