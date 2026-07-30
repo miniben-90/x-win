@@ -18,7 +18,7 @@ default          = []
 macos_permission = []
 
 [dependencies]
-base64    = "0.22.1"
+base64    = "0.23.0"
 once_cell = "1.21.4"
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -45,10 +45,10 @@ windows = { version = "0.62.2", features = [
 
 [target.'cfg(target_os = "linux")'.dependencies]
 image      = "0.25.10"
-serde_json = { version = "1.0.150" }
+serde_json = { version = "1.0.151" }
 x11        = { version = "2.21.0", features = ["xlib"], optional = true }
 xcb        = { version = "1.7.0" }
-zbus       = { version = "5.17.0" }
+zbus       = { version = "5.18.0" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6.2"

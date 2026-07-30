@@ -1,4 +1,4 @@
-import { Bench } from 'tinybench'
+import { Bench, type Task, type HookMode } from 'tinybench'
 import { activeWindow, activeWindowAsync } from '../index.js'
 import { activeWindow as activeWindowwOld, activeWindowAsync as activeWindowAsyncOld } from '@miniben90/x-win'
 import { activeWindow as getactiveWindow, activeWindowSync as getactiveWindowSync, MacOSResult } from 'get-windows'
@@ -6,16 +6,21 @@ import { readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
-const benchmarkActiveWindow: Bench = new Bench({
-  name: 'Benchmark between local repo, previous version of x-win and latest version of get-windows',
-  concurrency: 'task',
+const common = {
+  time: 1000,
+  warmupTime: 1000,
+  warmupIterations: 100,
   iterations: 1000,
-  setup: (_task, mode) => {
+  setup: (_task: Task | undefined, mode: HookMode | undefined) => {
     if (mode === 'warmup' && typeof globalThis.gc === 'function') {
       globalThis.gc()
     }
   },
-  time: 100,
+}
+
+const benchmarkActiveWindow: Bench = new Bench({
+  name: 'Benchmark between local repo, previous version of x-win and latest version of get-windows',
+  ...common,
 })
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -49,14 +54,7 @@ console.table(table)
 
 const benchmarkBrowserUrl: Bench = new Bench({
   name: 'Benchmark between local repo, previous version of x-win and latest version of get-windows url recovery',
-  concurrency: 'task',
-  iterations: 1000,
-  setup: (_task, mode) => {
-    if (mode === 'warmup' && typeof globalThis.gc === 'function') {
-      globalThis.gc()
-    }
-  },
-  time: 100,
+  ...common,
 })
 
 benchmarkBrowserUrl
@@ -82,3 +80,26 @@ benchmarkBrowserUrl
 await benchmarkBrowserUrl.run()
 const tableUrl = benchmarkBrowserUrl.table()
 console.table(tableUrl)
+
+const benchmarkIcon: Bench = new Bench({
+  name: 'Benchmark between local repo, previous version of x-win and latest version of get-windows url recovery',
+  ...common,
+})
+
+benchmarkIcon
+  .add('current workspace - activeWindow.getIcon', () => {
+    activeWindow().getIcon()
+  })
+  .add(`@miniben90/x-win:${xWinVersion} - activeWindow.getIcon`, () => {
+    activeWindowwOld().getIcon()
+  })
+  .add('current workspace - activeWindowAsync.getIconAsync', async () => {
+    ;(await activeWindowAsync()).getIconAsync()
+  })
+  .add(`@miniben90/x-win:${xWinVersion} - activeWindowAsync.getIconAsync`, async () => {
+    ;(await activeWindowAsyncOld()).getIconAsync()
+  })
+
+await benchmarkIcon.run()
+const tableIcon = benchmarkIcon.table()
+console.table(tableIcon)

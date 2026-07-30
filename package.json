@@ -65,7 +65,7 @@
     "oxlint": "^1.71.0",
     "prettier": "^3.8.4",
     "tinybench": "^6.0.2",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "lint-staged": {
     "*.@(js|ts|tsx)": [
@@ -127,5 +127,5 @@
     "checkall": "yarn format && yarn lint && yarn clippy && yarn fmt",
     "universalize": "napi universalize"
   },
-  "packageManager": "yarn@4.17.0"
+  "packageManager": "yarn@4.17.1"
 }
