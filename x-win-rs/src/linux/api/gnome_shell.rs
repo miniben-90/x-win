@@ -24,7 +24,7 @@ pub const GNOME_XWIN_EXTENSION_META: &str = r#"
   "name": "@mininben90/x-win extended",
   "description": "Get active and open window(s) informations for @miniben90/x-win node package.",
   "uuid": "x-win@miniben90.org",
-  "shell-version": [ "42", "43", "44", "45", "46" ],
+  "shell-version": [ "42", "43", "44", "45", "46", "47", "48", "49", "50" ],
   "url": "https://github.com/miniben-90/x-win.git",
   "version-name": "1.8.0"
 }
