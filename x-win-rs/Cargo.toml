@@ -18,8 +18,8 @@ default          = []
 macos_permission = []
 
 [dependencies]
-base64    = "0.23.0"
-once_cell = "1.21.4"
+base64    = { version = "0.23.0" }
+once_cell = { version = "1.21.4" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 png = { version = "0.18.1" }
@@ -44,14 +44,19 @@ windows = { version = "0.62.2", features = [
 ] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-image      = "0.25.10"
+image      = { version = "0.25.10" }
 serde_json = { version = "1.0.151" }
 x11        = { version = "2.21.0", features = ["xlib"], optional = true }
-xcb        = { version = "1.7.0" }
 zbus       = { version = "5.18.0" }
 
+[target.'cfg(all(target_os = "linux", target_env = "musl"))'.dependencies]
+xcb = { version = "1.7.0", features = ["dl"] }
+
+[target.'cfg(all(target_os = "linux", not(target_env = "musl")))'.dependencies]
+xcb = { version = "1.7.0" }
+
 [target.'cfg(target_os = "macos")'.dependencies]
-block2 = "0.6.2"
+block2 = { version = "0.6.2" }
 objc2 = { version = "0.6.4" }
 objc2-app-kit = { version = "0.3.2", features = [
   "NSImage",
