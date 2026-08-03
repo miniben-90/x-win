@@ -14,7 +14,7 @@ use common::{
   },
 };
 use error::xwin_error;
-use napi::{bindgen_prelude::AsyncTask, JsNumber, Result, Task};
+use napi::{JsNumber, Result};
 use x_win::{empty_entity, get_active_window, get_browser_url, get_open_windows, get_window_icon};
 
 #[macro_use]
@@ -28,71 +28,17 @@ use std::sync::Mutex;
 
 static THREAD_MANAGER: Lazy<Mutex<ThreadManager>> = Lazy::new(|| Mutex::new(ThreadManager::new()));
 
-pub struct OpenWindowsTask;
-pub struct ActiveWindowTask;
-pub struct GetIconTask {
-  data: WindowInfo,
-}
-
-impl GetIconTask {
-  pub fn new(data: WindowInfo) -> Self {
-    Self { data }
-  }
-}
-
-#[napi]
-impl Task for OpenWindowsTask {
-  type Output = Vec<WindowInfo>;
-  type JsValue = Vec<WindowInfo>;
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    open_windows()
-  }
-
-  fn resolve(&mut self, _: napi::Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output)
-  }
-}
-
-#[napi]
-impl Task for ActiveWindowTask {
-  type Output = WindowInfo;
-  type JsValue = WindowInfo;
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    active_window()
-  }
-
-  fn resolve(&mut self, _: napi::Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output)
-  }
-}
-
-#[napi]
-impl Task for GetIconTask {
-  type Output = IconInfo;
-  type JsValue = IconInfo;
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    get_icon(&self.data)
-  }
-
-  fn resolve(&mut self, _: napi::Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output)
-  }
-}
-
 fn get_icon(window_info: &WindowInfo) -> Result<IconInfo> {
-  let t: x_win::WindowInfo = window_info.clone().into();
-  match get_window_icon(&t) {
+  let window_info: x_win::WindowInfo = window_info.clone().into();
+  match get_window_icon(&window_info) {
     Ok(window_icon) => Ok(window_icon.into()),
     Err(err) => Err(xwin_error(err)),
   }
 }
 
 fn get_url(window_info: &WindowInfo) -> Result<String> {
-  let t: x_win::WindowInfo = window_info.clone().into();
-  match get_browser_url(&t) {
+  let window_info: x_win::WindowInfo = window_info.clone().into();
+  match get_browser_url(&window_info) {
     Ok(browser_url) => Ok(browser_url),
     Err(err) => Err(xwin_error(err)),
   }
@@ -112,9 +58,8 @@ impl WindowInfo {
    * Promise funciton who help to recover icon of application and will return `IconInfo`.
    */
   #[napi]
-  pub fn get_icon_async(&self) -> AsyncTask<GetIconTask> {
-    let data = self;
-    AsyncTask::new(GetIconTask { data: data.clone() })
+  pub async fn get_icon_async(&self) -> Result<IconInfo> {
+    get_icon(self)
   }
 
   /**
@@ -213,8 +158,8 @@ pub fn active_window() -> Result<WindowInfo> {
  * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
  */
 #[napi]
-pub fn active_window_async() -> AsyncTask<ActiveWindowTask> {
-  AsyncTask::new(ActiveWindowTask {})
+pub async fn active_window_async() -> Result<WindowInfo> {
+  active_window()
 }
 
 /**
@@ -294,8 +239,8 @@ pub fn open_windows() -> Result<Vec<WindowInfo>> {
  * It is recommended to use this function within a worker to mitigate potential recovery issues on MacOS.
  */
 #[napi]
-pub fn open_windows_async() -> AsyncTask<OpenWindowsTask> {
-  AsyncTask::new(OpenWindowsTask {})
+pub async fn open_windows_async() -> Result<Vec<WindowInfo>> {
+  open_windows()
 }
 
 /**

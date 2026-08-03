@@ -172,14 +172,14 @@ impl Api for X11Api {
 }
 
 fn connection() -> Result<Connection> {
-  let (conn, _) = xcb::Connection::connect(None)?;
+  let (conn, _) = Connection::connect(None)?;
   Ok(conn)
 }
 
 /**
  * Get window information
  */
-fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> Result<WindowInfo> {
+fn get_window_information(conn: &Connection, window: &x::Window) -> Result<WindowInfo> {
   let mut window_info: WindowInfo = init_entity();
   if window.is_none() {
     return Ok(window_info);
@@ -203,7 +203,7 @@ fn get_window_information(conn: &xcb::Connection, window: &x::Window) -> Result<
 /**
  * Get pid
  */
-fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> Result<u32> {
+fn get_window_pid(conn: &Connection, window: x::Window) -> Result<u32> {
   let window_pid_atom = get_window_pid_atom(conn);
 
   if window_pid_atom != x::ATOM_NONE {
@@ -228,7 +228,7 @@ fn get_window_pid(conn: &xcb::Connection, window: x::Window) -> Result<u32> {
 /**
  * Get window width, height, x and y
  */
-fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosition {
+fn get_window_position(conn: &Connection, window: x::Window) -> WindowPosition {
   let mut position = WindowPosition {
     x: 0,
     y: 0,
@@ -262,7 +262,7 @@ fn get_window_position(conn: &xcb::Connection, window: x::Window) -> WindowPosit
 /**
  * Get window title
  */
-fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
+fn get_window_title(conn: &Connection, window: x::Window) -> String {
   let mut title: String = {
     let atom_net_wm_name = get_atom(conn, b"_NET_WM_NAME", true);
     if !atom_net_wm_name.is_none() {
@@ -277,7 +277,7 @@ fn get_window_title(conn: &xcb::Connection, window: x::Window) -> String {
   title
 }
 
-fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::Atom) -> String {
+fn _get_string_response(conn: &Connection, window: x::Window, property: x::Atom) -> String {
   let window_title = conn.send_request(&x::GetProperty {
     delete: false,
     window,
@@ -297,7 +297,7 @@ fn _get_string_response(conn: &xcb::Connection, window: x::Window, property: x::
 /**
  * Get process name
  */
-fn get_window_class_name(conn: &xcb::Connection, window: x::Window) -> String {
+fn get_window_class_name(conn: &Connection, window: x::Window) -> String {
   let window_class = conn.send_request(&x::GetProperty {
     delete: false,
     window,
@@ -321,63 +321,63 @@ fn get_window_class_name(conn: &xcb::Connection, window: x::Window) -> String {
   String::from("")
 }
 
-fn get_window_pid_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_window_pid_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_WM_PID", true)
 }
 
 /**
  * Generate Atom of _NET_ACTIVE_WINDOW value
  */
-fn get_active_window_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_active_window_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_ACTIVE_WINDOW", true)
 }
 
 /**
  * Generate Atom of _NET_CLIENT_LIST_STACKING value
  */
-fn get_client_list_stacking_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_client_list_stacking_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_CLIENT_LIST_STACKING", true)
 }
 
 /**
  * Generate Atom of _NET_WM_WINDOW_TYPE value
  */
-fn get_window_type_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_window_type_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_WM_WINDOW_TYPE", true)
 }
 
 /**
  * Generate Atom of _NET_WM_WINDOW_TYPE_NORMAL value
  */
-fn get_window_type_normal_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_window_type_normal_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_WM_WINDOW_TYPE_NORMAL", true)
 }
 
 /**
  * Generate Atom of _NET_WM_STATE value
  */
-fn get_window_state_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_window_state_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_WM_STATE", false)
 }
 
 /**
  * Generate Atom of _NET_WM_STATE_FULLSCREEN value
  */
-fn get_window_state_fullscreen_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_window_state_fullscreen_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_WM_STATE_FULLSCREEN", false)
 }
 
 /**
  * Generate Atom of _NET_WM_ICON value
  */
-fn get_window_icon_atom(conn: &xcb::Connection) -> x::Atom {
+fn get_window_icon_atom(conn: &Connection) -> x::Atom {
   get_atom(conn, b"_NET_WM_ICON", false)
 }
 
 /**
  * Generate Atom of name parameter
  */
-fn get_atom(conn: &xcb::Connection, name: &[u8], only_if_exists: bool) -> x::Atom {
+fn get_atom(conn: &Connection, name: &[u8], only_if_exists: bool) -> x::Atom {
   let atom_name = conn.send_request(&x::InternAtom {
     only_if_exists,
     name,
@@ -392,7 +392,7 @@ fn get_atom(conn: &xcb::Connection, name: &[u8], only_if_exists: bool) -> x::Ato
 /**
  * Check if the window is a normal type
  */
-fn is_normal_window(conn: &xcb::Connection, window: x::Window) -> bool {
+fn is_normal_window(conn: &Connection, window: x::Window) -> bool {
   let window_type_atom = get_window_type_atom(conn);
   let type_normal_atom = get_window_type_normal_atom(conn);
   if window_type_atom != x::ATOM_NONE && type_normal_atom != x::ATOM_NONE {
@@ -414,7 +414,7 @@ fn is_normal_window(conn: &xcb::Connection, window: x::Window) -> bool {
 /**
  * Check if the window is full screened
  */
-fn is_full_screen_window(conn: &xcb::Connection, window: x::Window) -> bool {
+fn is_full_screen_window(conn: &Connection, window: x::Window) -> bool {
   let state_window_atom = get_window_state_atom(conn);
   let state_fullscreen_atom = get_window_state_fullscreen_atom(conn);
   if state_window_atom != x::ATOM_NONE && state_fullscreen_atom != x::ATOM_NONE {

@@ -71,7 +71,8 @@ impl ThreadManager {
   pub fn stop_all_threads(&self) -> Result<(), String> {
     match self.threads.lock() {
       Ok(threads) => {
-        for (_, sender) in threads.iter() {
+        for sender in threads.iter() {
+          let (_, sender) = sender;
           sender
             .send(())
             .map_err(|_| "Failed to send stop signal.".to_string())?;
