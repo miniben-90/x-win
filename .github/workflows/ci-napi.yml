@@ -123,6 +123,9 @@ jobs:
           - name: Linux MUSL x64
             target: x86_64-unknown-linux-musl
             flags: '-x'
+          - name: Linux GNU arm64
+            target: aarch64-unknown-linux-gnu
+            host: ubuntu-24.04-arm
     runs-on: ${{ matrix.settings.host || 'ubuntu-latest' }}
     name: Build ${{ matrix.settings.name }} (${{ matrix.settings.target }}) - node@${{ matrix.node-version }}
     steps:
@@ -140,7 +143,7 @@ jobs:
 
       # Install lib dev required for compilation of the project
       - name: Install libx11 & libxcb for building
-        if: startsWith(matrix.settings.target, 'x86_64-unknown-linux')
+        if: contains(matrix.settings.target, '-unknown-linux-')
         run: bash ${{ github.workspace }}/.github/docker-install-deps.sh
 
       # Cargo cache
