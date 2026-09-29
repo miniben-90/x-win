@@ -126,6 +126,8 @@ jobs:
           - name: Linux GNU arm64
             target: aarch64-unknown-linux-gnu
             host: ubuntu-24.04-arm
+            # flags: '--use-napi-cross'
+
     runs-on: ${{ matrix.settings.host || 'ubuntu-latest' }}
     name: Build ${{ matrix.settings.name }} (${{ matrix.settings.target }}) - node@${{ matrix.node-version }}
     steps:
@@ -242,6 +244,11 @@ jobs:
             target: x86_64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:latest
 
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            image: miniben90/ubuntu-dummy-desktop:24.04-arm64
+            architecture: 'aarch64'
+
         node-version: [22, 24, 26]
 
     runs-on: ${{ matrix.settings.host }}
@@ -271,6 +278,7 @@ jobs:
 
       # Install deps
       - name: Install dependencies
+        if: ${{ !matrix.settings.image }}
         run: yarn install
 
       # Download artifacts
@@ -292,12 +300,24 @@ jobs:
         if: ${{ !matrix.settings.image }}
         run: yarn test
 
+      - name: Setup QEMU
+        if: ${{ matrix.settings.target == 'aarch64-unknown-linux-gnu' }}
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Test bindings on docker
         if: ${{ matrix.settings.image }}
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ matrix.settings.image }}
-          options: --user 0:0 -v ${{ github.workspace }}/.github/docker-ubuntu-install.sh:/usr/local/docker-ubuntu-install.sh -v ${{ github.workspace }}/.github/download-firefox.sh:/usr/local/download-firefox.sh -v ${{ github.workspace }}:/work -w /work
+          options: >-
+            --user 0:0
+            --platform ${{ matrix.settings.target == 'aarch64-unknown-linux-gnu' && 'linux/arm64' || 'linux/amd64' }}
+            -v ${{ github.workspace }}/.github/docker-ubuntu-install.sh:/usr/local/docker-ubuntu-install.sh
+            -v ${{ github.workspace }}/.github/download-firefox.sh:/usr/local/download-firefox.sh
+            -v ${{ github.workspace }}:/work
+            -w /work
           run: |
             Xvfb :0 &
             sleep 1
@@ -305,8 +325,9 @@ jobs:
             sleep 1
             xfce4-session &
             sleep 1
-            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }} ${{ matrix.settings.architecture || '' }}
             cd /work
+            yarn install
             yarn test
 
   # Generate universal for macos
