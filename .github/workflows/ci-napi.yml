@@ -125,8 +125,8 @@ jobs:
             flags: '-x'
           - name: Linux GNU arm64
             target: aarch64-unknown-linux-gnu
-            # host: ubuntu-24.04-arm
-            flags: '--use-napi-cross'
+            host: ubuntu-24.04-arm
+            # flags: '--use-napi-cross'
 
     runs-on: ${{ matrix.settings.host || 'ubuntu-latest' }}
     name: Build ${{ matrix.settings.name }} (${{ matrix.settings.target }}) - node@${{ matrix.node-version }}
