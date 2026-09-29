@@ -1,12 +1,7 @@
 #!/bin/bash
 
 node_version=${1:-24}
-
-if [[ "$2" == "aarch64" ]]; then
-  arm_target="aarch64"
-else
-  arm_target=""
-fi
+arm_target="${2:-}"
 
 # Install nodejs version x.x
 curl -fsSL https://deb.nodesource.com/setup_$node_version.x | sudo -E bash
@@ -20,7 +15,7 @@ sudo apt install -y nodejs libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libx
 # Install yarn glboal
 npm install --global yarn
 
-sh /usr/local/download-firefox.sh "$arm_target"
+sh /usr/local/download-firefox.sh "${arm_target}"
 
 /opt/firefox/firefox --safe-mode https://github.com/ &
 
