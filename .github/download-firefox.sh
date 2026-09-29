@@ -1,8 +1,8 @@
-#!bin/bash
+#!/bin/bash
 
 set -e
 
-if [[ "$1" == "aarch64"]]; then
+if [[ "$1" == "aarch64" ]]; then
   DIST="-aarch64"
 else
   DIST=""
