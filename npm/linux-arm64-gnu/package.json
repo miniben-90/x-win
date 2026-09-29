@@ -1,12 +1,12 @@
 {
-  "name": "@miniben90/x-win-darwin-x64",
+  "name": "@miniben90/x-win-linux-arm64-gnu",
   "version": "1.6.0",
   "cpu": [
-    "x64"
+    "arm64"
   ],
-  "main": "x-win.darwin-x64.node",
+  "main": "x-win.linux-arm64-gnu.node",
   "files": [
-    "x-win.darwin-x64.node"
+    "x-win.linux-arm64-gnu.node"
   ],
   "description": "This package allows you to retrieve precise information about active and open windows on Windows, MacOS, and Linux. You can obtain the position, size, title, and other memory of windows.",
   "keywords": [
@@ -39,6 +39,9 @@
     "access": "public"
   },
   "os": [
-    "darwin"
+    "linux"
+  ],
+  "libc": [
+    "glibc"
   ]
 }
