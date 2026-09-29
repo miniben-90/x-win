@@ -278,6 +278,7 @@ jobs:
 
       # Install deps
       - name: Install dependencies
+        if: ${{ !matrix.settings.image }}
         run: yarn install
 
       # Download artifacts
@@ -326,6 +327,7 @@ jobs:
             sleep 1
             sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }} ${{ matrix.settings.architecture || '' }}
             cd /work
+            yarn install
             yarn test
 
   # Generate universal for macos
