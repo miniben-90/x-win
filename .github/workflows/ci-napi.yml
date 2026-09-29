@@ -247,7 +247,7 @@ jobs:
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:24.04-arm64
-            architecture: "aarch64"
+            architecture: 'aarch64'
 
         node-version: [22, 24, 26]
 
