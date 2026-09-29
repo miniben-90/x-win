@@ -126,6 +126,8 @@ jobs:
           - name: Linux GNU arm64
             target: aarch64-unknown-linux-gnu
             host: ubuntu-24.04-arm
+            flags: '--use-napi-cross'
+
     runs-on: ${{ matrix.settings.host || 'ubuntu-latest' }}
     name: Build ${{ matrix.settings.name }} (${{ matrix.settings.target }}) - node@${{ matrix.node-version }}
     steps:
@@ -242,6 +244,11 @@ jobs:
             target: x86_64-unknown-linux-gnu
             image: miniben90/ubuntu-dummy-desktop:latest
 
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            image: miniben90/ubuntu-dummy-desktop:24.04-arm64
+            architecture: "aarch64"
+
         node-version: [22, 24, 26]
 
     runs-on: ${{ matrix.settings.host }}
@@ -305,7 +312,7 @@ jobs:
             sleep 1
             xfce4-session &
             sleep 1
-            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }}
+            sh /usr/local/docker-ubuntu-install.sh ${{ matrix.node-version }} ${{ matrix.settings.architecture || '' }}
             cd /work
             yarn test
 
