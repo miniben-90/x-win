@@ -18,7 +18,7 @@ default          = []
 macos_permission = []
 
 [dependencies]
-base64    = { version = "0.23.0" }
+base64    = { version = "0.23.1" }
 once_cell = { version = "1.21.4" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -45,19 +45,19 @@ windows = { version = "0.62.2", features = [
 
 [target.'cfg(target_os = "linux")'.dependencies]
 image      = { version = "0.25.10" }
-serde_json = { version = "1.0.151" }
+serde_json = { version = "1.0.154" }
 x11        = { version = "2.21.0", features = ["xlib"], optional = true }
-zbus       = { version = "5.18.0" }
+zbus       = { version = "5.19.0" }
 
 [target.'cfg(all(target_os = "linux", target_env = "musl"))'.dependencies]
-xcb = { version = "1.7.0", features = ["dl"] }
+xcb = { version = "1.7.1", features = ["dl"] }
 
 [target.'cfg(all(target_os = "linux", not(target_env = "musl")))'.dependencies]
 xcb = { version = "1.7.0" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = { version = "0.6.2" }
-objc2 = { version = "0.6.4" }
+objc2 = { version = "0.6.5" }
 objc2-app-kit = { version = "0.3.2", features = [
   "NSImage",
   "NSRunningApplication",
