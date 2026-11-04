@@ -47,7 +47,7 @@ windows = { version = "0.62.2", features = [
 image      = { version = "0.25.10" }
 serde_json = { version = "1.0.154" }
 x11        = { version = "2.21.0", features = ["xlib"], optional = true }
-zbus       = { version = "5.19.0" }
+zbus       = { version = "6.2.1" }
 
 [target.'cfg(all(target_os = "linux", target_env = "musl"))'.dependencies]
 xcb = { version = "1.7.1", features = ["dl"] }
