@@ -1,4 +1,5 @@
 mod common_api;
+mod common_zbus;
 mod gnome_shell;
 mod wayland_api;
 mod wayland_eval_api;
