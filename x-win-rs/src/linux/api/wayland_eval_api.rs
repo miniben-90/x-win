@@ -1,12 +1,10 @@
-use zbus::blocking::Connection;
-
 use crate::{
   common::{
     api::empty_icon,
     result::Result,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   },
-  linux::api::gnome_shell::GNOME_XWIN_EVAL_SCRIPT,
+  linux::api::{common_zbus::call_method, gnome_shell::GNOME_XWIN_EVAL_SCRIPT},
 };
 
 use super::{
@@ -65,9 +63,7 @@ get_open_windows();
 }
 
 fn call_script(script: &String) -> Result<String> {
-  let connection = Connection::session()?;
-
-  let response = connection.call_method(DESTINATION, SHELL_PATH, SHELL_IFACE, "Eval", script)?;
+  let response = call_method(DESTINATION, SHELL_PATH, SHELL_IFACE, "Eval", script)?;
 
   if !response.body().is_empty() {
     let response: String = response.body().deserialize()?;

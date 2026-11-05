@@ -1,6 +1,6 @@
-use zbus::{blocking::Connection, zvariant::OwnedValue, Message};
-
 use std::{collections::HashMap, env, fs, ops::Deref, path};
+
+use zbus::{Message, OwnedVariant};
 
 use crate::{
   common::{
@@ -8,10 +8,13 @@ use crate::{
     result::Result,
     x_win_struct::{icon_info::IconInfo, window_info::WindowInfo},
   },
-  linux::api::gnome_shell::{
-    value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON,
-    GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH,
-    GNOME_XWIN_EXTENSION_META, GNOME_XWIN_EXTENSION_SCRIPT, GNOME_XWIN_UUID,
+  linux::api::{
+    common_zbus::call_method,
+    gnome_shell::{
+      value_to_window_info, GNOME45_XWIN_EXTENSION_SCRIPT, GNOME_SINGLETON,
+      GNOME_XWIN_EXTENSION_COMMON_SCRIPT, GNOME_XWIN_EXTENSION_FOLDER_PATH,
+      GNOME_XWIN_EXTENSION_META, GNOME_XWIN_EXTENSION_SCRIPT, GNOME_XWIN_UUID,
+    },
   },
 };
 
@@ -145,7 +148,6 @@ pub fn install_extension() -> Result<bool> {
 }
 
 fn toggle_extension(enable: bool) -> Result<bool> {
-  let connection = Connection::session()?;
   let method_name = {
     if enable {
       "EnableExtension"
@@ -153,7 +155,7 @@ fn toggle_extension(enable: bool) -> Result<bool> {
       "DisableExtension"
     }
   };
-  let response = connection.call_method(
+  let response = call_method(
     DESTINATION,
     SHELL_PATH,
     SHELL_IFACE,
@@ -192,11 +194,11 @@ pub fn is_enabled_extension() -> Result<bool> {
   let response = request_extension_info()?;
   let body = response.body();
   if !body.is_empty() {
-    let response: HashMap<String, OwnedValue> = body.deserialize()?;
+    let response: HashMap<String, OwnedVariant> = body.deserialize()?;
     if !response.is_empty() {
       let state = response
         .get("state")
-        .and_then(|v| v.downcast_ref::<f64>().ok())
+        .and_then(|v: &zbus::OwnedVariant| v.downcast_ref::<f64>().ok())
         .unwrap_or(0.0);
       // State 3 = Error
       if state.eq(&3.0) {
@@ -221,11 +223,11 @@ pub fn is_installed_extension() -> Result<bool> {
   let response = request_extension_info()?;
   let body = response.body();
   if !body.is_empty() {
-    let response: HashMap<String, OwnedValue> = body.deserialize()?;
+    let response: HashMap<String, OwnedVariant> = body.deserialize()?;
     if !response.is_empty() {
       let state = response
         .get("state")
-        .and_then(|v| v.downcast_ref::<f64>().ok())
+        .and_then(|v: &zbus::OwnedVariant| v.downcast_ref::<f64>().ok())
         .unwrap_or(0.0);
       // State 3 = Error
       if state.eq(&3.0) {
@@ -241,15 +243,14 @@ pub fn is_installed_extension() -> Result<bool> {
   Ok(false)
 }
 
-fn request_extension_info() -> Result<Message> {
-  let connection = Connection::session()?;
-  Ok(connection.call_method(
+fn request_extension_info() -> zbus::Result<Message> {
+  call_method(
     DESTINATION,
     SHELL_PATH,
     SHELL_IFACE,
     "GetExtensionInfo",
     &GNOME_XWIN_UUID.to_string(),
-  )?)
+  )
 }
 
 fn get_extension_path() -> Result<path::PathBuf> {
@@ -280,9 +281,7 @@ fn remove_extension_file() -> Result<()> {
 }
 
 fn call_script(method_name: &str) -> Result<String> {
-  let connection = Connection::session()?;
-
-  let response = connection.call_method(DESTINATION, XWIN_PATH, XWIN_IFACE, method_name, &())?;
+  let response = call_method(DESTINATION, XWIN_PATH, XWIN_IFACE, method_name, &())?;
 
   if !response.body().is_empty() {
     let response: String = response.body().deserialize()?;
@@ -298,9 +297,7 @@ fn call_script(method_name: &str) -> Result<String> {
 }
 
 fn call_script_arg(method_name: &str, body: u32) -> Result<String> {
-  let connection = Connection::session()?;
-
-  let response = connection.call_method(
+  let response = call_method(
     DESTINATION,
     XWIN_PATH,
     XWIN_IFACE,
